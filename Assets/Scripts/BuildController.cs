@@ -3,28 +3,61 @@ using UnityEngine.Tilemaps;
 using UnityEngine.EventSystems;
 
 /// <summary>
-/// 简易等距建造系统：
-/// 1. 第一次点击方格：在目标方格显示明亮绿色棱形高亮边框。
-/// 2. 再次点击同一方格：在该方格放置选定的方块。
-/// 3. 点击其他方格：切换高亮目标。
-/// 4. 智能过滤手势：滑动/拖拽地图或双指缩放时不触发点击。
+/// 智能等距建造与拆除系统（带立方体顶面高程对齐）：
+/// 1. 立方体顶面对齐：
+///    - 识别地面方块为带有 0.5 单位高度的立体方块；
+///    - 玩家点击方块最上表面时，精准命中对应方块坐标；
+///    - 绿色/红色高亮棱形框精准贴合在方块【最顶面】上；
+///    - 放置的物品（如栅栏）自动站在方块【最顶面】上。
+/// 2. 地面检测：
+///    - 有地面且空格子：显示【绿框】，再次点击放置物品。
+///    - 无地面（虚空）：显示【红框】，无法放置，再次点击会有抖动警告。
+/// 3. 物品拆除：
+///    - 点击已放置的物品：显示【红框】（删除标记），再次点击即可拆除/删除该物品。
+/// 4. 手势过滤：
+///    - 拖拽平移或双指缩放时不触发点击判定。
 /// </summary>
 public class BuildController : MonoBehaviour
 {
-    [Header("Tilemap & Grid (网格与瓦片图)")]
+    private enum CellAction
+    {
+        None,
+        Place,    // 处于地面上，可正常放置（绿框）
+        Delete,   // 已有放置物品，再次点击删除（红框）
+        Invalid   // 无地面（悬空/虚空），无法放置（红框）
+    }
+
+    [Header("Tilemaps (网格与瓦片图层)")]
     public Grid grid;
+    [Tooltip("地面参考层：基础地面方块所在的图层")]
+    public Tilemap groundTilemap;
+    [Tooltip("建造放置层：玩家放置物品的图层 (如栅栏、道具等)")]
+    public Tilemap buildTilemap;
+
+    // 兼容旧属性命名
+    [HideInInspector]
     public Tilemap targetTilemap;
 
-    [Header("Building Tile (用于放置的方块资源)")]
+    [Header("Block Surface Alignment (顶面高度对齐)")]
+    [Tooltip("地面方块的厚度/顶面高度 (128x128 像素且侧面厚度 64px 的方块对应世界单位 0.5)")]
+    public float groundHeightOffset = 0.5f;
+
+    [Header("Building Tile (用于放置的物品/方块资源)")]
     [Tooltip("放置的方块资源 (可拖拽替换)")]
     public TileBase buildTile;
 
-    [Header("Cursor Settings (高亮棱形光标设置)")]
+    [Header("Cursor Colors (高亮边框颜色设置)")]
+    [Tooltip("可放置时的绿框颜色 (有地面)")]
+    public Color validColor = new Color(0.2f, 1f, 0.4f, 1f);
+    [Tooltip("不可放置时的红框颜色 (无地面)")]
+    public Color invalidColor = new Color(1f, 0.25f, 0.25f, 1f);
+    [Tooltip("点击已放置物品时的删除红框颜色")]
+    public Color deleteColor = new Color(1f, 0.25f, 0.25f, 1f);
+
+    [Header("Cursor Settings (光标设置)")]
     [Tooltip("绿色棱形光标精灵")]
     public Sprite highlightSprite;
-    [Tooltip("光标颜色")]
-    public Color highlightColor = new Color(0.2f, 1f, 0.4f, 1f);
-    [Tooltip("高亮光标 Y 轴微调偏移")]
+    [Tooltip("高亮光标微调额外偏移")]
     public float cursorYOffset = 0f;
     [Tooltip("高亮图层排序 (确保悬浮在所有地块之上)")]
     public int highlightSortingOrder = 100;
@@ -37,12 +70,21 @@ public class BuildController : MonoBehaviour
     [Tooltip("最长点击判定时间 (秒)")]
     public float clickMaxDuration = 0.35f;
 
-    // 当前选中的格子坐标
+    [Header("Build Mode State (建造模式开关)")]
+    [Tooltip("是否正处于建造模式（由 UI 建造按钮控制，为 false 时不响应建造点击）")]
+    public bool isBuildMode = false;
+
+    // 当前选中的格子与对应操作
     private Vector3Int? selectedCell = null;
+    private CellAction currentAction = CellAction.None;
 
     // 光标物体与组件
     private GameObject highlightObject;
     private SpriteRenderer highlightRenderer;
+
+    // 抖动动画状态
+    private float shakeTimer = 0f;
+    private Vector3 originalCursorPos;
 
     // 点击判定跟踪
     private Vector2 pointerDownPos;
@@ -59,8 +101,25 @@ public class BuildController : MonoBehaviour
         if (grid == null)
             grid = FindObjectOfType<Grid>();
 
-        if (targetTilemap == null && grid != null)
-            targetTilemap = grid.GetComponentInChildren<Tilemap>();
+        if (grid != null)
+        {
+            var tms = grid.GetComponentsInChildren<Tilemap>();
+            if (groundTilemap == null)
+            {
+                groundTilemap = System.Array.Find(tms, t => t.name == "Tilemap") ?? (tms.Length > 0 ? tms[0] : null);
+            }
+            if (buildTilemap == null)
+            {
+                buildTilemap = targetTilemap ?? System.Array.Find(tms, t => t.name != "Tilemap") ?? groundTilemap;
+            }
+            targetTilemap = buildTilemap;
+
+            // 自动将建造层抬高到方块顶面高度，使放置的物品自然站在方块顶面上！
+            if (buildTilemap != null && buildTilemap != groundTilemap)
+            {
+                buildTilemap.transform.localPosition = new Vector3(0f, groundHeightOffset, 0f);
+            }
+        }
 
         CreateHighlightCursor();
     }
@@ -76,17 +135,16 @@ public class BuildController : MonoBehaviour
             highlightRenderer.sprite = highlightSprite;
         }
 
-        // 使用 URP Unlit 材质，保证绿色发光边框不受场景光照阴影影响，始终极度鲜亮醒目
+        // 使用 URP Unlit 材质，保证边框不受场景光照阴影影响，始终极度鲜亮醒目
         var unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
         if (unlitShader != null)
         {
             highlightRenderer.material = new Material(unlitShader);
         }
 
-        highlightRenderer.color = highlightColor;
+        highlightRenderer.color = validColor;
         highlightRenderer.sortingOrder = highlightSortingOrder;
 
-        // 默认隐藏
         highlightObject.SetActive(false);
     }
 
@@ -94,14 +152,21 @@ public class BuildController : MonoBehaviour
     {
         HandleInput();
         UpdatePulseAnimation();
+        UpdateShakeAnimation();
     }
 
     private void HandleInput()
     {
+        // 若未开启建造模式，不接收建造点击
+        if (!isBuildMode)
+        {
+            isPointerDown = false;
+            return;
+        }
+
         // 手机触控检测
         if (Input.touchCount > 0)
         {
-            // 如果是双指缩放，放弃点击判定
             if (Input.touchCount > 1)
             {
                 isPointerDown = false;
@@ -138,7 +203,7 @@ public class BuildController : MonoBehaviour
         }
         else
         {
-            // 电脑鼠标（仅鼠标左键用于选择与建造）
+            // 电脑鼠标（仅鼠标左键用于选择与建造/删除）
             if (Input.GetMouseButtonDown(0))
             {
                 if (IsPointerOverUI(-1))
@@ -189,42 +254,128 @@ public class BuildController : MonoBehaviour
 
     private void OnCellClicked(Vector2 screenPosition)
     {
-        if (cam == null || grid == null || targetTilemap == null) return;
+        if (cam == null || grid == null) return;
 
         Vector3 worldPos = cam.ScreenToWorldPoint(screenPosition);
-        worldPos.z = 0f; // 投影到 2D 平面
-        Vector3Int cellPos = grid.WorldToCell(worldPos);
+        worldPos.z = 0f;
 
-        // 如果点击的正是当前已高亮的格子 -> 确认放置方块！
+        // 核心对齐：玩家在屏幕上看见并点击的是方块的【最顶面】。
+        // 减去方块的物理厚度 (groundHeightOffset)，才能精准映射到该方块实际底层的网格坐标！
+        Vector3 groundRayPos = new Vector3(worldPos.x, worldPos.y - groundHeightOffset, 0f);
+        Vector3Int cellPos = grid.WorldToCell(groundRayPos);
+
+        // 评估当前格子的状态（建造 / 删除 / 无效）
+        CellAction action = EvaluateCellAction(cellPos);
+
+        // 如果点击的正是当前已高亮的格子 -> 触发对应动作！
         if (selectedCell.HasValue && selectedCell.Value == cellPos)
         {
-            PlaceBlock(cellPos);
+            switch (currentAction)
+            {
+                case CellAction.Place:
+                    PlaceBlock(cellPos);
+                    break;
+                case CellAction.Delete:
+                    DeleteBlock(cellPos);
+                    break;
+                case CellAction.Invalid:
+                    TriggerShakeFeedback();
+                    Debug.LogWarning($"[BuildSystem] 无法放置：格子 {cellPos} 没有地面！");
+                    break;
+            }
         }
         else
         {
-            // 第一次点击该格子 -> 显示绿色高亮棱形
-            SelectCell(cellPos);
+            // 第一次点击该格子 -> 显示对应颜色高亮边框
+            SelectCell(cellPos, action);
         }
     }
 
-    private void SelectCell(Vector3Int cellPos)
+    /// <summary>
+    /// 评估格子状态：
+    /// 1. 如果已放置物品 -> Delete (红框待删)
+    /// 2. 如果无物品但有地面 -> Place (绿框可建)
+    /// 3. 如果无地面 -> Invalid (红框不可建)
+    /// </summary>
+    private CellAction EvaluateCellAction(Vector3Int cellPos)
+    {
+        var bTilemap = buildTilemap != null ? buildTilemap : targetTilemap;
+
+        // 1. 检查建筑层上是否已有物品（由玩家或场景放置）
+        if (bTilemap != null && bTilemap.HasTile(cellPos))
+        {
+            return CellAction.Delete;
+        }
+
+        // 2. 检查下方地面层是否有地块
+        if (groundTilemap != null && groundTilemap.HasTile(cellPos))
+        {
+            return CellAction.Place;
+        }
+
+        // 3. 无地面
+        return CellAction.Invalid;
+    }
+
+    private void SelectCell(Vector3Int cellPos, CellAction action)
     {
         selectedCell = cellPos;
+        currentAction = action;
 
-        Vector3 cellCenter = targetTilemap.GetCellCenterWorld(cellPos);
-        highlightObject.transform.position = new Vector3(cellCenter.x, cellCenter.y + cursorYOffset, 0f);
+        var activeTilemap = groundTilemap != null ? groundTilemap : (buildTilemap ?? targetTilemap);
+        Vector3 cellCenter = activeTilemap != null ? activeTilemap.GetCellCenterWorld(cellPos) : grid.GetCellCenterWorld(cellPos);
+
+        // 高亮边框精确显示在方块的【最顶面】上！
+        highlightObject.transform.position = new Vector3(cellCenter.x, cellCenter.y + groundHeightOffset + cursorYOffset, 0f);
+        originalCursorPos = highlightObject.transform.position;
+
+        // 设置对应的高亮颜色
+        switch (action)
+        {
+            case CellAction.Place:
+                highlightRenderer.color = validColor;
+                break;
+            case CellAction.Delete:
+                highlightRenderer.color = deleteColor;
+                break;
+            case CellAction.Invalid:
+                highlightRenderer.color = invalidColor;
+                break;
+        }
+
         highlightObject.SetActive(true);
     }
 
     private void PlaceBlock(Vector3Int cellPos)
     {
-        if (buildTile != null && targetTilemap != null)
+        var bTilemap = buildTilemap != null ? buildTilemap : targetTilemap;
+        if (buildTile != null && bTilemap != null)
         {
-            targetTilemap.SetTile(cellPos, buildTile);
+            bTilemap.SetTile(cellPos, buildTile);
+            Debug.Log($"[BuildSystem] 成功在格子 {cellPos} 放置了物品: {buildTile.name}");
+            ClearSelection();
+        }
+    }
 
-            Debug.Log($"[BuildSystem] 成功在格子 {cellPos} 放置了方块: {buildTile.name}");
+    private void DeleteBlock(Vector3Int cellPos)
+    {
+        var bTilemap = buildTilemap != null ? buildTilemap : targetTilemap;
+        if (bTilemap != null)
+        {
+            var oldTile = bTilemap.GetTile(cellPos);
+            string tileName = oldTile != null ? oldTile.name : "物品";
+            bTilemap.SetTile(cellPos, null);
 
-            // 放置完成后清除高亮，等待下一次点击选择
+            Debug.Log($"[BuildSystem] 成功拆除删除了格子 {cellPos} 上的物品: {tileName}");
+            ClearSelection();
+        }
+    }
+
+    public void SetBuildMode(bool active)
+    {
+        isBuildMode = active;
+        if (!active)
+        {
             ClearSelection();
         }
     }
@@ -232,15 +383,34 @@ public class BuildController : MonoBehaviour
     public void ClearSelection()
     {
         selectedCell = null;
+        currentAction = CellAction.None;
         if (highlightObject != null)
         {
             highlightObject.SetActive(false);
         }
     }
 
+    private void TriggerShakeFeedback()
+    {
+        shakeTimer = 0.2f;
+    }
+
+    private void UpdateShakeAnimation()
+    {
+        if (shakeTimer > 0f)
+        {
+            shakeTimer -= Time.deltaTime;
+            float offset = Mathf.Sin(shakeTimer * 50f) * 0.08f;
+            if (highlightObject != null)
+            {
+                highlightObject.transform.position = originalCursorPos + new Vector3(offset, 0f, 0f);
+            }
+        }
+    }
+
     private void UpdatePulseAnimation()
     {
-        if (!enablePulseAnimation || highlightObject == null || !highlightObject.activeSelf) return;
+        if (!enablePulseAnimation || highlightObject == null || !highlightObject.activeSelf || shakeTimer > 0f) return;
 
         // 呼吸效果：温和的尺寸轻微脉冲
         float scale = 1f + Mathf.Sin(Time.time * 6f) * 0.04f;
