@@ -56,8 +56,18 @@ public class IsometricPathfinder : MonoBehaviour
         new Vector3Int(-1, -1, 0)
     };
 
+    public static IsometricPathfinder Instance { get; private set; }
+
+    /// <summary>
+    /// 动态障碍物占据的网格（例如放置状态的家具）
+    /// </summary>
+    public static readonly HashSet<Vector3Int> DynamicBlockedCells = new HashSet<Vector3Int>();
+
     void Awake()
     {
+        if (Instance == null) Instance = this;
+        else if (Instance != this) { Destroy(gameObject); return; }
+
         if (groundTilemap == null || buildTilemap == null)
         {
             var grid = FindObjectOfType<Grid>();
@@ -73,9 +83,30 @@ public class IsometricPathfinder : MonoBehaviour
     }
 
     /// <summary>
+    /// 将世界坐标转化为地面网格坐标
+    /// </summary>
+    public Vector3Int WorldToCell(Vector3 worldPos, float heightOffset = 0.5f)
+    {
+        if (groundTilemap != null)
+            return groundTilemap.WorldToCell(worldPos - Vector3.up * heightOffset);
+        return Vector3Int.zero;
+    }
+
+    /// <summary>
+    /// 将网格坐标转化为世界中心坐标
+    /// </summary>
+    public Vector3 CellToWorld(Vector3Int cell, float heightOffset = 0.5f)
+    {
+        if (groundTilemap != null)
+            return groundTilemap.GetCellCenterWorld(cell) + Vector3.up * heightOffset;
+        return Vector3.zero;
+    }
+
+    /// <summary>
     /// 判断某个网格是否可通行：
     /// 1. 必须有地面方块支撑；
-    /// 2. 不能有障碍物/建筑遮挡。
+    /// 2. 不能有障碍物/建筑遮挡；
+    /// 3. 不能有动态放置的家具阻挡。
     /// </summary>
     public bool IsWalkable(Vector3Int cell)
     {
@@ -83,6 +114,9 @@ public class IsometricPathfinder : MonoBehaviour
             return false;
 
         if (buildTilemap != null && buildTilemap.HasTile(cell))
+            return false;
+
+        if (DynamicBlockedCells.Contains(cell))
             return false;
 
         return true;
@@ -222,7 +256,7 @@ public class IsometricPathfinder : MonoBehaviour
     /// <summary>
     /// 当点击了障碍物时，寻找距离起点最近的可通行邻接格
     /// </summary>
-    private Vector3Int FindNearestWalkableNeighbor(Vector3Int blockedCell, Vector3Int startCell)
+    public Vector3Int FindNearestWalkableNeighbor(Vector3Int blockedCell, Vector3Int startCell)
     {
         Vector3Int bestNeighbor = blockedCell;
         float bestDist = float.MaxValue;

@@ -42,6 +42,18 @@ public class BuildController : MonoBehaviour
     [Tooltip("地面方块的厚度/顶面高度 (128x128 像素且侧面厚度 64px 的方块对应世界单位 0.5)")]
     public float groundHeightOffset = 0.5f;
 
+    public enum BuildModeCategory
+    {
+        Furniture,  // 放置重型战斗家具 (如玄岩熔火餐桌)
+        Block       // 放置地形防御方块 (如栅栏)
+    }
+
+    [Header("Build Category (建造品类设置)")]
+    [Tooltip("当前建造品类：家具 (Furniture) 或 防御方块 (Block)")]
+    public BuildModeCategory currentCategory = BuildModeCategory.Furniture;
+    [Tooltip("放置的家具预制体 (如玄岩熔火重型餐桌)")]
+    public GameObject furniturePrefab;
+
     [Header("Building Tile (用于放置的物品/方块资源)")]
     [Tooltip("放置的方块资源 (可拖拽替换)")]
     public TileBase buildTile;
@@ -273,10 +285,10 @@ public class BuildController : MonoBehaviour
             switch (currentAction)
             {
                 case CellAction.Place:
-                    PlaceBlock(cellPos);
+                    PlaceObject(cellPos);
                     break;
                 case CellAction.Delete:
-                    DeleteBlock(cellPos);
+                    DeleteObject(cellPos);
                     break;
                 case CellAction.Invalid:
                     TriggerShakeFeedback();
@@ -293,27 +305,32 @@ public class BuildController : MonoBehaviour
 
     /// <summary>
     /// 评估格子状态：
-    /// 1. 如果已放置物品 -> Delete (红框待删)
+    /// 1. 如果已有家具或建筑层物品 -> Delete (红框待删/回收)
     /// 2. 如果无物品但有地面 -> Place (绿框可建)
     /// 3. 如果无地面 -> Invalid (红框不可建)
     /// </summary>
     private CellAction EvaluateCellAction(Vector3Int cellPos)
     {
-        var bTilemap = buildTilemap != null ? buildTilemap : targetTilemap;
+        // 1. 检查网格上是否已有放置状态的家具（可拆除回收）
+        if (FurnitureObject.GetFurnitureAtCell(cellPos) != null)
+        {
+            return CellAction.Delete;
+        }
 
-        // 1. 检查建筑层上是否已有物品（由玩家或场景放置）
+        // 2. 检查建筑层上是否已有物品/栅栏（可拆除）
+        var bTilemap = buildTilemap != null ? buildTilemap : targetTilemap;
         if (bTilemap != null && bTilemap.HasTile(cellPos))
         {
             return CellAction.Delete;
         }
 
-        // 2. 检查下方地面层是否有地块
+        // 3. 检查下方地面层是否有地块
         if (groundTilemap != null && groundTilemap.HasTile(cellPos))
         {
             return CellAction.Place;
         }
 
-        // 3. 无地面
+        // 4. 无地面
         return CellAction.Invalid;
     }
 
@@ -346,29 +363,107 @@ public class BuildController : MonoBehaviour
         highlightObject.SetActive(true);
     }
 
+    private void PlaceObject(Vector3Int cellPos)
+    {
+        if (currentCategory == BuildModeCategory.Furniture)
+        {
+            PlaceFurniture(cellPos);
+        }
+        else
+        {
+            PlaceBlock(cellPos);
+        }
+    }
+
+    private void PlaceFurniture(Vector3Int cellPos)
+    {
+        if (furniturePrefab == null)
+        {
+            furniturePrefab = Resources.Load<GameObject>("Furniture_LavaTable");
+#if UNITY_EDITOR
+            if (furniturePrefab == null)
+            {
+                furniturePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Furniture_LavaTable.prefab");
+            }
+#endif
+        }
+
+        if (furniturePrefab != null)
+        {
+            var activeTilemap = groundTilemap != null ? groundTilemap : (buildTilemap ?? targetTilemap);
+            Vector3 cellCenter = activeTilemap != null ? activeTilemap.GetCellCenterWorld(cellPos) : grid.GetCellCenterWorld(cellPos);
+            Vector3 spawnPos = new Vector3(cellCenter.x, cellCenter.y + groundHeightOffset, 0f);
+
+            GameObject furnGo = Instantiate(furniturePrefab, spawnPos, Quaternion.identity);
+            furnGo.name = "Furniture_LavaTable";
+            var furnComp = furnGo.GetComponent<FurnitureObject>();
+            if (furnComp != null)
+            {
+                furnComp.SnapToNearestGrid();
+            }
+
+            if (DamageTextManager.Instance != null)
+            {
+                DamageTextManager.Instance.ShowText(spawnPos + Vector3.up * 0.6f, "PLACED!", new Color(0.2f, 1f, 0.5f), 0.1f);
+            }
+
+            Debug.Log($"[BuildSystem] 成功在格子 {cellPos} 放置了家具: {furnGo.name}");
+            ClearSelection();
+        }
+        else
+        {
+            Debug.LogError("[BuildSystem] 无法放置家具：furniturePrefab 为空！");
+        }
+    }
+
     private void PlaceBlock(Vector3Int cellPos)
     {
         var bTilemap = buildTilemap != null ? buildTilemap : targetTilemap;
         if (buildTile != null && bTilemap != null)
         {
             bTilemap.SetTile(cellPos, buildTile);
-            Debug.Log($"[BuildSystem] 成功在格子 {cellPos} 放置了物品: {buildTile.name}");
+            Debug.Log($"[BuildSystem] 成功在格子 {cellPos} 放置了方块: {buildTile.name}");
             ClearSelection();
         }
     }
 
-    private void DeleteBlock(Vector3Int cellPos)
+    private void DeleteObject(Vector3Int cellPos)
     {
+        // 1. 优先检查并删除家具
+        var furn = FurnitureObject.GetFurnitureAtCell(cellPos);
+        if (furn != null)
+        {
+            string fName = furn.furnitureName;
+            Vector3 fPos = furn.transform.position;
+            Destroy(furn.gameObject);
+
+            if (DamageTextManager.Instance != null)
+            {
+                DamageTextManager.Instance.ShowText(fPos + Vector3.up * 0.5f, "RECYCLED!", new Color(1f, 0.4f, 0.4f), 0.1f);
+            }
+
+            Debug.Log($"[BuildSystem] 成功拆除并回收了格子 {cellPos} 上的家具: {fName}");
+            ClearSelection();
+            return;
+        }
+
+        // 2. 检查并删除建筑层方块
         var bTilemap = buildTilemap != null ? buildTilemap : targetTilemap;
-        if (bTilemap != null)
+        if (bTilemap != null && bTilemap.HasTile(cellPos))
         {
             var oldTile = bTilemap.GetTile(cellPos);
             string tileName = oldTile != null ? oldTile.name : "物品";
             bTilemap.SetTile(cellPos, null);
 
-            Debug.Log($"[BuildSystem] 成功拆除删除了格子 {cellPos} 上的物品: {tileName}");
+            Debug.Log($"[BuildSystem] 成功拆除删除了格子 {cellPos} 上的方块: {tileName}");
             ClearSelection();
         }
+    }
+
+    public void SetCategory(BuildModeCategory category)
+    {
+        currentCategory = category;
+        ClearSelection();
     }
 
     public void SetBuildMode(bool active)

@@ -32,6 +32,21 @@ public class CameraController : MonoBehaviour
     public Vector2 minBounds = new Vector2(-20f, -20f);
     public Vector2 maxBounds = new Vector2(20f, 20f);
 
+    [Header("Follow Settings (跟随玩家设置)")]
+    [Tooltip("是否处于跟随玩家模式（非建造模式下为 true，建造模式下为 false）")]
+    public bool followPlayer = true;
+    [Tooltip("跟随目标（通常为玩家）")]
+    public Transform targetToFollow;
+    [Tooltip("跟随偏移量")]
+    public Vector3 followOffset = new Vector3(0f, 0f, -10f);
+
+    [Header("Mobile Portrait Adaptation (手机竖屏适配设置)")]
+    [Tooltip("是否启用竖屏底部功能UI偏置（使角色始终居中于屏幕上方 2/3 可视区域）")]
+    public bool enableMobilePortraitBias = true;
+    [Tooltip("底部功能UI占屏幕高度比例（默认 0.22f）")]
+    [Range(0f, 0.5f)]
+    public float bottomUIDockRatio = 0.22f;
+
     private Camera cam;
     private float targetZoom;
     private float zoomVelocity;
@@ -54,10 +69,47 @@ public class CameraController : MonoBehaviour
         cam = GetComponent<Camera>();
         targetZoom = cam.orthographicSize;
         targetPosition = transform.position;
+
+        if (targetToFollow == null)
+        {
+            var p = GameObject.Find("Player");
+            if (p != null) targetToFollow = p.transform;
+        }
+    }
+
+    /// <summary>
+    /// 设置是否跟随玩家（建造模式传入 false，正常/战斗模式传入 true）
+    /// </summary>
+    public void SetFollowPlayer(bool follow)
+    {
+        followPlayer = follow;
+        isMouseDragging = false;
+        isTouchDragging = false;
+        if (follow && targetToFollow == null)
+        {
+            var p = GameObject.Find("Player");
+            if (p != null) targetToFollow = p.transform;
+        }
     }
 
     void Update()
     {
+        // 跟随玩家模式：摄像机目标始终锁定并对准玩家
+        if (followPlayer && targetToFollow != null)
+        {
+            float biasY = 0f;
+            if (enableMobilePortraitBias && cam != null)
+            {
+                // 竖屏适配：将摄像机向下偏置，使角色位于屏幕上方 2/3 (即 1 - bottomUIDockRatio) 视野区域的中心
+                biasY = -(bottomUIDockRatio * 0.5f) * (cam.orthographicSize * 2f);
+            }
+            targetPosition = new Vector3(
+                targetToFollow.position.x + followOffset.x,
+                targetToFollow.position.y + followOffset.y + biasY,
+                transform.position.z
+            );
+        }
+
         if (Input.touchCount > 0)
         {
             HandleTouchInput();
@@ -72,7 +124,7 @@ public class CameraController : MonoBehaviour
 
     private void HandleTouchInput()
     {
-        // 双指捏合缩放
+        // 双指捏合缩放（任何模式下均支持）
         if (Input.touchCount >= 2)
         {
             isTouchDragging = false;
@@ -101,7 +153,14 @@ public class CameraController : MonoBehaviour
 
         isPinching = false;
 
-        // 单指平移拖拽
+        // 跟随玩家模式下禁用单指拖拽视野，使滑动操作全权用于快速短滑翻滚！
+        if (followPlayer)
+        {
+            isTouchDragging = false;
+            return;
+        }
+
+        // 单指平移拖拽（仅在自由视角 / 建造模式下生效）
         if (Input.touchCount == 1)
         {
             Touch touch = Input.GetTouch(0);
@@ -148,7 +207,7 @@ public class CameraController : MonoBehaviour
 
     private void HandleMouseInput()
     {
-        // 鼠标滚轮缩放
+        // 鼠标滚轮缩放（任何模式下均支持）
         float scroll = Input.mouseScrollDelta.y;
         if (Mathf.Abs(scroll) > 0.001f)
         {
@@ -157,7 +216,14 @@ public class CameraController : MonoBehaviour
             targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
         }
 
-        // 鼠标拖拽平移
+        // 跟随玩家模式下禁用鼠标拖拽平移，避免与短滑翻滚手势冲突！
+        if (followPlayer)
+        {
+            isMouseDragging = false;
+            return;
+        }
+
+        // 鼠标拖拽平移（仅在自由视角 / 建造模式下生效）
         if (Input.GetMouseButtonDown(mouseDragButton))
         {
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
