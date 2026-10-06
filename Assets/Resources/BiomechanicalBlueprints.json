@@ -1,0 +1,216 @@
+{
+  "blueprints": [
+    {
+      "id": "furn_eel_generator",
+      "name": "电鳗电机发电机组",
+      "category": "电网设施",
+      "isAberrant": false,
+      "primaryElement": "Electric",
+      "requiredCoreIds": [
+        "mat_elec_clam_shell",
+        "mat_elec_muscle_bundle"
+      ],
+      "requiredAnyIds": [],
+      "minNodes": 2,
+      "flavor": "砗磲贝壳紧紧闭合包裹着放电肌，向外吐出滋滋电火花。",
+      "formulaDescription": "电涌麻痹范围由 [电荷律 E] 决定；放电伤害由 [电荷律 E] 与 [压力 P] 决定；结构耐久由 [生物增生 G] 决定。",
+      "baseStats": {
+        "dmg": 25,
+        "range": 2.0,
+        "durability": 150
+      }
+    },
+    {
+      "id": "furn_coral_wall",
+      "name": "增生珊瑚管排墙",
+      "category": "增生防线",
+      "isAberrant": false,
+      "primaryElement": "Wood",
+      "requiredCoreIds": [
+        "mat_wood_coral_plate"
+      ],
+      "requiredAnyIds": [
+        "mat_wood_hollow_coral",
+        "mat_wood_root_gear",
+        "mat_wood_symbiotic_fungi"
+      ],
+      "minNodes": 2,
+      "flavor": "粉红致密的钙化珊瑚排管，在水汽中能以肉眼可见的速度不断增生自愈。",
+      "formulaDescription": "掩体耐久值受 [生物增生 G] 巨额增幅；荆棘反伤受 [电荷律 E] 与 [生物增生 G] 影响；排管承压受 [压力 P] 影响。",
+      "baseStats": {
+        "durability": 260,
+        "thorns": 14,
+        "regen": 3.5
+      }
+    },
+    {
+      "id": "furn_pneumatic_bed",
+      "name": "气泡微压悬浮软床",
+      "category": "气压设施",
+      "isAberrant": false,
+      "primaryElement": "Gas",
+      "requiredCoreIds": [
+        "mat_gas_bubble_sac",
+        "mat_gas_float_bladder"
+      ],
+      "requiredAnyIds": [],
+      "minNodes": 2,
+      "flavor": "微弱浮空呼吸的透明气垫床，宛如活着的海绵水母。",
+      "formulaDescription": "浮空斥力力场由 [压力 P] 强力决定；抗重力浮力系数由 [压力 P] 与 [通量 W] 决定；充气膜耐久由 [增生 G] 维持。",
+      "baseStats": {
+        "repelRange": 3.2,
+        "speedBoost": 0.25,
+        "durability": 120
+      }
+    },
+    {
+      "id": "furn_water_tower",
+      "name": "脉动造水循环塔",
+      "category": "潮润设施",
+      "isAberrant": false,
+      "primaryElement": "Water",
+      "requiredCoreIds": [
+        "mat_water_ventricle"
+      ],
+      "requiredAnyIds": [
+        "mat_water_sponge_filter",
+        "mat_water_siphon_tube",
+        "mat_water_viscous_gel"
+      ],
+      "minNodes": 2,
+      "flavor": "心室有节律地泵出清冽活水，通过虹吸管网形成闭环活体喷泉。",
+      "formulaDescription": "潮润喷淋半径由 [流体通量 W] 决定；地表水渍减速由 [流体通量 W] 与 [生物增生 G] 强化；喷淋水压由 [压力 P] 强化。",
+      "baseStats": {
+        "radius": 3.6,
+        "slowDown": 0.45,
+        "humidity": 80
+      }
+    },
+    {
+      "id": "furn_bio_incubator",
+      "name": "小型生体驯化培养箱",
+      "category": "智能设施",
+      "isAberrant": false,
+      "primaryElement": "Water",
+      "requiredCoreIds": [
+        "mat_water_logic_chip"
+      ],
+      "requiredAnyIds": [
+        "mat_elec_piezo_chip",
+        "mat_wood_symbiotic_fungi",
+        "mat_water_patrol_lens"
+      ],
+      "minNodes": 2,
+      "flavor": "内置水族认知逻辑回路的微型培养舱，散发淡蓝荧光，可安抚或驯化近旁生体怪物。",
+      "formulaDescription": "认知诱引半径由 [流体通量 W] 与 [电荷律 E] 复合决定；培养液自愈活性由 [生物增生 G] 决定。",
+      "baseStats": {
+        "lureRange": 4.5,
+        "pacifyRate": 0.35,
+        "durability": 180
+      }
+    },
+    {
+      "id": "furn_hydro_cannon",
+      "name": "高压自愈喷水炮",
+      "category": "水气武器",
+      "isAberrant": false,
+      "primaryElement": "Water",
+      "requiredCoreIds": [
+        "mat_water_keratin_nozzle",
+        "mat_gas_valve_pipe"
+      ],
+      "requiredAnyIds": [
+        "mat_gas_vortex_cartilage",
+        "mat_water_siphon_tube"
+      ],
+      "minNodes": 2,
+      "flavor": "以生体角质为炮管的高压喷流防卫炮，受触碰时喷出击退水刃。",
+      "formulaDescription": "射程由 [压力 P] 决定；冲击击退力由 [压力 P] 与 [流体通量 W] 叠加；炮管耐磨由 [增生 G] 决定。",
+      "baseStats": {
+        "range": 6.5,
+        "knockback": 8.5,
+        "durability": 160
+      }
+    },
+    {
+      "id": "scrap_spasm_metal",
+      "name": "抽搐的痉挛金属团",
+      "category": "活性杂交废料",
+      "isAberrant": true,
+      "primaryElement": "Electric",
+      "requiredCoreIds": [],
+      "requiredAnyIds": [],
+      "minNodes": 2,
+      "flavor": "电肌与金属残件在强行熔铸后形成的畸变瘤块，通体剧烈痉挛颤动。",
+      "formulaDescription": "【强力弹簧反冲特性】：被怪物踩踏时将其反向弹飞，击退力由 [压力 P] 与 [电荷律 E] 决定，带电麻痹时间由 [电荷律 E] 决定。",
+      "baseStats": {
+        "knockback": 6.0,
+        "paralyze": 1.2
+      }
+    },
+    {
+      "id": "scrap_mud_coral",
+      "name": "漏电的烂泥珊瑚块",
+      "category": "活性杂交废料",
+      "isAberrant": true,
+      "primaryElement": "Water",
+      "requiredCoreIds": [],
+      "requiredAnyIds": [],
+      "minNodes": 2,
+      "flavor": "带有电解液的潮湿珊瑚烂泥，散发出焦糊的海洋咸腥味。",
+      "formulaDescription": "【导电陷阱特性】：在地面铺开带电泥潭，踩入者持续减速并遭受电击，范围由 [流体通量 W] 决定，电击伤害由 [电荷律 E] 决定。",
+      "baseStats": {
+        "trapRadius": 3.0,
+        "shockDmg": 18
+      }
+    },
+    {
+      "id": "scrap_gas_cyst",
+      "name": "膨胀的气囊疙瘩",
+      "category": "活性杂交废料",
+      "isAberrant": true,
+      "primaryElement": "Gas",
+      "requiredCoreIds": [],
+      "requiredAnyIds": [],
+      "minNodes": 2,
+      "flavor": "因气压与水压冲突而鼓起的生体肿瘤，表面薄如蝉翼，极度不稳定。",
+      "formulaDescription": "【受触自爆特性】：受任何物理撞击立即发生连锁泄压爆炸，自爆威力由 [压力 P] 决定，溅射黏液由 [流体通量 W] 与 [生物增生 G] 决定。",
+      "baseStats": {
+        "blastDmg": 48,
+        "blastRadius": 3.5
+      }
+    },
+    {
+      "id": "scrap_screaming_valve",
+      "name": "嘶鸣的过载排气瓣",
+      "category": "活性杂交废料",
+      "isAberrant": true,
+      "primaryElement": "Gas",
+      "requiredCoreIds": [],
+      "requiredAnyIds": [],
+      "minNodes": 2,
+      "flavor": "金属瓣膜因电弧灼烧变形，排气时发出刺耳的高频尖叫。",
+      "formulaDescription": "【诱敌嘲讽特性】：间歇性向外喷射带电蒸汽并发出尖啸，强行吸引周围怪物注意力，嘲讽范围由 [压力 P] 与 [电荷律 E] 决定。",
+      "baseStats": {
+        "tauntRange": 7.0,
+        "duration": 12.0
+      }
+    },
+    {
+      "id": "scrap_symbiotic_sludge",
+      "name": "活性共生杂交残渣",
+      "category": "活性杂交废料",
+      "isAberrant": true,
+      "primaryElement": "Wood",
+      "requiredCoreIds": [],
+      "requiredAnyIds": [],
+      "minNodes": 2,
+      "flavor": "多种混乱生体组织强行缠绕的蠕动残渣，生命力异常顽强。",
+      "formulaDescription": "【活体路障特性】：摆放在地面作为自愈阻挡物，生命值由 [生物增生 G] 强力决定，被摧毁后分裂为更小的减速碎块。",
+      "baseStats": {
+        "durability": 190,
+        "slowFactor": 0.4
+      }
+    }
+  ]
+}

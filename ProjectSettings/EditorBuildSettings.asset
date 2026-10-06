@@ -5,7 +5,7 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/TileTest.unity
     guid: 7474433da8e3c3449aff660584f6d477
   - enabled: 0
@@ -14,7 +14,10 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/CraftingTest.unity
     guid: 1ec768c6eb1ed584da7537efd8726d1b
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/CraftingScene.unity
     guid: 45a8bad43523242408232b803bdaf2dc
+  - enabled: 1
+    path: Assets/Scenes/Mix.unity
+    guid: 23de9d0428d76a44784bbb58261cc64c
   m_configObjects: {}
