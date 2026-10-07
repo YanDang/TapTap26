@@ -112,6 +112,15 @@ public static class ShellInventorySceneBuilder
         codexRT.anchoredPosition = new Vector2(320, 0);
         controller.btnBlueprintCodex = btnCodex;
 
+        // 🌱 采集温室按钮 (前往 Collect 场景)
+        Button btnGathering = CreateButton(headerGO.transform, "BtnGatheringRoom", "🌱 采集温室", new Vector2(130, 48), new Color(0.18f, 0.48f, 0.35f, 0.95f), Color.white, 14);
+        RectTransform gatherRT = btnGathering.GetComponent<RectTransform>();
+        gatherRT.anchorMin = new Vector2(0, 0.5f);
+        gatherRT.anchorMax = new Vector2(0, 0.5f);
+        gatherRT.pivot = new Vector2(0, 0.5f);
+        gatherRT.anchoredPosition = new Vector2(460, 0);
+        btnGathering.onClick.AddListener(() => UnityEngine.SceneManagement.SceneManager.LoadScene("Collect"));
+
         // 模式切换按钮组 (中间偏右)
         GameObject modeGroupGO = CreateUIObject("ModeButtons", headerGO.transform);
         RectTransform modeGroupRT = modeGroupGO.GetComponent<RectTransform>();
@@ -777,7 +786,7 @@ public static class ShellInventorySceneBuilder
     {
         BuildMixScene();
         string buildPath = "C:/Users/YiLog/Desktop/test/Mix/TapTap2026.exe";
-        string[] scenes = new string[] { "Assets/Scenes/Mix.unity" };
+        string[] scenes = new string[] { "Assets/Scenes/Mix.unity", "Assets/Scenes/Collect.unity" };
         var report = BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.StandaloneWindows64, BuildOptions.None);
         Debug.Log($"<color=#4AFF70>[Build Standalone Player]</color> 构建结果: {report.summary.result}, 耗时: {report.summary.totalTime.TotalSeconds:F1}s, 产物大小: {report.summary.totalSize / 1024 / 1024}MB, 错误数: {report.summary.totalErrors}");
     }

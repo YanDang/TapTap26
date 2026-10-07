@@ -23,6 +23,9 @@ public static class PlayerSessionData
     // 当前是否正处于工坊开启状态（用于无缝叠加模式）
     public static bool isCraftingOpen = false;
 
+    // 玩家在温室采集到的生体机械材料库（供背壳工坊合成使用）
+    public static List<BiomechanicalCrafting.BiomechanicalMaterial> gatheredBiomechanicalMaterials = new List<BiomechanicalCrafting.BiomechanicalMaterial>();
+
     /// <summary>
     /// 初始化或获取共享材料库
     /// </summary>

@@ -9,6 +9,7 @@ namespace BiomechanicalCrafting.Editor
     public static class AutoMixSceneBuilder
     {
         private const string TriggerFile = "Temp/TriggerMixBuild.txt";
+        private const string TriggerCollectFile = "Temp/TriggerCollectBuild.txt";
         private const string TriggerPlayerFile = "Temp/TriggerPlayerBuild.txt";
         private const string BuildResultFile = "Temp/BuildResult.txt";
 
@@ -40,6 +41,21 @@ namespace BiomechanicalCrafting.Editor
                 catch (Exception ex)
                 {
                     Debug.LogError($"[AutoMixSceneBuilder] 构建 Mix 场景异常: {ex}");
+                }
+            }
+
+            if (File.Exists(TriggerCollectFile))
+            {
+                try
+                {
+                    File.Delete(TriggerCollectFile);
+                    Debug.Log("<color=#00FFFF>[AutoMixSceneBuilder]</color> 检测到采集场景构建触发指令，开始构建 Collect 场景...");
+                    CollectSceneBuilder.BuildCollectScene();
+                    Debug.Log("<color=#00FFFF>[AutoMixSceneBuilder]</color> Collect 场景已成功构建并持久化保存！");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[AutoMixSceneBuilder] 构建 Collect 场景异常: {ex}");
                 }
             }
 
