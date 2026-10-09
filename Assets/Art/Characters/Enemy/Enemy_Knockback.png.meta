@@ -1,0 +1,642 @@
+fileFormatVersion: 2
+guid: 89b2321bb6abce941a34f58ff113febd
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 106.67
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 16384
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Knockback_down_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13d8ccf4cc08bb1e0800000000000000
+      internalID: -2181007979530384079
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_down_01
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c270c292180f28f90800000000000000
+      internalID: -6952730437174425812
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_down_02
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40dff4ab8285aaf60800000000000000
+      internalID: 8046340616198552836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_down_03
+      rect:
+        serializedVersion: 2
+        x: 1200
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f268adf5820f7960800000000000000
+      internalID: 7601797470534263539
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_down_04
+      rect:
+        serializedVersion: 2
+        x: 1600
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6ca2eb0fcdc0cb50800000000000000
+      internalID: 6611510542121217134
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_down_05
+      rect:
+        serializedVersion: 2
+        x: 2000
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 598edfa10f3424d40800000000000000
+      internalID: 5567086787907414165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_left_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0c1aa70d410dd830800000000000000
+      internalID: 4097432666329717775
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_left_01
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bf1e45197128ba9f0800000000000000
+      internalID: -456127899513855493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_left_02
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62a98edd1b6bd1750800000000000000
+      internalID: 6277374330672814630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_left_03
+      rect:
+        serializedVersion: 2
+        x: 1200
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 769250d4b83b374f0800000000000000
+      internalID: -832124095259399833
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_left_04
+      rect:
+        serializedVersion: 2
+        x: 1600
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdd26cc7de0478c80800000000000000
+      internalID: -8320610397798912545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_left_05
+      rect:
+        serializedVersion: 2
+        x: 2000
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc00cb7bfff78fe10800000000000000
+      internalID: 2231674351638020303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_right_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1913a1153f52106f0800000000000000
+      internalID: -720252738434616943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_right_01
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b30975c01a0444b50800000000000000
+      internalID: 6576452416308744251
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_right_02
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de0cfc7c89ee95870800000000000000
+      internalID: 8672224897433321709
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_right_03
+      rect:
+        serializedVersion: 2
+        x: 1200
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b406ab9227855ff10800000000000000
+      internalID: 2302844031819472971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_right_04
+      rect:
+        serializedVersion: 2
+        x: 1600
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2975f31de50e787a0800000000000000
+      internalID: -6374880049677510766
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_right_05
+      rect:
+        serializedVersion: 2
+        x: 2000
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b1515252412df770800000000000000
+      internalID: 8646103428353839545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_up_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d7870cbe820a87e0800000000000000
+      internalID: -1762593492098906154
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_up_01
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 01eeb1d000f0cfef0800000000000000
+      internalID: -73167001050419696
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_up_02
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc917422f0bca5210800000000000000
+      internalID: 1322592706446694863
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_up_03
+      rect:
+        serializedVersion: 2
+        x: 1200
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac67644e5e973a480800000000000000
+      internalID: -8889127211214932278
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_up_04
+      rect:
+        serializedVersion: 2
+        x: 1600
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30beba67a0e3c8e50800000000000000
+      internalID: 6812888550966291203
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockback_up_05
+      rect:
+        serializedVersion: 2
+        x: 2000
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bba03c2abb319db30800000000000000
+      internalID: 4312499814794463931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      Knockback_down_00: -2181007979530384079
+      Knockback_down_01: -6952730437174425812
+      Knockback_down_02: 8046340616198552836
+      Knockback_down_03: 7601797470534263539
+      Knockback_down_04: 6611510542121217134
+      Knockback_down_05: 5567086787907414165
+      Knockback_left_00: 4097432666329717775
+      Knockback_left_01: -456127899513855493
+      Knockback_left_02: 6277374330672814630
+      Knockback_left_03: -832124095259399833
+      Knockback_left_04: -8320610397798912545
+      Knockback_left_05: 2231674351638020303
+      Knockback_right_00: -720252738434616943
+      Knockback_right_01: 6576452416308744251
+      Knockback_right_02: 8672224897433321709
+      Knockback_right_03: 2302844031819472971
+      Knockback_right_04: -6374880049677510766
+      Knockback_right_05: 8646103428353839545
+      Knockback_up_00: -1762593492098906154
+      Knockback_up_01: -73167001050419696
+      Knockback_up_02: 1322592706446694863
+      Knockback_up_03: -8889127211214932278
+      Knockback_up_04: 6812888550966291203
+      Knockback_up_05: 4312499814794463931
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

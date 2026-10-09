@@ -1,0 +1,491 @@
+{
+ "sets": [
+  {
+   "name": "Hero",
+   "ppu": 106.67,
+   "pivotX": 0.5,
+   "pivotY": 0.236,
+   "clips": [
+    {
+     "name": "Idle",
+     "file": "Assets/Art/Characters/Hero/Hero_Idle.png",
+     "frames": 8,
+     "fps": 8,
+     "loop": true,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "Idle_Unarmed",
+     "file": "Assets/Art/Characters/Hero/Hero_Idle_Unarmed.png",
+     "frames": 8,
+     "fps": 8,
+     "loop": true,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "Run",
+     "file": "Assets/Art/Characters/Hero/Hero_Run.png",
+     "frames": 8,
+     "fps": 14,
+     "loop": true,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "Run_Unarmed",
+     "file": "Assets/Art/Characters/Hero/Hero_Run_Unarmed.png",
+     "frames": 8,
+     "fps": 14,
+     "loop": true,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "AttackA",
+     "file": "Assets/Art/Characters/Hero/Hero_AttackA.png",
+     "frames": 10,
+     "fps": 15,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "AttackB",
+     "file": "Assets/Art/Characters/Hero/Hero_AttackB.png",
+     "frames": 10,
+     "fps": 15,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "Block",
+     "file": "Assets/Art/Characters/Hero/Hero_Block.png",
+     "frames": 8,
+     "fps": 15,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "Hit",
+     "file": "Assets/Art/Characters/Hero/Hero_Hit.png",
+     "frames": 4,
+     "fps": 12,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "Knockback_DropBroom",
+     "file": "Assets/Art/Characters/Hero/Hero_Knockback_DropBroom.png",
+     "frames": 6,
+     "fps": 12,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "Roll",
+     "file": "Assets/Art/Characters/Hero/Hero_Roll.png",
+     "frames": 8,
+     "fps": 16,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "Roll_Unarmed",
+     "file": "Assets/Art/Characters/Hero/Hero_Roll_Unarmed.png",
+     "frames": 8,
+     "fps": 16,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "KickTable",
+     "file": "Assets/Art/Characters/Hero/Hero_KickTable.png",
+     "frames": 8,
+     "fps": 16,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "BackflipArrow",
+     "file": "Assets/Art/Characters/Hero/Hero_BackflipArrow.png",
+     "frames": 34,
+     "fps": 15,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "Execute",
+     "file": "Assets/Art/Characters/Hero/Hero_Execute.png",
+     "frames": 24,
+     "fps": 16,
+     "loop": false,
+     "rows": [
+      "left",
+      "right"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    },
+    {
+     "name": "Death",
+     "file": "Assets/Art/Characters/Hero/Hero_Death.png",
+     "frames": 8,
+     "fps": 10,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 404,
+     "cellH": 428
+    }
+   ]
+  },
+  {
+   "name": "Enemy",
+   "ppu": 106.67,
+   "pivotX": 0.4975,
+   "pivotY": 0.2938,
+   "clips": [
+    {
+     "name": "Idle",
+     "file": "Assets/Art/Characters/Enemy/Enemy_Idle.png",
+     "frames": 8,
+     "fps": 8,
+     "loop": true,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 400,
+     "cellH": 388
+    },
+    {
+     "name": "Walk",
+     "file": "Assets/Art/Characters/Enemy/Enemy_Walk.png",
+     "frames": 8,
+     "fps": 10,
+     "loop": true,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 400,
+     "cellH": 388
+    },
+    {
+     "name": "Attack_Slam",
+     "file": "Assets/Art/Characters/Enemy/Enemy_Attack_Slam.png",
+     "frames": 10,
+     "fps": 12,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 400,
+     "cellH": 388
+    },
+    {
+     "name": "Attack_Swing",
+     "file": "Assets/Art/Characters/Enemy/Enemy_Attack_Swing.png",
+     "frames": 8,
+     "fps": 12,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 400,
+     "cellH": 388
+    },
+    {
+     "name": "Attack_Claw",
+     "file": "Assets/Art/Characters/Enemy/Enemy_Attack_Claw.png",
+     "frames": 10,
+     "fps": 12,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 400,
+     "cellH": 388
+    },
+    {
+     "name": "Hit",
+     "file": "Assets/Art/Characters/Enemy/Enemy_Hit.png",
+     "frames": 4,
+     "fps": 12,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 400,
+     "cellH": 388
+    },
+    {
+     "name": "Knockback",
+     "file": "Assets/Art/Characters/Enemy/Enemy_Knockback.png",
+     "frames": 6,
+     "fps": 12,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 400,
+     "cellH": 388
+    },
+    {
+     "name": "Stun",
+     "file": "Assets/Art/Characters/Enemy/Enemy_Stun.png",
+     "frames": 8,
+     "fps": 8,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 400,
+     "cellH": 388
+    },
+    {
+     "name": "Death",
+     "file": "Assets/Art/Characters/Enemy/Enemy_Death.png",
+     "frames": 8,
+     "fps": 10,
+     "loop": false,
+     "rows": [
+      "down",
+      "left",
+      "right",
+      "up"
+     ],
+     "cellW": 400,
+     "cellH": 388
+    }
+   ]
+  },
+  {
+   "name": "VFX",
+   "ppu": 100.0,
+   "pivotX": 0.5,
+   "pivotY": 0.5,
+   "clips": [
+    {
+     "name": "VFX_Slash",
+     "file": "Assets/Art/VFX/VFX_Slash.png",
+     "frames": 8,
+     "fps": 20,
+     "loop": false,
+     "rows": [
+      "down"
+     ],
+     "cellW": 256,
+     "cellH": 256
+    },
+    {
+     "name": "VFX_ExecuteSlash",
+     "file": "Assets/Art/VFX/VFX_ExecuteSlash.png",
+     "frames": 10,
+     "fps": 20,
+     "loop": false,
+     "rows": [
+      "down"
+     ],
+     "cellW": 384,
+     "cellH": 256
+    },
+    {
+     "name": "VFX_ArrowCharge",
+     "file": "Assets/Art/VFX/VFX_ArrowCharge.png",
+     "frames": 8,
+     "fps": 14,
+     "loop": false,
+     "rows": [
+      "down"
+     ],
+     "cellW": 192,
+     "cellH": 192
+    },
+    {
+     "name": "VFX_ArrowFly",
+     "file": "Assets/Art/VFX/VFX_ArrowFly.png",
+     "frames": 4,
+     "fps": 16,
+     "loop": true,
+     "rows": [
+      "down"
+     ],
+     "cellW": 256,
+     "cellH": 96
+    },
+    {
+     "name": "VFX_ArrowBurst",
+     "file": "Assets/Art/VFX/VFX_ArrowBurst.png",
+     "frames": 8,
+     "fps": 16,
+     "loop": false,
+     "rows": [
+      "down"
+     ],
+     "cellW": 256,
+     "cellH": 256
+    },
+    {
+     "name": "VFX_ArrowHit",
+     "file": "Assets/Art/VFX/VFX_ArrowHit.png",
+     "frames": 8,
+     "fps": 16,
+     "loop": false,
+     "rows": [
+      "down"
+     ],
+     "cellW": 256,
+     "cellH": 256
+    },
+    {
+     "name": "VFX_ParrySpark",
+     "file": "Assets/Art/VFX/VFX_ParrySpark.png",
+     "frames": 6,
+     "fps": 18,
+     "loop": false,
+     "rows": [
+      "down"
+     ],
+     "cellW": 160,
+     "cellH": 160
+    },
+    {
+     "name": "VFX_StunStars",
+     "file": "Assets/Art/VFX/VFX_StunStars.png",
+     "frames": 6,
+     "fps": 10,
+     "loop": true,
+     "rows": [
+      "down"
+     ],
+     "cellW": 128,
+     "cellH": 64
+    }
+   ]
+  }
+ ],
+ "backflipEvents": {
+  "jump": 0,
+  "air": 7,
+  "charge_enter": 10,
+  "charge": 15,
+  "shoot": 22,
+  "land": 26,
+  "end": 33
+ }
+}

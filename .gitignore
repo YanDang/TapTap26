@@ -1,0 +1,41 @@
+# Unity 生成的目录（可由 Unity 重新生成）
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# 打包产物（试玩包放 GitHub Releases）
+/[Bb]uild/
+/[Bb]uilds/
+/Release/*.zip
+
+# IDE / 系统
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+crashlytics-build.properties
+.DS_Store
+Thumbs.db
+
+# 旧版打包和说明（已过时）、自测结果
+/Release/
+selftest.txt
