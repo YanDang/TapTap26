@@ -42,9 +42,9 @@ public class BioIncubatorAuraBehavior : BiomechanicalAuraBase
             TriggerLurePulse();
         }
 
-        // 2. 每 3 秒判定一次心智反戈
+        // 2. 每 2.2 秒判定一次心智反戈
         pacifyCheckTimer += Time.deltaTime;
-        if (pacifyCheckTimer >= 3.0f)
+        if (pacifyCheckTimer >= 2.2f)
         {
             pacifyCheckTimer = 0f;
             TriggerPacifyCheck();
@@ -84,8 +84,8 @@ public class BioIncubatorAuraBehavior : BiomechanicalAuraBase
                     int roll = Random.Range(1, 101);
                     if (roll <= pacifyChance)
                     {
-                        // 寻找另一个可以攻击的敌怪
-                        EnemyController targetOther = enemies.Find(other => other != null && other != e && other.IsAlive);
+                        // 寻找另一个可以攻击的敌对怪（排除已驯化同伴）
+                        EnemyController targetOther = enemies.Find(other => other != null && other != e && other.IsAlive && !other.isPacified);
                         e.ApplyPacify(8.0f, targetOther);
 
                         if (DamageTextManager.Instance != null)

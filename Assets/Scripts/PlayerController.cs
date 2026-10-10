@@ -795,13 +795,13 @@ public class PlayerController : MonoBehaviour
 
     private EnemyController FindEnemyNear(Vector3 worldPos, float radius)
     {
-        var enemies = FindObjectsOfType<EnemyController>();
+        var enemies = EnemyController.AllEnemies;
         EnemyController closest = null;
         float minDist = radius;
 
         foreach (var enemy in enemies)
         {
-            if (enemy == null || !enemy.IsAlive) continue;
+            if (enemy == null || !enemy.IsAlive || enemy.isPacified) continue;
             float d = Vector2.Distance(worldPos, enemy.transform.position);
             if (d < minDist)
             {

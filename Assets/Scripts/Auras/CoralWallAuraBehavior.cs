@@ -41,7 +41,7 @@ public class CoralWallAuraBehavior : BiomechanicalAuraBase
         outOfCombatTimer = 3.0f; // 重置脱战计时器
 
         // 荆棘反噬
-        if (attacker != null && attacker.IsAlive)
+        if (attacker != null && attacker.IsAlive && !attacker.isPacified)
         {
             attacker.TakeDamage(thornsDamage, 20f, transform.position);
             if (DamageTextManager.Instance != null)

@@ -51,7 +51,7 @@ public class GasCystMineBehavior : BiomechanicalAuraBase
         for (int i = 0; i < enemies.Count; i++)
         {
             var e = enemies[i];
-            if (e != null && e.IsAlive)
+            if (e != null && e.IsAlive && !e.isPacified)
             {
                 if (Vector2.Distance(transform.position, e.transform.position) <= triggerDistance)
                 {
@@ -97,7 +97,7 @@ public class GasCystMineBehavior : BiomechanicalAuraBase
         foreach (var col in colliders)
         {
             var e = col.GetComponent<EnemyController>() ?? col.GetComponentInParent<EnemyController>();
-            if (e != null && e.IsAlive)
+            if (e != null && e.IsAlive && !e.isPacified)
             {
                 e.TakeDamage(blastDamage, 75f, transform.position);
                 Vector3 blastDir = (e.transform.position - transform.position).normalized;

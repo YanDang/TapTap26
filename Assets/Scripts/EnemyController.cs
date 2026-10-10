@@ -70,6 +70,8 @@ public class EnemyController : MonoBehaviour
     [HideInInspector] public bool isPacified = false;
     private float pacifiedTimer = 0f;
     [HideInInspector] public EnemyController pacifiedTargetEnemy = null;
+    [HideInInspector] public EnemyController currentTargetEnemy = null;
+    private float pacifiedHeartbeatTimer = 0f;
 
     void OnEnable()
     {
@@ -273,6 +275,10 @@ public class EnemyController : MonoBehaviour
                 float shake = Mathf.Sin(Time.time * 30f) * 0.04f;
                 monsterRenderer.transform.localPosition = new Vector3(shake, 0f, 0f);
             }
+            if (paralysisTimer <= 0f && monsterRenderer != null)
+            {
+                monsterRenderer.transform.localPosition = Vector3.zero;
+            }
             return;
         }
 
@@ -291,6 +297,15 @@ public class EnemyController : MonoBehaviour
             {
                 isPacified = false;
                 pacifiedTargetEnemy = null;
+                if (monsterRenderer != null)
+                {
+                    monsterRenderer.color = originalColor;
+                    monsterRenderer.transform.localPosition = Vector3.zero;
+                }
+                if (DamageTextManager.Instance != null)
+                {
+                    DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.7f, "💢 驯化解除!", Color.red, 0.10f);
+                }
             }
             else
             {
@@ -399,6 +414,38 @@ public class EnemyController : MonoBehaviour
 
     private void UpdateChaseState(float distToPlayer)
     {
+        // 优先检查是否有反戈怪兽正在攻击我（触发恶魔间决斗）
+        if (currentTargetEnemy != null && currentTargetEnemy.IsAlive)
+        {
+            float distToEnemy = Vector2.Distance(transform.position, currentTargetEnemy.transform.position);
+            if (distToEnemy <= attackRange * 1.15f && attackCooldownTimer <= 0f)
+            {
+                attackCooldownTimer = attackCooldown;
+                currentTargetEnemy.TakeDamage(attackDamage, 30f, transform.position);
+                SpawnClawEffect();
+                if (DamageTextManager.Instance != null)
+                {
+                    DamageTextManager.Instance.ShowText(currentTargetEnemy.transform.position + Vector3.up * 0.7f, $"💥 恶魔互殴 -{attackDamage:0}!", Color.red, 0.10f);
+                }
+                return;
+            }
+
+            Vector3 enemyDir = (currentTargetEnemy.transform.position - transform.position).normalized;
+            transform.position = Vector3.MoveTowards(transform.position, currentTargetEnemy.transform.position, moveSpeed * slowMultiplier * Time.deltaTime);
+            if (monsterRenderer != null)
+            {
+                if (enemyDir.x > 0.05f) monsterRenderer.flipX = false;
+                else if (enemyDir.x < -0.05f) monsterRenderer.flipX = true;
+                float bob = Mathf.Abs(Mathf.Sin(Time.time * 8f)) * 0.03f;
+                monsterRenderer.transform.localPosition = new Vector3(0f, bob, 0f);
+            }
+            return;
+        }
+        else
+        {
+            currentTargetEnemy = null;
+        }
+
         // 游击战术支持：玩家拉开距离超过 loseTargetRange，丢失目标进入警觉搜寻态
         if (distToPlayer > loseTargetRange)
         {
@@ -808,6 +855,9 @@ public class EnemyController : MonoBehaviour
         currentGuardBreak = maxGuardBreak;
         isStaggered = false;
         isAttacking = false;
+        isPacified = false;
+        pacifiedTargetEnemy = null;
+        currentTargetEnemy = null;
         aiState = EnemyAIState.Patrol;
         lastPlayerCell = new Vector3Int(int.MinValue, int.MinValue, 0);
         waypoints.Clear();
@@ -959,30 +1009,121 @@ public class EnemyController : MonoBehaviour
 
     private void UpdatePacifiedAI()
     {
-        if (pacifiedTargetEnemy == null || !pacifiedTargetEnemy.IsAlive)
+        // 1. 冷却计时器每帧必须递减，彻底修复原代码中 return 导致攻击一次后永远无法再次攻击的致命 Bug
+        if (attackCooldownTimer > 0f)
         {
-            // 自动从全局怪兽中寻找除自身外的另一只活跃怪物
-            pacifiedTargetEnemy = AllEnemies.Find(e => e != null && e != this && e.IsAlive);
+            attackCooldownTimer -= Time.deltaTime;
         }
 
+        // 2. 驯化期间呈现持续粉红光晕特效，清晰昭示其已“反戈投诚”
+        if (monsterRenderer != null)
+        {
+            float pulse = Mathf.PingPong(Time.time * 3.5f, 0.5f);
+            monsterRenderer.color = Color.Lerp(originalColor, new Color(1f, 0.45f, 0.8f, 1f), pulse + 0.35f);
+        }
+
+        // 3. 目标筛选：优先锁定除自身外的最近活跃【敌对怪物】（!other.isPacified）
+        if (pacifiedTargetEnemy == null || !pacifiedTargetEnemy.IsAlive || pacifiedTargetEnemy.isPacified)
+        {
+            pacifiedTargetEnemy = null;
+            float minD = float.MaxValue;
+            for (int i = 0; i < AllEnemies.Count; i++)
+            {
+                var other = AllEnemies[i];
+                if (other != null && other != this && other.IsAlive && !other.isPacified)
+                {
+                    float d = Vector2.Distance(transform.position, other.transform.position);
+                    if (d < minD)
+                    {
+                        minD = d;
+                        pacifiedTargetEnemy = other;
+                    }
+                }
+            }
+        }
+
+        // 4. 若场上存在敌对怪物，全力冲锋并进行驯化撕咬
         if (pacifiedTargetEnemy != null)
         {
             float dist = Vector2.Distance(transform.position, pacifiedTargetEnemy.transform.position);
-            if (dist <= attackRange)
+            if (dist <= attackRange * 1.25f)
             {
                 if (attackCooldownTimer <= 0f)
                 {
                     attackCooldownTimer = attackCooldown;
-                    pacifiedTargetEnemy.TakeDamage(attackDamage, 35f, transform.position);
+                    float dmg = attackDamage * 1.5f; // 驯化狂暴加成 150% 伤害
+                    pacifiedTargetEnemy.TakeDamage(dmg, 45f, transform.position);
+                    SpawnClawEffect();
+
+                    // 让被攻击的敌怪产生仇恨反击，激发怪兽互殴激烈场面
+                    if (pacifiedTargetEnemy.aiState != EnemyAIState.BreakBarrier)
+                    {
+                        pacifiedTargetEnemy.currentTargetEnemy = this;
+                    }
+
                     if (DamageTextManager.Instance != null)
                     {
-                        DamageTextManager.Instance.ShowText(pacifiedTargetEnemy.transform.position + Vector3.up * 0.6f, "❤️ 驯化撕咬!", new Color(1f, 0.5f, 0.8f), 0.10f);
+                        DamageTextManager.Instance.ShowText(pacifiedTargetEnemy.transform.position + Vector3.up * 0.7f, $"❤️ 驯化撕咬 -{dmg:0}!", new Color(1f, 0.45f, 0.75f), 0.12f);
                     }
                 }
             }
             else
             {
-                transform.position = Vector3.MoveTowards(transform.position, pacifiedTargetEnemy.transform.position, moveSpeed * slowMultiplier * Time.deltaTime);
+                // 追击敌对怪物
+                Vector3 moveDir = (pacifiedTargetEnemy.transform.position - transform.position).normalized;
+                transform.position = Vector3.MoveTowards(transform.position, pacifiedTargetEnemy.transform.position, moveSpeed * 1.35f * slowMultiplier * Time.deltaTime);
+
+                if (monsterRenderer != null)
+                {
+                    if (moveDir.x > 0.05f) monsterRenderer.flipX = false;
+                    else if (moveDir.x < -0.05f) monsterRenderer.flipX = true;
+
+                    float bob = Mathf.Abs(Mathf.Sin(Time.time * 8f)) * 0.03f;
+                    monsterRenderer.transform.localPosition = new Vector3(0f, bob, 0f);
+                }
+            }
+        }
+        else
+        {
+            // 5. 核心修复：若场上没有其他敌对怪物（例如只有 1 只怪或全被驯化），绝对不再傻站静止！
+            // 转为【忠诚护卫形态】：主动靠近玩家并守卫在玩家身侧！
+            if (targetPlayer == null)
+            {
+                targetPlayer = FindObjectOfType<PlayerController>();
+            }
+
+            if (targetPlayer != null)
+            {
+                float distToPlayer = Vector2.Distance(transform.position, targetPlayer.transform.position);
+                if (distToPlayer > 1.85f)
+                {
+                    Vector3 followDir = (targetPlayer.transform.position - transform.position).normalized;
+                    transform.position = Vector3.MoveTowards(transform.position, targetPlayer.transform.position, moveSpeed * slowMultiplier * Time.deltaTime);
+
+                    if (monsterRenderer != null)
+                    {
+                        if (followDir.x > 0.05f) monsterRenderer.flipX = false;
+                        else if (followDir.x < -0.05f) monsterRenderer.flipX = true;
+
+                        float bob = Mathf.Abs(Mathf.Sin(Time.time * 8f)) * 0.03f;
+                        monsterRenderer.transform.localPosition = new Vector3(0f, bob, 0f);
+                    }
+                }
+                else if (monsterRenderer != null)
+                {
+                    monsterRenderer.transform.localPosition = Vector3.zero;
+                }
+            }
+
+            // 护卫状态周期性爱心提示
+            pacifiedHeartbeatTimer += Time.deltaTime;
+            if (pacifiedHeartbeatTimer >= 2.5f)
+            {
+                pacifiedHeartbeatTimer = 0f;
+                if (DamageTextManager.Instance != null)
+                {
+                    DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "❤️ 忠诚护卫中", new Color(1f, 0.55f, 0.85f), 0.09f);
+                }
             }
         }
     }

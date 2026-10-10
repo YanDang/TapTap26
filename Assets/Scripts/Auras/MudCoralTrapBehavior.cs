@@ -44,7 +44,7 @@ public class MudCoralTrapBehavior : BiomechanicalAuraBase
         for (int i = 0; i < enemies.Count; i++)
         {
             var e = enemies[i];
-            if (e != null && e.IsAlive)
+            if (e != null && e.IsAlive && !e.isPacified)
             {
                 float d = Vector2.Distance(transform.position, e.transform.position);
                 if (d <= trapRadius)

@@ -48,7 +48,7 @@ public class SpasmMetalTrapBehavior : BiomechanicalAuraBase
         foreach (var col in hits)
         {
             var enemy = col.GetComponent<EnemyController>() ?? col.GetComponentInParent<EnemyController>();
-            if (enemy != null && enemy.IsAlive)
+            if (enemy != null && enemy.IsAlive && !enemy.isPacified)
             {
                 TriggerSpringTrap(enemy);
                 break;
