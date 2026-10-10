@@ -53,6 +53,8 @@ namespace BiomechanicalCrafting
             if (modalRoot != null) modalRoot.SetActive(false);
         }
 
+        public bool IsOpen => (modalRoot != null && modalRoot.activeSelf);
+
         public void Toggle()
         {
             if (modalRoot != null)
@@ -166,12 +168,20 @@ namespace BiomechanicalCrafting
                 foreach (var cid in bp.requiredCoreIds)
                 {
                     var m = BiomechanicalMaterialDatabase.GetById(cid);
-                    coreNames.Add(m != null ? m.materialName : cid);
+                    string sizeLabel = (m != null && m.isMajor) ? " [2x2大核心·占4格]" : " [1x1辅料]";
+                    coreNames.Add((m != null ? m.materialName : cid) + sizeLabel);
                 }
                 reqStr += string.Join(" + ", coreNames);
                 if (bp.requiredAnyIds.Count > 0)
                 {
-                    reqStr += " + [对应系任意辅料]";
+                    List<string> anyNames = new List<string>();
+                    foreach (var aid in bp.requiredAnyIds)
+                    {
+                        var am = BiomechanicalMaterialDatabase.GetById(aid);
+                        if (am != null) anyNames.Add(am.materialName);
+                    }
+                    string anyDesc = anyNames.Count > 0 ? string.Join("/", anyNames) : "对应系任意辅料";
+                    reqStr += $" + 辅料({anyDesc}) [1x1]";
                 }
             }
             reqText.text = reqStr;

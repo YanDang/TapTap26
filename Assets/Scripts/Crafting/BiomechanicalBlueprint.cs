@@ -29,6 +29,17 @@ namespace BiomechanicalCrafting
         {
             if (cachedIcon != null) return cachedIcon;
 
+            // 优先检查是否有配套的真实家具/废料高清精灵图片
+            if (!string.IsNullOrEmpty(id))
+            {
+                var directFurnSprite = Resources.Load<Sprite>("FurnitureSprites/" + id);
+                if (directFurnSprite != null)
+                {
+                    cachedIcon = directFurnSprite;
+                    return cachedIcon;
+                }
+            }
+
             // 优先采用首个核心材料的图标
             if (requiredCoreIds != null && requiredCoreIds.Count > 0)
             {

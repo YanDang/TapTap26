@@ -58,6 +58,10 @@ public class BuildController : MonoBehaviour
     [Tooltip("放置的方块资源 (可拖拽替换)")]
     public TileBase buildTile;
 
+    [Header("Biomechanical Products Selection (生体构装选择)")]
+    [Tooltip("当前选中的待放置构装成品")]
+    public BiomechanicalCrafting.CraftedProduct selectedProduct = null;
+
     [Header("Cursor Colors (高亮边框颜色设置)")]
     [Tooltip("可放置时的绿框颜色 (有地面)")]
     public Color validColor = new Color(0.2f, 1f, 0.4f, 1f);
@@ -93,6 +97,8 @@ public class BuildController : MonoBehaviour
     // 光标物体与组件
     private GameObject highlightObject;
     private SpriteRenderer highlightRenderer;
+    private GameObject ghostPreviewObject;
+    private SpriteRenderer ghostPreviewRenderer;
 
     // 抖动动画状态
     private float shakeTimer = 0f;
@@ -156,6 +162,19 @@ public class BuildController : MonoBehaviour
 
         highlightRenderer.color = validColor;
         highlightRenderer.sortingOrder = highlightSortingOrder;
+
+        // 创建生体构装待放置半透明投影幻影预览
+        ghostPreviewObject = new GameObject("Ghost_Preview");
+        ghostPreviewObject.transform.SetParent(highlightObject.transform, false);
+        ghostPreviewObject.transform.localPosition = Vector3.zero;
+        ghostPreviewRenderer = ghostPreviewObject.AddComponent<SpriteRenderer>();
+        var ghostShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+        if (ghostShader != null)
+        {
+            ghostPreviewRenderer.material = new Material(ghostShader);
+        }
+        ghostPreviewRenderer.sortingOrder = highlightSortingOrder + 1;
+        ghostPreviewObject.SetActive(false);
 
         highlightObject.SetActive(false);
     }
@@ -346,17 +365,20 @@ public class BuildController : MonoBehaviour
         highlightObject.transform.position = new Vector3(cellCenter.x, cellCenter.y + groundHeightOffset + cursorYOffset, 0f);
         originalCursorPos = highlightObject.transform.position;
 
-        // 设置对应的高亮颜色
+        // 设置对应的高亮颜色与幻影预览
         switch (action)
         {
             case CellAction.Place:
                 highlightRenderer.color = validColor;
+                UpdateGhostPreview();
                 break;
             case CellAction.Delete:
                 highlightRenderer.color = deleteColor;
+                if (ghostPreviewObject != null) ghostPreviewObject.SetActive(false);
                 break;
             case CellAction.Invalid:
                 highlightRenderer.color = invalidColor;
+                if (ghostPreviewObject != null) ghostPreviewObject.SetActive(false);
                 break;
         }
 
@@ -365,66 +387,49 @@ public class BuildController : MonoBehaviour
 
     private void PlaceObject(Vector3Int cellPos)
     {
-        if (currentCategory == BuildModeCategory.Furniture)
-        {
-            PlaceFurniture(cellPos);
-        }
-        else
-        {
-            PlaceBlock(cellPos);
-        }
+        // 彻底移除旧方块放置逻辑，全面拥抱工坊联动生体构装与战术废料建造体系
+        PlaceFurniture(cellPos);
     }
 
     private void PlaceFurniture(Vector3Int cellPos)
     {
-        if (furniturePrefab == null)
+        var activeTilemap = groundTilemap != null ? groundTilemap : (buildTilemap ?? targetTilemap);
+        Vector3 cellCenter = activeTilemap != null ? activeTilemap.GetCellCenterWorld(cellPos) : grid.GetCellCenterWorld(cellPos);
+        Vector3 spawnPos = new Vector3(cellCenter.x, cellCenter.y + groundHeightOffset, 0f);
+
+        // 若当前未选定构装，自动从 PlayerSessionData 仓库中选择第一件
+        if (selectedProduct == null)
         {
-            furniturePrefab = Resources.Load<GameObject>("Furniture_LavaTable");
-#if UNITY_EDITOR
-            if (furniturePrefab == null)
+            var products = PlayerSessionData.GetCraftedProducts();
+            if (products.Count > 0)
             {
-                furniturePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Furniture_LavaTable.prefab");
+                selectedProduct = products[0];
             }
-#endif
         }
 
-        if (furniturePrefab != null)
+        // 放置工坊联动生体构装
+        if (selectedProduct != null && BiomechanicalCombatAdapter.Instance != null)
         {
-            var activeTilemap = groundTilemap != null ? groundTilemap : (buildTilemap ?? targetTilemap);
-            Vector3 cellCenter = activeTilemap != null ? activeTilemap.GetCellCenterWorld(cellPos) : grid.GetCellCenterWorld(cellPos);
-            Vector3 spawnPos = new Vector3(cellCenter.x, cellCenter.y + groundHeightOffset, 0f);
-
-            GameObject furnGo = Instantiate(furniturePrefab, spawnPos, Quaternion.identity);
-            furnGo.name = "Furniture_LavaTable";
-            var furnComp = furnGo.GetComponent<FurnitureObject>();
-            if (furnComp != null)
+            var spawned = BiomechanicalCombatAdapter.Instance.SpawnProductAtCell(selectedProduct, cellPos, spawnPos);
+            if (spawned != null)
             {
-                furnComp.SnapToNearestGrid();
+                Debug.Log($"[BuildSystem] 成功放置生体构装: {selectedProduct.productName} 于格子 {cellPos}");
+                // 若该物品已全部放置，更新或清空当前选中项以便重新从仓库选择
+                var products = PlayerSessionData.GetCraftedProducts();
+                if (!products.Contains(selectedProduct))
+                {
+                    selectedProduct = products.Count > 0 ? products[0] : null;
+                }
+                ClearSelection();
+                return;
             }
-
-            if (DamageTextManager.Instance != null)
-            {
-                DamageTextManager.Instance.ShowText(spawnPos + Vector3.up * 0.6f, "PLACED!", new Color(0.2f, 1f, 0.5f), 0.1f);
-            }
-
-            Debug.Log($"[BuildSystem] 成功在格子 {cellPos} 放置了家具: {furnGo.name}");
-            ClearSelection();
         }
-        else
+
+        if (DamageTextManager.Instance != null)
         {
-            Debug.LogError("[BuildSystem] 无法放置家具：furniturePrefab 为空！");
+            DamageTextManager.Instance.ShowText(spawnPos + Vector3.up * 0.6f, "⚠️ 仓库中暂无可用构装，请按 [B] 前往工坊合成！", new Color(1f, 0.4f, 0.4f), 0.12f);
         }
-    }
-
-    private void PlaceBlock(Vector3Int cellPos)
-    {
-        var bTilemap = buildTilemap != null ? buildTilemap : targetTilemap;
-        if (buildTile != null && bTilemap != null)
-        {
-            bTilemap.SetTile(cellPos, buildTile);
-            Debug.Log($"[BuildSystem] 成功在格子 {cellPos} 放置了方块: {buildTile.name}");
-            ClearSelection();
-        }
+        ClearSelection();
     }
 
     private void DeleteObject(Vector3Int cellPos)
@@ -435,13 +440,25 @@ public class BuildController : MonoBehaviour
         {
             string fName = furn.furnitureName;
             Vector3 fPos = furn.transform.position;
-            Destroy(furn.gameObject);
 
-            if (DamageTextManager.Instance != null)
+            // 若属于生体构装，回收返回仓库
+            if (furn.originalProduct != null)
             {
-                DamageTextManager.Instance.ShowText(fPos + Vector3.up * 0.5f, "RECYCLED!", new Color(1f, 0.4f, 0.4f), 0.1f);
+                PlayerSessionData.AddCraftedProduct(furn.originalProduct);
+                if (DamageTextManager.Instance != null)
+                {
+                    DamageTextManager.Instance.ShowText(fPos + Vector3.up * 0.6f, $"♻️ 回收入库: {furn.originalProduct.productName}", new Color(0.3f, 0.9f, 1f), 0.12f);
+                }
+            }
+            else
+            {
+                if (DamageTextManager.Instance != null)
+                {
+                    DamageTextManager.Instance.ShowText(fPos + Vector3.up * 0.5f, "RECYCLED!", new Color(1f, 0.4f, 0.4f), 0.1f);
+                }
             }
 
+            Destroy(furn.gameObject);
             Debug.Log($"[BuildSystem] 成功拆除并回收了格子 {cellPos} 上的家具: {fName}");
             ClearSelection();
             return;
@@ -475,10 +492,40 @@ public class BuildController : MonoBehaviour
         }
     }
 
+    private void UpdateGhostPreview()
+    {
+        if (ghostPreviewObject == null) return;
+        if (selectedProduct == null)
+        {
+            var products = PlayerSessionData.GetCraftedProducts();
+            if (products.Count > 0)
+            {
+                selectedProduct = products[0];
+            }
+        }
+
+        if (selectedProduct != null)
+        {
+            var sp = Resources.Load<Sprite>("FurnitureSprites/" + selectedProduct.id);
+            if (sp != null)
+            {
+                ghostPreviewRenderer.sprite = sp;
+                ghostPreviewRenderer.color = new Color(1f, 1f, 1f, 0.6f);
+                ghostPreviewObject.SetActive(true);
+                return;
+            }
+        }
+        ghostPreviewObject.SetActive(false);
+    }
+
     public void ClearSelection()
     {
         selectedCell = null;
         currentAction = CellAction.None;
+        if (ghostPreviewObject != null)
+        {
+            ghostPreviewObject.SetActive(false);
+        }
         if (highlightObject != null)
         {
             highlightObject.SetActive(false);
@@ -510,5 +557,87 @@ public class BuildController : MonoBehaviour
         // 呼吸效果：温和的尺寸轻微脉冲
         float scale = 1f + Mathf.Sin(Time.time * 6f) * 0.04f;
         highlightObject.transform.localScale = new Vector3(scale, scale, 1f);
+    }
+
+    private Vector2 warehouseScrollPos = Vector2.zero;
+
+    void OnGUI()
+    {
+        if (!isBuildMode) return;
+
+        float dockHeight = 125f;
+        float dockY = Screen.height - dockHeight;
+
+        // 半透明暗底
+        GUI.Box(new Rect(10f, dockY, Screen.width - 20f, dockHeight), "");
+
+        GUIStyle titleStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 15,
+            fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.MiddleLeft
+        };
+        titleStyle.normal.textColor = new Color(0.95f, 0.85f, 0.3f);
+
+        string selName = selectedProduct != null ? selectedProduct.productName : "未选定（点击下方卡片）";
+        GUI.Label(new Rect(20f, dockY + 6f, Screen.width - 200f, 22f), $"📦 战术构装仓库选择 (点击卡片选中，点击地面绿框部署，点击红框回收入库) | 当前选中: <color=#38bdf8><b>{selName}</b></color>", titleStyle);
+
+        // 快捷前往生体工坊按钮
+        if (GUI.Button(new Rect(Screen.width - 200f, dockY + 6f, 185f, 24f), "🔨 前往生体工坊 (B)"))
+        {
+            var entrance = FindObjectOfType<CombatSceneCraftingEntrance>();
+            if (entrance != null)
+            {
+                entrance.EnterCraftingScene();
+            }
+            else
+            {
+                PlayerSessionData.isCraftingOpen = true;
+                PlayerSessionData.returnCombatSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Mix", UnityEngine.SceneManagement.LoadSceneMode.Additive);
+            }
+        }
+
+        var products = PlayerSessionData.GetCraftedProducts();
+        if (products.Count == 0)
+        {
+            GUI.Label(new Rect(25f, dockY + 40f, 750f, 30f), "<color=#94A3B8>📦 战术仓库开局为空。请点击右上角【前往生体工坊 (B)】连线合成构装，合成后即可在此选取并部署到战场！</color>");
+            return;
+        }
+
+        // 横向滚动构装卡片列表
+        float scrollWidth = Screen.width - 40f;
+        float contentWidth = Mathf.Max(scrollWidth, products.Count * 220f + 20f);
+        warehouseScrollPos = GUI.BeginScrollView(new Rect(20f, dockY + 32f, scrollWidth, 80f), warehouseScrollPos, new Rect(0, 0, contentWidth, 65f), true, false);
+
+        for (int i = 0; i < products.Count; i++)
+        {
+            var p = products[i];
+            if (p == null) continue;
+
+            float itemX = i * 220f;
+            bool isSelected = selectedProduct == p;
+
+            Color oldBg = GUI.backgroundColor;
+            GUI.backgroundColor = isSelected ? new Color(0.2f, 0.95f, 0.45f, 1f) : (p.isAberrantScrap ? new Color(0.9f, 0.45f, 0.65f, 0.9f) : new Color(0.2f, 0.45f, 0.75f, 0.9f));
+
+            string tag = p.isAberrantScrap ? "[废料]" : $"[{p.category}]";
+            string btnText = $"{tag} {p.productName}\nP:{p.totalP} E:{p.totalE} G:{p.totalG} W:{p.totalW}";
+
+            Sprite furnSprite = Resources.Load<Sprite>("FurnitureSprites/" + p.id);
+            GUIContent btnContent = furnSprite != null && furnSprite.texture != null
+                ? new GUIContent(btnText, furnSprite.texture)
+                : new GUIContent(btnText);
+
+            if (GUI.Button(new Rect(itemX, 0, 210f, 55f), btnContent))
+            {
+                selectedProduct = p;
+                ClearSelection();
+            }
+
+            GUI.backgroundColor = oldBg;
+        }
+
+        GUI.EndScrollView();
     }
 }

@@ -78,6 +78,11 @@ public class FurnitureObject : MonoBehaviour
     private PlayerController holderPlayer;
     [HideInInspector] public bool isThrown = false;
 
+    // 关联的构装成品数据源 (用于拆除回收与属性重构)
+    [HideInInspector] public BiomechanicalCrafting.CraftedProduct originalProduct;
+    public System.Action<float, EnemyController> onHitTaken;
+    public System.Action onFurnitureDestroyed;
+
     // 全局活跃家具列表
     public static readonly List<FurnitureObject> AllFurniture = new List<FurnitureObject>();
 
@@ -100,10 +105,22 @@ public class FurnitureObject : MonoBehaviour
                     furnitureRenderer.material = new Material(unlitShader);
                 }
             }
+
+            if (currentState == FurnitureState.Placed)
+            {
+                furnitureRenderer.sortingOrder = 10;
+            }
         }
 
         if (furnitureCollider == null)
             furnitureCollider = GetComponent<Collider2D>();
+
+        // 统一物理碰撞体覆盖度，使其贴合 1.0m 等距菱形地块，杜绝怪物从边缘穿模穿透
+        if (furnitureCollider is CircleCollider2D circleCol)
+        {
+            circleCol.radius = 0.52f;
+            circleCol.offset = new Vector2(0f, 0.12f);
+        }
 
         CreateInteractionVisual();
     }
@@ -146,6 +163,9 @@ public class FurnitureObject : MonoBehaviour
             sr.sprite = promptRingSprite;
         else
             sr.sprite = Resources.Load<Sprite>("target_ring") ?? Resources.Load<Sprite>("click_marker");
+
+        // target_ring 原生为 128x64 (2:1 等距椭圆)，缩放 1.8f 可在外围形成一圈清晰金圈
+        promptRing.transform.localScale = new Vector3(1.8f, 1.8f, 1f);
         promptRing.SetActive(false);
     }
 
@@ -153,20 +173,22 @@ public class FurnitureObject : MonoBehaviour
     {
         if (currentState == FurnitureState.Placed)
         {
-            // 动态前后遮挡深度排序
-            if (furnitureRenderer != null)
+            // 实体统一层级为 10（与玩家、怪物保持一致，高于地面瓷砖 0/1 与阴影 4，低于血条 30）
+            // 由项目 URP 2D 的 TransparencySortMode.CustomAxis (0, 1, -0.26) 自动精准根据 Y 轴坐标计算 2.5D 前后透视遮挡。
+            // 彻底修复原公式 (-y * 10) + 12 导致 y > 1.2 时层级降为负数、被补全的地面 Tile 遮盖而只露阴影的严重 Bug！
+            if (furnitureRenderer != null && furnitureRenderer.sortingOrder != 10)
             {
-                furnitureRenderer.sortingOrder = Mathf.RoundToInt(-transform.position.y * 10) + 12;
+                furnitureRenderer.sortingOrder = 10;
             }
 
-            // 检查玩家距离，近身 (1.4m 内) 高亮显示脚底交互金圈
+            // 检查玩家距离，近身 (1.85m 内) 高亮显示脚底交互金圈
             var player = FindObjectOfType<PlayerController>();
             if (player != null && player.heldFurniture == null)
             {
                 float dist = Vector2.Distance(transform.position, player.transform.position);
-                if (dist <= 1.4f && !promptRing.activeSelf)
+                if (dist <= 1.85f && !promptRing.activeSelf)
                     promptRing.SetActive(true);
-                else if (dist > 1.4f && promptRing.activeSelf)
+                else if (dist > 1.85f && promptRing.activeSelf)
                     promptRing.SetActive(false);
             }
             else if (promptRing.activeSelf)
@@ -409,6 +431,11 @@ public class FurnitureObject : MonoBehaviour
         transform.localPosition = new Vector3(0f, 0.62f, -0.05f);
         transform.localScale = Vector3.one * 0.9f;
 
+        if (furnitureRenderer != null)
+        {
+            furnitureRenderer.sortingOrder = 12; // 举起在玩家头顶上方
+        }
+
         if (promptRing != null)
             promptRing.SetActive(false);
     }
@@ -477,9 +504,10 @@ public class FurnitureObject : MonoBehaviour
     /// <summary>
     /// 受到攻击时扣除耐久度
     /// </summary>
-    public void TakeHit(float damage)
+    public void TakeHit(float damage, EnemyController attacker = null)
     {
         currentDurability -= damage;
+        onHitTaken?.Invoke(damage, attacker);
         if (DamageTextManager.Instance != null)
         {
             DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.4f, $"-{damage:0} 耐久", new Color(0.9f, 0.9f, 0.9f), 0.08f);
@@ -512,6 +540,7 @@ public class FurnitureObject : MonoBehaviour
             }
         }
 
+        onFurnitureDestroyed?.Invoke();
         UnregisterFromGrid();
         if (holderPlayer != null)
         {
@@ -524,7 +553,7 @@ public class FurnitureObject : MonoBehaviour
     /// <summary>
     /// 查找距离指定坐标最近的放置态家具
     /// </summary>
-    public static FurnitureObject GetNearestPlaced(Vector3 position, float maxRange = 1.6f)
+    public static FurnitureObject GetNearestPlaced(Vector3 position, float maxRange = 1.95f)
     {
         FurnitureObject best = null;
         float minDist = maxRange;

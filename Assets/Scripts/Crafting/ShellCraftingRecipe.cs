@@ -158,9 +158,15 @@ namespace BiomechanicalCrafting
                 };
             }
 
-            // 2. 增生珊瑚管排墙 (木系防线核心：珊瑚骨板/珊瑚管 + 齿轮/菌群)
-            if ((idSet.Contains("mat_wood_coral_plate") || idSet.Contains("mat_wood_hollow_coral")) &&
-                (idSet.Contains("mat_wood_root_gear") || idSet.Contains("mat_wood_symbiotic_fungi")))
+            // 2. 增生珊瑚管排墙 (木系防线核心：增生珊瑚骨板 + 任意木系辅料(空心珊瑚管/齿轮/菌群等)，或 空心珊瑚管 + 齿轮/菌群)
+            bool hasCoralPlate = idSet.Contains("mat_wood_coral_plate");
+            bool hasHollowCoral = idSet.Contains("mat_wood_hollow_coral");
+            bool hasWoodAccessory = hasHollowCoral || idSet.Contains("mat_wood_root_gear") || idSet.Contains("mat_wood_symbiotic_fungi") ||
+                                    idSet.Contains("mat_wood_calcified_valve") || idSet.Contains("mat_wood_rubber_seal") ||
+                                    idSet.Contains("mat_wood_titanium_patch") || idSet.Contains("mat_wood_spring_fascia");
+            bool hasSecondaryWood = idSet.Contains("mat_wood_root_gear") || idSet.Contains("mat_wood_symbiotic_fungi");
+
+            if ((hasCoralPlate && hasWoodAccessory) || (hasHollowCoral && hasSecondaryWood))
             {
                 int wallHp = Mathf.Clamp(Mathf.RoundToInt((150 + sumG * 2.0f) * qualityMultiplier), 150, 480);
                 int thorns = Mathf.Clamp(Mathf.RoundToInt((10 + sumE * 0.18f + sumG * 0.16f) * qualityMultiplier), 10, 42);
@@ -207,8 +213,17 @@ namespace BiomechanicalCrafting
                 };
             }
 
-            // 4. 脉动造水循环塔 (水系核心：造水心室 + 海绵滤芯/虹吸管)
-            if (idSet.Contains("mat_water_ventricle") && (idSet.Contains("mat_water_sponge_filter") || idSet.Contains("mat_water_siphon_tube")))
+            // 4. 脉动造水循环塔 (水系核心：造水心室 + 任意水系辅料，或 滤芯 + 虹吸管 组合)
+            bool hasWaterVentricle = idSet.Contains("mat_water_ventricle");
+            bool hasSpongeFilter = idSet.Contains("mat_water_sponge_filter");
+            bool hasSiphonTube = idSet.Contains("mat_water_siphon_tube");
+            bool hasViscousGel = idSet.Contains("mat_water_viscous_gel");
+            bool hasAlgaeFilament = idSet.Contains("mat_water_algae_filament");
+            bool hasWaterAccessory = hasSpongeFilter || hasSiphonTube || hasViscousGel || hasAlgaeFilament ||
+                                     idSet.Contains("mat_water_keratin_nozzle") || idSet.Contains("mat_water_patrol_lens") ||
+                                     idSet.Contains("mat_water_neon_powder");
+
+            if ((hasWaterVentricle && hasWaterAccessory) || (hasSpongeFilter && hasSiphonTube))
             {
                 float sprayRadius = Mathf.Clamp(2.5f + sumW / 40.0f * qualityMultiplier, 2.5f, 6.0f);
                 int slowPercent = Mathf.Clamp(Mathf.RoundToInt((25 + sumW / 9.0f) * qualityMultiplier), 25, 60);

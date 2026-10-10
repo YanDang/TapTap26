@@ -73,8 +73,11 @@ public class GameModeManager : MonoBehaviour
 
         if (blockCategoryButton != null)
         {
-            blockCategoryButton.onClick.RemoveAllListeners();
-            blockCategoryButton.onClick.AddListener(SelectBlockCategory);
+            blockCategoryButton.gameObject.SetActive(false);
+        }
+        if (blockBtnBg != null)
+        {
+            blockBtnBg.gameObject.SetActive(false);
         }
 
         // 默认进入探索/战斗模式
@@ -138,43 +141,42 @@ public class GameModeManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 切换为家具建造分类（玄岩熔火餐桌）
+    /// 激活战术生体构装建造分类
     /// </summary>
     public void SelectFurnitureCategory()
     {
         if (buildController != null)
             buildController.SetCategory(BuildController.BuildModeCategory.Furniture);
 
-        UpdateCategoryUI(BuildController.BuildModeCategory.Furniture);
+        UpdateCategoryUI();
     }
 
     /// <summary>
-    /// 切换为方块建造分类（防御方块）
+    /// 旧方块建造已废弃，自动重定向至生体构装模式
     /// </summary>
     public void SelectBlockCategory()
     {
-        if (buildController != null)
-            buildController.SetCategory(BuildController.BuildModeCategory.Block);
-
-        UpdateCategoryUI(BuildController.BuildModeCategory.Block);
+        SelectFurnitureCategory();
     }
 
-    private void UpdateCategoryUI(BuildController.BuildModeCategory category)
+    private void UpdateCategoryUI()
     {
-        bool isFurniture = category == BuildController.BuildModeCategory.Furniture;
-
+        // 彻底移除旧版“重型家具”与“防御方块”分类按键，全面由底部生体构装选择栏接管
+        if (furnitureCategoryButton != null)
+            furnitureCategoryButton.gameObject.SetActive(false);
         if (furnitureBtnBg != null)
-            furnitureBtnBg.color = isFurniture ? new Color(0.95f, 0.55f, 0.15f, 0.95f) : new Color(0.2f, 0.22f, 0.28f, 0.8f);
-
+            furnitureBtnBg.gameObject.SetActive(false);
+        if (blockCategoryButton != null)
+            blockCategoryButton.gameObject.SetActive(false);
         if (blockBtnBg != null)
-            blockBtnBg.color = !isFurniture ? new Color(0.2f, 0.6f, 1f, 0.95f) : new Color(0.2f, 0.22f, 0.28f, 0.8f);
+            blockBtnBg.gameObject.SetActive(false);
+
+        var catBar = GameObject.Find("CategoryBar");
+        if (catBar != null) catBar.SetActive(false);
 
         if (statusText != null)
         {
-            if (isFurniture)
-                statusText.text = "【建造模式 · 家具】点击绿框放置玄岩熔火餐桌，点击红框回收家具";
-            else
-                statusText.text = "【建造模式 · 方块】点击绿框放置防御方块，点击红框拆除方块";
+            statusText.text = "【建造模式 · 战术构装】从底部仓库选择构装/废料部署于绿框，点击红框回收入库";
         }
     }
 

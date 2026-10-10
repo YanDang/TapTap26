@@ -75,7 +75,8 @@
       "requiredAnyIds": [
         "mat_water_sponge_filter",
         "mat_water_siphon_tube",
-        "mat_water_viscous_gel"
+        "mat_water_viscous_gel",
+        "mat_water_algae_filament"
       ],
       "minNodes": 2,
       "flavor": "心室有节律地泵出清冽活水，通过虹吸管网形成闭环活体喷泉。",
@@ -119,10 +120,7 @@
         "mat_water_keratin_nozzle",
         "mat_gas_valve_pipe"
       ],
-      "requiredAnyIds": [
-        "mat_gas_vortex_cartilage",
-        "mat_water_siphon_tube"
-      ],
+      "requiredAnyIds": [],
       "minNodes": 2,
       "flavor": "以生体角质为炮管的高压喷流防卫炮，受触碰时喷出击退水刃。",
       "formulaDescription": "射程由 [压力 P] 决定；冲击击退力由 [压力 P] 与 [流体通量 W] 叠加；炮管耐磨由 [增生 G] 决定。",

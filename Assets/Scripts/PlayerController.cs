@@ -123,6 +123,12 @@ public class PlayerController : MonoBehaviour
     private int consecutiveEnemyClickCount = 0;
     private const float DOUBLE_CLICK_TIME_WINDOW = 0.6f;
 
+    // 电脑鼠标操作状态 (右键移动，左键家具与战术目标交互)
+    private float rightClickHoldTimer = 0f;
+    private bool isLeftPointerDown = false;
+    private Vector2 leftPointerDownPos;
+    private float leftPointerDownTime;
+
     // 标记
     private GameObject markerObject;
     private SpriteRenderer markerRenderer;
@@ -130,16 +136,32 @@ public class PlayerController : MonoBehaviour
 
     private Camera cam;
 
+    [HideInInspector] public float moveSpeedMultiplier = 1f;
+    [HideInInspector] public float staminaCostMultiplier = 1f;
+
     /// <summary>
-    /// 获取当前实际移动速度（若举起家具则承受 30% 移速惩罚）
+    /// 获取当前实际移动速度（若举起家具则承受 30% 移速惩罚，可受气压床增益）
     /// </summary>
     public float EffectiveMoveSpeed
     {
         get
         {
+            float spd = baseMoveSpeed;
             if (heldFurniture != null)
-                return baseMoveSpeed * (1f - heldFurniture.moveSpeedPenalty);
-            return baseMoveSpeed;
+                spd *= (1f - heldFurniture.moveSpeedPenalty);
+            return spd * moveSpeedMultiplier;
+        }
+    }
+
+    /// <summary>
+    /// 恢复玩家生命值（生体疗愈水雾等机制）
+    /// </summary>
+    public void Heal(float amount)
+    {
+        currentHp = Mathf.Min(maxHp, currentHp + amount);
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, $"+{amount:0} HP", Color.green, 0.11f);
         }
     }
 
@@ -235,6 +257,9 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // 工坊或温室叠加开启时，战斗角色输入与逻辑全面静默冻结
+        if (PlayerSessionData.isCraftingOpen) return;
+
         if (rollCooldownTimer > 0f)
             rollCooldownTimer -= Time.deltaTime;
 
@@ -299,25 +324,200 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            // 电脑鼠标操作
-            if (Input.GetMouseButtonDown(0))
+            // 电脑鼠标操作：右键移动，左键与家具及战术目标交互
+            HandleMouseInput();
+        }
+    }
+
+    private void HandleMouseInput()
+    {
+        // 1. 鼠标右键 (Button 1)：专用于寻路移动 (单点瞬时寻路 + 长按平滑跟随移动)
+        if (Input.GetMouseButtonDown(1))
+        {
+            if (!IsPointerOverUI(-1) && !IsInBottomDockArea(Input.mousePosition))
             {
-                if (IsPointerOverUI(-1) || IsInBottomDockArea(Input.mousePosition))
+                if (cam != null)
                 {
-                    isPointerDown = false;
-                    return;
+                    Vector3 worldPos = cam.ScreenToWorldPoint(Input.mousePosition);
+                    worldPos.z = 0f;
+                    MoveToWorldPoint(worldPos);
+                    rightClickHoldTimer = 0f;
                 }
-                StartPointer(Input.mousePosition);
-            }
-            else if (Input.GetMouseButtonUp(0))
-            {
-                if (isPointerDown)
-                {
-                    EvaluatePointerRelease(Input.mousePosition);
-                }
-                isPointerDown = false;
             }
         }
+        else if (Input.GetMouseButton(1))
+        {
+            if (!IsPointerOverUI(-1) && !IsInBottomDockArea(Input.mousePosition))
+            {
+                rightClickHoldTimer += Time.deltaTime;
+                if (rightClickHoldTimer >= 0.1f)
+                {
+                    rightClickHoldTimer = 0f;
+                    if (cam != null)
+                    {
+                        Vector3 worldPos = cam.ScreenToWorldPoint(Input.mousePosition);
+                        worldPos.z = 0f;
+                        MoveToWorldPoint(worldPos);
+                    }
+                }
+            }
+        }
+
+        // 2. 鼠标左键 (Button 0)：专用于与家具交互及战术目标交互 (举起/放下/踢飞/锁定/攻击)
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (IsPointerOverUI(-1) || IsInBottomDockArea(Input.mousePosition))
+            {
+                isLeftPointerDown = false;
+                return;
+            }
+            leftPointerDownPos = Input.mousePosition;
+            leftPointerDownTime = Time.time;
+            isLeftPointerDown = true;
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            if (isLeftPointerDown)
+            {
+                EvaluateLeftClickRelease(Input.mousePosition);
+            }
+            isLeftPointerDown = false;
+        }
+    }
+
+    private void EvaluateLeftClickRelease(Vector2 releasePos)
+    {
+        float duration = Time.time - leftPointerDownTime;
+        Vector2 delta = releasePos - leftPointerDownPos;
+        float distance = delta.magnitude;
+        float speed = distance / Mathf.Max(duration, 0.001f);
+
+        // A. 鼠标快速短滑 (Swipe)：划动踢飞家具或闪避翻滚
+        if (distance >= minSwipeDistance && duration <= maxSwipeDuration && speed >= 120f)
+        {
+            Vector2 swipeDir = delta.normalized;
+
+            // 踢家具判定：触控/光标滑动起点落在家具上，且角色处于近身交互范围内 (playerDist <= 1.95f)
+            if (cam != null && heldFurniture == null)
+            {
+                Vector3 startWorldPos = cam.ScreenToWorldPoint(leftPointerDownPos);
+                startWorldPos.z = 0f;
+                FurnitureObject touchedFurn = FurnitureObject.GetNearestPlaced(startWorldPos, 1.1f);
+
+                if (touchedFurn != null)
+                {
+                    float playerDist = Vector2.Distance(transform.position, touchedFurn.transform.position);
+                    if (playerDist <= 1.95f)
+                    {
+                        Vector3 kickDir = new Vector3(swipeDir.x, swipeDir.y, 0f).normalized;
+                        if (playerRenderer != null)
+                        {
+                            playerRenderer.flipX = kickDir.x < 0;
+                        }
+
+                        touchedFurn.Kick(kickDir);
+
+                        if (DamageTextManager.Instance != null)
+                        {
+                            DamageTextManager.Instance.ShowText(touchedFurn.transform.position + Vector3.up * 0.5f, "KICK!", new Color(1f, 0.45f, 0.1f), 0.11f);
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // 若手持沉重家具时遇袭执行滑动：战术放下家具在脚边并翻滚闪避！
+            if (heldFurniture != null)
+            {
+                var dropFurn = heldFurniture;
+                DropFurniture();
+                dropFurn.PutDown(transform.position);
+            }
+
+            if (rollCooldownTimer <= 0f)
+            {
+                StartCoroutine(PerformDodgeRollRoutine(swipeDir));
+                return;
+            }
+        }
+
+        // B. 点击判定 (Click)：家具交互、目标攻击、放下或投掷
+        if (distance < clickMaxDistance && duration <= clickMaxDuration)
+        {
+            OnLeftClickTap(releasePos);
+        }
+    }
+
+    private void OnLeftClickTap(Vector2 screenPosition)
+    {
+        if (cam == null || grid == null || groundTilemap == null) return;
+
+        Vector3 worldPos = cam.ScreenToWorldPoint(screenPosition);
+        worldPos.z = 0f;
+
+        // 1. 如果当前手中正举着家具：
+        if (heldFurniture != null)
+        {
+            // A. 如果点击到了敌人 -> 将手持家具全力掷向目标砸向敌人！
+            EnemyController enemy = FindEnemyNear(worldPos, 1.0f);
+            if (enemy != null && enemy.IsAlive)
+            {
+                ThrowHeldFurnitureAtTarget(enemy);
+                return;
+            }
+
+            // B. 如果点击的是地面 -> 平稳放下家具至点击处！
+            PutDownHeldFurniture(worldPos);
+            return;
+        }
+
+        // 2. 如果未手持家具，检查是否点击了地面的家具（核心交互需求！）
+        FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.1f);
+        if (clickedFurn != null)
+        {
+            float distToFurn = Vector2.Distance(transform.position, clickedFurn.transform.position);
+            if (distToFurn <= 1.95f)
+            {
+                // 靠近时点击直接举起家具
+                HoldFurniture(clickedFurn);
+                return;
+            }
+            else
+            {
+                // 较远时，先寻路前往家具身旁以便交互
+                Vector3Int furnCell = pathfinder != null ? pathfinder.WorldToCell(clickedFurn.transform.position) : grid.WorldToCell(clickedFurn.transform.position);
+                Vector3Int pCell = pathfinder != null ? pathfinder.WorldToCell(transform.position) : grid.WorldToCell(transform.position);
+                Vector3Int neighborCell = pathfinder != null ? pathfinder.FindNearestWalkableNeighbor(furnCell, pCell) : furnCell;
+                MoveToCell(neighborCell);
+                return;
+            }
+        }
+
+        // 3. 检查是否点击到了敌人（左键锁定/普通攻击）
+        EnemyController clickedEnemy = FindEnemyNear(worldPos, 0.95f);
+        if (clickedEnemy != null && clickedEnemy.IsAlive)
+        {
+            SetAttackTarget(clickedEnemy);
+            float dist = Vector2.Distance(transform.position, clickedEnemy.transform.position);
+            if (dist <= attackRange)
+            {
+                PerformManualAttack();
+            }
+            return;
+        }
+
+        // 4. 左键点击空地：
+        // 关键：左键绝对不触发地面寻路移动（移动已全权赋予鼠标右键！）
+        // 若身边 1.95m 内有现存家具，点击附近地面可智能吸附举起身边最近的家具；
+        var nearbyFurn = FurnitureObject.GetNearestPlaced(transform.position, 1.95f);
+        if (nearbyFurn != null)
+        {
+            HoldFurniture(nearbyFurn);
+            return;
+        }
+
+        // 否则如果在近战姿态下，原地挥空出招，绝不产生误走位
+        PerformManualAttack();
     }
 
     private void StartPointer(Vector2 screenPos)
@@ -352,18 +552,18 @@ public class PlayerController : MonoBehaviour
             // 踢家具判定：
             // 规则：
             // A. 玩家手中未手持家具 (heldFurniture == null)
-            // B. 触控滑动起点必须正落在家具上 (touchDist <= 0.85f)
-            // C. 玩家必须处于家具近战交互范围内 (playerDist <= 1.45f，严禁隔空超能力滑动物体！)
+            // B. 触控滑动起点必须正落在家具上 (touchDist <= 1.1f)
+            // C. 玩家必须处于家具近战交互范围内 (playerDist <= 1.95f)
             if (cam != null && heldFurniture == null)
             {
                 Vector3 startWorldPos = cam.ScreenToWorldPoint(pointerDownPos);
                 startWorldPos.z = 0f;
-                FurnitureObject touchedFurn = FurnitureObject.GetNearestPlaced(startWorldPos, 0.85f);
+                FurnitureObject touchedFurn = FurnitureObject.GetNearestPlaced(startWorldPos, 1.1f);
 
                 if (touchedFurn != null)
                 {
                     float playerDist = Vector2.Distance(transform.position, touchedFurn.transform.position);
-                    if (playerDist <= 1.45f)
+                    if (playerDist <= 1.95f)
                     {
                         // 满足近身且手指划过家具：角色顺应手指滑动方向将家具飞速踢出冲撞！
                         Vector3 kickDir = new Vector3(swipeDir.x, swipeDir.y, 0f).normalized;
@@ -498,11 +698,11 @@ public class PlayerController : MonoBehaviour
         // 3. 若未手持家具，检查是否点击了地面的家具！
         if (heldFurniture == null)
         {
-            FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 0.85f);
+            FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.1f);
             if (clickedFurn != null)
             {
                 float distToFurn = Vector2.Distance(transform.position, clickedFurn.transform.position);
-                if (distToFurn <= 1.45f)
+                if (distToFurn <= 1.95f)
                 {
                     // 靠近时点击直接举起家具
                     HoldFurniture(clickedFurn);
@@ -697,9 +897,10 @@ public class PlayerController : MonoBehaviour
 
     public bool ConsumeStamina(float amount)
     {
-        if (currentStamina >= amount)
+        float actualCost = amount * staminaCostMultiplier;
+        if (currentStamina >= actualCost)
         {
-            currentStamina -= amount;
+            currentStamina -= actualCost;
             return true;
         }
         return false;
@@ -1011,7 +1212,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void KickNearbyFurniture()
     {
-        var furn = FurnitureObject.GetNearestPlaced(transform.position, 1.6f);
+        var furn = FurnitureObject.GetNearestPlaced(transform.position, 1.95f);
         if (furn == null) return;
 
         Vector3 kickDir = (playerRenderer != null && playerRenderer.flipX ? Vector3.left : Vector3.right);
@@ -1033,7 +1234,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void PickUpNearbyFurniture()
     {
-        var furn = FurnitureObject.GetNearestPlaced(transform.position, 1.6f);
+        var furn = FurnitureObject.GetNearestPlaced(transform.position, 1.95f);
         if (furn != null)
         {
             HoldFurniture(furn);

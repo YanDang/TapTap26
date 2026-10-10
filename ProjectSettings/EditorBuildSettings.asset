@@ -23,4 +23,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Collect.unity
     guid: 39ccce0a1d5fc784ca347098737cf60e
+  - enabled: 1
+    path: Assets/Scenes/BiomechanicalCombatScene.unity
+    guid: 826a3a7b26ddf2446b7ab23ed60b78ba
   m_configObjects: {}

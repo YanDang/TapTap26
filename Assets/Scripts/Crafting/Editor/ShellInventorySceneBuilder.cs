@@ -120,6 +120,17 @@ public static class ShellInventorySceneBuilder
         gatherRT.pivot = new Vector2(0, 0.5f);
         gatherRT.anchoredPosition = new Vector2(460, 0);
         btnGathering.onClick.AddListener(() => UnityEngine.SceneManagement.SceneManager.LoadScene("Collect"));
+        controller.btnGathering = btnGathering;
+
+        // ⚔️ 返回战场按钮
+        Button btnReturn = CreateButton(headerGO.transform, "BtnReturnToCombat", "⚔️ 返回战场", new Vector2(130, 48), new Color(0.85f, 0.32f, 0.22f, 0.95f), Color.white, 14);
+        RectTransform returnRT = btnReturn.GetComponent<RectTransform>();
+        returnRT.anchorMin = new Vector2(0, 0.5f);
+        returnRT.anchorMax = new Vector2(0, 0.5f);
+        returnRT.pivot = new Vector2(0, 0.5f);
+        returnRT.anchoredPosition = new Vector2(600, 0);
+        btnReturn.onClick.AddListener(() => controller.ReturnToCombatScene());
+        controller.btnReturnToCombat = btnReturn;
 
         // 模式切换按钮组 (中间偏右)
         GameObject modeGroupGO = CreateUIObject("ModeButtons", headerGO.transform);
@@ -399,6 +410,29 @@ public static class ShellInventorySceneBuilder
         lineRend.raycastTarget = false;
         controller.strokeLineRenderer = lineRend;
 
+        // 垃圾桶回收丢弃区域 (TrashBin Drop Area)
+        GameObject trashBinGO = CreateUIObject("TrashBinDropArea", shellPlateGO.transform);
+        RectTransform tbRT = trashBinGO.GetComponent<RectTransform>();
+        tbRT.anchorMin = new Vector2(1, 0);
+        tbRT.anchorMax = new Vector2(1, 0);
+        tbRT.pivot = new Vector2(1, 0);
+        tbRT.anchoredPosition = new Vector2(-24, 20);
+        tbRT.sizeDelta = new Vector2(190, 52);
+
+        Image tbImg = trashBinGO.AddComponent<Image>();
+        tbImg.color = new Color(0.38f, 0.12f, 0.14f, 0.95f);
+        Button tbBtn = trashBinGO.AddComponent<Button>();
+        ColorBlock tbColors = tbBtn.colors;
+        tbColors.normalColor = new Color(0.38f, 0.12f, 0.14f, 0.95f);
+        tbColors.highlightedColor = new Color(0.55f, 0.18f, 0.2f, 1f);
+        tbColors.pressedColor = new Color(0.7f, 0.22f, 0.24f, 1f);
+        tbBtn.colors = tbColors;
+
+        GameObject tbTxtGO = CreateText(trashBinGO.transform, "TrashText", "🗑️ 垃圾桶 (拖曳/点击丢弃)", 13, FontStyle.Bold, new Color(1f, 0.7f, 0.7f), TextAnchor.MiddleCenter);
+        StretchFull(tbTxtGO.GetComponent<RectTransform>());
+
+        controller.trashBinRect = tbRT;
+
         // =========================================================================
         // 11. 底部操作工具栏 (BottomToolbar)
         // =========================================================================
@@ -418,32 +452,36 @@ public static class ShellInventorySceneBuilder
         actRT.anchorMin = new Vector2(0, 0.5f);
         actRT.anchorMax = new Vector2(0, 0.5f);
         actRT.pivot = new Vector2(0, 0.5f);
-        actRT.anchoredPosition = new Vector2(470, 0);
-        actRT.sizeDelta = new Vector2(660, 52);
+        actRT.anchoredPosition = new Vector2(430, 0);
+        actRT.sizeDelta = new Vector2(760, 52);
 
-        Button btnAdd = CreateButton(actGroupGO.transform, "BtnAddRandom", "🎲 拾取随机材料", new Vector2(150, 48), new Color(0.18f, 0.35f, 0.5f, 0.9f), Color.white, 14);
-        btnAdd.GetComponent<RectTransform>().anchoredPosition = new Vector2(75, 0);
+        Button btnAdd = CreateButton(actGroupGO.transform, "BtnAddRandom", "🎲 拾取随机", new Vector2(130, 48), new Color(0.18f, 0.35f, 0.5f, 0.9f), Color.white, 14);
+        btnAdd.GetComponent<RectTransform>().anchoredPosition = new Vector2(65, 0);
         controller.btnAddRandom = btnAdd;
 
-        Button btnFill = CreateButton(actGroupGO.transform, "BtnFillAll", "🎒 填满背壳", new Vector2(140, 48), new Color(0.25f, 0.45f, 0.35f, 0.9f), Color.white, 14);
-        btnFill.GetComponent<RectTransform>().anchoredPosition = new Vector2(230, 0);
+        Button btnFill = CreateButton(actGroupGO.transform, "BtnFillAll", "🎒 填满背壳", new Vector2(130, 48), new Color(0.25f, 0.45f, 0.35f, 0.9f), Color.white, 14);
+        btnFill.GetComponent<RectTransform>().anchoredPosition = new Vector2(205, 0);
         controller.btnFillAll = btnFill;
 
-        Button btnClear = CreateButton(actGroupGO.transform, "BtnClearAll", "🗑️ 清空背壳", new Vector2(140, 48), new Color(0.5f, 0.22f, 0.22f, 0.9f), Color.white, 14);
-        btnClear.GetComponent<RectTransform>().anchoredPosition = new Vector2(380, 0);
+        Button btnClear = CreateButton(actGroupGO.transform, "BtnClearAll", "🧹 清空背壳", new Vector2(130, 48), new Color(0.5f, 0.22f, 0.22f, 0.9f), Color.white, 14);
+        btnClear.GetComponent<RectTransform>().anchoredPosition = new Vector2(345, 0);
         controller.btnClearAll = btnClear;
 
-        Button btnDemo = CreateButton(actGroupGO.transform, "BtnDemoStroke", "💡 连线示例", new Vector2(140, 48), new Color(0.48f, 0.32f, 0.65f, 0.9f), Color.white, 14);
-        btnDemo.GetComponent<RectTransform>().anchoredPosition = new Vector2(530, 0);
+        Button btnDemo = CreateButton(actGroupGO.transform, "BtnDemoStroke", "💡 连线示例", new Vector2(130, 48), new Color(0.48f, 0.32f, 0.65f, 0.9f), Color.white, 14);
+        btnDemo.GetComponent<RectTransform>().anchoredPosition = new Vector2(485, 0);
         controller.btnDemoStroke = btnDemo;
 
-        GameObject hintTxtGO = CreateText(bottomBarGO.transform, "HintText", "【操作指引】点击左侧蓝图高亮配方；按住滑动进行 8 向连线；点击材料查看数值；按 B 打开蓝图图鉴；Tab/Space 切换整理。", 12, FontStyle.Normal, new Color(0.6f, 0.72f, 0.85f), TextAnchor.MiddleRight);
+        Button btnDelete = CreateButton(actGroupGO.transform, "BtnDeleteSelected", "🗑️ 丢弃材料", new Vector2(130, 48), new Color(0.72f, 0.2f, 0.2f, 0.95f), Color.white, 14);
+        btnDelete.GetComponent<RectTransform>().anchoredPosition = new Vector2(625, 0);
+        controller.btnDeleteSelected = btnDelete;
+
+        GameObject hintTxtGO = CreateText(bottomBarGO.transform, "HintText", "【操作指引】左键连线合成；右键直接删除材料；拖拽材料至垃圾桶丢弃；点击材料可查看详情与丢弃。", 12, FontStyle.Normal, new Color(0.6f, 0.72f, 0.85f), TextAnchor.MiddleRight);
         RectTransform hintRT = hintTxtGO.GetComponent<RectTransform>();
         hintRT.anchorMin = new Vector2(1, 0.5f);
         hintRT.anchorMax = new Vector2(1, 0.5f);
         hintRT.pivot = new Vector2(1, 0.5f);
         hintRT.anchoredPosition = new Vector2(-24, 0);
-        hintRT.sizeDelta = new Vector2(760, 48);
+        hintRT.sizeDelta = new Vector2(700, 48);
 
         // =========================================================================
         // 12. 独立材料说明浮窗 (Floating Detail Popup)
@@ -517,9 +555,13 @@ public static class ShellInventorySceneBuilder
         dsRT.sizeDelta = new Vector2(380, 26);
         controller.detailStatsText = dStatsGO.GetComponent<Text>();
 
-        // 关闭按钮
-        Button dCloseBtn = CreateButton(detailCardGO.transform, "DetailCloseBtn", "关闭", new Vector2(140, 40), new Color(0.2f, 0.3f, 0.45f, 0.9f), Color.white, 14);
-        dCloseBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -145);
+        // 丢弃材料按钮与保留关闭按钮
+        Button dDeleteBtn = CreateButton(detailCardGO.transform, "DetailDeleteBtn", "🗑️ 丢弃材料", new Vector2(130, 40), new Color(0.72f, 0.22f, 0.22f, 0.95f), Color.white, 14);
+        dDeleteBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-75, -145);
+        controller.detailDeleteBtn = dDeleteBtn;
+
+        Button dCloseBtn = CreateButton(detailCardGO.transform, "DetailCloseBtn", "保留关闭", new Vector2(130, 40), new Color(0.2f, 0.3f, 0.45f, 0.9f), Color.white, 14);
+        dCloseBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(75, -145);
         controller.detailCloseBtn = dCloseBtn;
 
         controller.detailPopupPanel = detailGO;

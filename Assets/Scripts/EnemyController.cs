@@ -61,6 +61,27 @@ public class EnemyController : MonoBehaviour
     [HideInInspector] public float respawnCountdown = 0f;
     public bool IsRespawning => isDead && autoRespawn;
 
+    public static readonly List<EnemyController> AllEnemies = new List<EnemyController>();
+
+    [Header("Biomechanical Status Effects (生体状态效果)")]
+    [HideInInspector] public float slowMultiplier = 1f;
+    private float slowTimer = 0f;
+    private float paralysisTimer = 0f;
+    [HideInInspector] public bool isPacified = false;
+    private float pacifiedTimer = 0f;
+    [HideInInspector] public EnemyController pacifiedTargetEnemy = null;
+
+    void OnEnable()
+    {
+        if (!AllEnemies.Contains(this))
+            AllEnemies.Add(this);
+    }
+
+    void OnDisable()
+    {
+        AllEnemies.Remove(this);
+    }
+
     public bool IsAlive => currentHp > 0 && !isDead;
     public bool IsStaggered => isStaggered;
 
@@ -240,8 +261,43 @@ public class EnemyController : MonoBehaviour
     {
         if (isDead) return;
 
-        // 建造模式下全局时停冻结，给玩家静谧布防空间
-        if (isAIPaused) return;
+        // 建造模式或合成工坊/温室开启下全局时停冻结，给玩家静谧布防空间
+        if (isAIPaused || PlayerSessionData.isCraftingOpen) return;
+
+        // 麻痹硬直拦截（电鳗发电机、弹力金属等触发）
+        if (paralysisTimer > 0f)
+        {
+            paralysisTimer -= Time.deltaTime;
+            if (monsterRenderer != null)
+            {
+                float shake = Mathf.Sin(Time.time * 30f) * 0.04f;
+                monsterRenderer.transform.localPosition = new Vector3(shake, 0f, 0f);
+            }
+            return;
+        }
+
+        // 减速计时更新
+        if (slowTimer > 0f)
+        {
+            slowTimer -= Time.deltaTime;
+            if (slowTimer <= 0f) slowMultiplier = 1f;
+        }
+
+        // 驯化反戈逻辑（小型生体培养箱触发）
+        if (isPacified)
+        {
+            pacifiedTimer -= Time.deltaTime;
+            if (pacifiedTimer <= 0f)
+            {
+                isPacified = false;
+                pacifiedTargetEnemy = null;
+            }
+            else
+            {
+                UpdatePacifiedAI();
+                return;
+            }
+        }
 
         // 瘫痪状态更新
         if (isStaggered)
@@ -372,7 +428,7 @@ public class EnemyController : MonoBehaviour
         if (blockingFurn != null && attackCooldownTimer <= 0f)
         {
             attackCooldownTimer = attackCooldown;
-            blockingFurn.TakeHit(attackDamage);
+            blockingFurn.TakeHit(attackDamage, this);
             if (DamageTextManager.Instance != null)
             {
                 DamageTextManager.Instance.ShowText(blockingFurn.transform.position + Vector3.up * 0.5f, "💥 撞击路障!", new Color(1f, 0.5f, 0.2f), 0.09f);
@@ -442,7 +498,7 @@ public class EnemyController : MonoBehaviour
             targetWp.z = transform.position.z;
             Vector3 moveDir = (targetWp - transform.position).normalized;
 
-            transform.position = Vector3.MoveTowards(transform.position, targetWp, moveSpeed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, targetWp, moveSpeed * slowMultiplier * Time.deltaTime);
 
             if (monsterRenderer != null)
             {
@@ -821,4 +877,115 @@ public class EnemyController : MonoBehaviour
             guardBarFill.localPosition = new Vector3(-0.33f * (1f - ratio), -0.065f, -0.01f);
         }
     }
+
+    #region 生体构装战术状态接口 (Biomechanical Status Interfaces)
+
+    /// <summary>
+    /// 强力击退物理冲量（弹力金属、水刃炮台等机制）
+    /// </summary>
+    public void ApplyKnockback(Vector3 dir, float force, float duration = 0.35f)
+    {
+        if (isDead) return;
+        StartCoroutine(KnockbackRoutine(dir.normalized, force, duration));
+    }
+
+    private IEnumerator KnockbackRoutine(Vector3 dir, float force, float duration)
+    {
+        float elapsed = 0f;
+        Vector3 startPos = transform.position;
+        Vector3 targetPos = startPos + dir * force;
+        var pfinder = pathfinder != null ? pathfinder : (IsometricPathfinder.Instance ?? FindObjectOfType<IsometricPathfinder>());
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float ease = Mathf.Sin(t * Mathf.PI * 0.5f);
+            Vector3 cand = Vector3.Lerp(startPos, targetPos, ease);
+
+            // 地形边界保护：严禁飞出地图边缘虚空
+            if (pfinder != null && pfinder.groundTilemap != null)
+            {
+                Vector3Int cell = pfinder.WorldToCell(cand);
+                if (!pfinder.groundTilemap.HasTile(cell))
+                {
+                    break;
+                }
+            }
+
+            transform.position = cand;
+            yield return null;
+        }
+    }
+
+    /// <summary>
+    /// 施加减速状态（造水塔湿渍、烂泥陷阱等机制）
+    /// </summary>
+    public void ApplySlow(float slowPercent, float duration)
+    {
+        float factor = Mathf.Clamp01(1f - slowPercent / 100f);
+        slowMultiplier = Mathf.Min(slowMultiplier, factor);
+        slowTimer = Mathf.Max(slowTimer, duration);
+    }
+
+    /// <summary>
+    /// 施加电弧麻痹硬直（电鳗电机、带电水潭等机制）
+    /// </summary>
+    public void ApplyParalysis(float duration)
+    {
+        if (isDead) return;
+        paralysisTimer = Mathf.Max(paralysisTimer, duration);
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.85f, "⚡ 麻痹硬直!", new Color(1f, 0.9f, 0.2f), 0.10f);
+        }
+    }
+
+    /// <summary>
+    /// 施加生体驯化反戈（小型生体培养箱机制）：使其停止攻击玩家，转而反戈攻击同胞
+    /// </summary>
+    public void ApplyPacify(float duration, EnemyController targetOther = null)
+    {
+        if (isDead) return;
+        isPacified = true;
+        pacifiedTimer = duration;
+        pacifiedTargetEnemy = targetOther;
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 1.0f, "❤️ 驯化反戈!", new Color(1f, 0.45f, 0.75f), 0.12f);
+        }
+    }
+
+    private void UpdatePacifiedAI()
+    {
+        if (pacifiedTargetEnemy == null || !pacifiedTargetEnemy.IsAlive)
+        {
+            // 自动从全局怪兽中寻找除自身外的另一只活跃怪物
+            pacifiedTargetEnemy = AllEnemies.Find(e => e != null && e != this && e.IsAlive);
+        }
+
+        if (pacifiedTargetEnemy != null)
+        {
+            float dist = Vector2.Distance(transform.position, pacifiedTargetEnemy.transform.position);
+            if (dist <= attackRange)
+            {
+                if (attackCooldownTimer <= 0f)
+                {
+                    attackCooldownTimer = attackCooldown;
+                    pacifiedTargetEnemy.TakeDamage(attackDamage, 35f, transform.position);
+                    if (DamageTextManager.Instance != null)
+                    {
+                        DamageTextManager.Instance.ShowText(pacifiedTargetEnemy.transform.position + Vector3.up * 0.6f, "❤️ 驯化撕咬!", new Color(1f, 0.5f, 0.8f), 0.10f);
+                    }
+                }
+            }
+            else
+            {
+                transform.position = Vector3.MoveTowards(transform.position, pacifiedTargetEnemy.transform.position, moveSpeed * slowMultiplier * Time.deltaTime);
+            }
+        }
+    }
+
+    #endregion
 }

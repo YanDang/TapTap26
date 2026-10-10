@@ -94,6 +94,11 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
+        if (PlayerSessionData.isCraftingOpen || Time.timeScale <= 0.0001f)
+        {
+            return;
+        }
+
         // 跟随玩家模式：摄像机目标始终锁定并对准玩家
         if (followPlayer && targetToFollow != null)
         {
@@ -101,7 +106,8 @@ public class CameraController : MonoBehaviour
             if (enableMobilePortraitBias && cam != null)
             {
                 // 竖屏适配：将摄像机向下偏置，使角色位于屏幕上方 2/3 (即 1 - bottomUIDockRatio) 视野区域的中心
-                biasY = -(bottomUIDockRatio * 0.5f) * (cam.orthographicSize * 2f);
+                float orthoSize = float.IsNaN(cam.orthographicSize) ? 5f : cam.orthographicSize;
+                biasY = -(bottomUIDockRatio * 0.5f) * (orthoSize * 2f);
             }
             targetPosition = new Vector3(
                 targetToFollow.position.x + followOffset.x,
@@ -261,6 +267,35 @@ public class CameraController : MonoBehaviour
 
     private void ApplyCameraUpdates()
     {
+        if (Time.timeScale <= 0.0001f || PlayerSessionData.isCraftingOpen)
+        {
+            return;
+        }
+
+        // 严格防 NaN 保护
+        if (float.IsNaN(targetPosition.x) || float.IsNaN(targetPosition.y) || float.IsNaN(targetPosition.z))
+        {
+            targetPosition = new Vector3(
+                float.IsNaN(transform.position.x) ? 0f : transform.position.x,
+                float.IsNaN(transform.position.y) ? 0f : transform.position.y,
+                -10f
+            );
+            panVelocity = Vector3.zero;
+        }
+
+        if (float.IsNaN(targetZoom) || float.IsNaN(cam.orthographicSize))
+        {
+            targetZoom = 5f;
+            cam.orthographicSize = 5f;
+            zoomVelocity = 0f;
+        }
+
+        if (float.IsNaN(transform.position.x) || float.IsNaN(transform.position.y) || float.IsNaN(transform.position.z))
+        {
+            transform.position = new Vector3(targetPosition.x, targetPosition.y, -10f);
+            panVelocity = Vector3.zero;
+        }
+
         // 边界限制
         if (useBounds)
         {
@@ -271,7 +306,11 @@ public class CameraController : MonoBehaviour
         // 阻尼过渡
         if (panSmoothTime > 0.001f)
         {
-            transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref panVelocity, panSmoothTime);
+            Vector3 newPos = Vector3.SmoothDamp(transform.position, targetPosition, ref panVelocity, panSmoothTime);
+            if (!float.IsNaN(newPos.x) && !float.IsNaN(newPos.y) && !float.IsNaN(newPos.z))
+            {
+                transform.position = newPos;
+            }
         }
         else
         {
@@ -280,7 +319,11 @@ public class CameraController : MonoBehaviour
 
         if (zoomSmoothTime > 0.001f)
         {
-            cam.orthographicSize = Mathf.SmoothDamp(cam.orthographicSize, targetZoom, ref zoomVelocity, zoomSmoothTime);
+            float newZoom = Mathf.SmoothDamp(cam.orthographicSize, targetZoom, ref zoomVelocity, zoomSmoothTime);
+            if (!float.IsNaN(newZoom))
+            {
+                cam.orthographicSize = newZoom;
+            }
         }
         else
         {

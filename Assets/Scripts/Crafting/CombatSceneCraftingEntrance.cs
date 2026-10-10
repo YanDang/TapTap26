@@ -77,6 +77,11 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
             PlayerSessionData.isCraftingOpen = false;
             Time.timeScale = 1f;
 
+            var camCtrl = FindObjectOfType<CameraController>();
+            if (camCtrl != null) camCtrl.enabled = true;
+            var myAl = FindObjectOfType<AudioListener>();
+            if (myAl != null) myAl.enabled = true;
+
             if (player == null) player = FindObjectOfType<PlayerController>();
             if (player != null && PlayerSessionData.currentEquippedWeapon != null)
             {
@@ -364,7 +369,7 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
         }
 
         // 左下：动态情境互动键 (放下家具 / 踢飞家具 / 索敌锁定)
-        var nearestFurn = player != null ? FurnitureObject.GetNearestPlaced(player.transform.position, 1.6f) : null;
+        var nearestFurn = player != null ? FurnitureObject.GetNearestPlaced(player.transform.position, 1.95f) : null;
         if (player != null && player.heldFurniture != null)
         {
             GUI.backgroundColor = new Color(0.42f, 0.58f, 0.75f, 1f);
@@ -398,9 +403,9 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
         float centerX = (VIRTUAL_WIDTH - centerW) * 0.5f;
         float hintY = dockTopY + (dockHeight - 78f) * 0.5f;
 
-        GUI.Label(new Rect(centerX, hintY, centerW, 26f), "<color=#38bdf8>👆 点击地面</color> 寻路移动", centerHintStyle);
-        GUI.Label(new Rect(centerX, hintY + 26f, centerW, 26f), "<color=#facc15>⚡ 快速划动</color> 翻滚闪避", centerHintStyle);
-        GUI.Label(new Rect(centerX, hintY + 52f, centerW, 26f), "<color=#fb923c>💣 连点敌人</color> 掷出家具", centerHintStyle);
+        GUI.Label(new Rect(centerX, hintY, centerW, 26f), "<color=#38bdf8>🖱️ 右键地面</color> 寻路移动", centerHintStyle);
+        GUI.Label(new Rect(centerX, hintY + 26f, centerW, 26f), "<color=#10b981>🖱️ 左键家具</color> 互动举放", centerHintStyle);
+        GUI.Label(new Rect(centerX, hintY + 52f, centerW, 26f), "<color=#facc15>⚡ 空格/划动</color> 翻滚闪避", centerHintStyle);
 
         // ==========================================
         // 【右手战术区】：核心战术大按键 (X: 666 ~ 1056)
@@ -440,6 +445,12 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
         }
 
         Debug.Log($"<color=#38bdf8>[CombatScene] 采用 Additive 叠加模式打开工坊场景: {craftingSceneName}，战斗场景原样冻结不重置！</color>");
+        
+        var camCtrl = FindObjectOfType<CameraController>();
+        if (camCtrl != null) camCtrl.enabled = false;
+        var myAl = FindObjectOfType<AudioListener>();
+        if (myAl != null) myAl.enabled = false;
+
         Time.timeScale = 0f; // 冻结战斗
         SceneManager.LoadSceneAsync(craftingSceneName, LoadSceneMode.Additive);
     }
@@ -453,7 +464,7 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
         }
         else
         {
-            var furn = FurnitureObject.GetNearestPlaced(player.transform.position, 1.6f);
+            var furn = FurnitureObject.GetNearestPlaced(player.transform.position, 1.95f);
             if (furn != null)
             {
                 player.PickUpNearbyFurniture();

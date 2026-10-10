@@ -117,6 +117,18 @@ namespace BiomechanicalCrafting
         {
             if (bp == null) return false;
 
+            // 脉动造水循环塔：若同时拥有海绵滤芯和虹吸管，也算可合成
+            if (bp.id == "furn_water_tower" && heldIds.Contains("mat_water_sponge_filter") && heldIds.Contains("mat_water_siphon_tube"))
+            {
+                return true;
+            }
+
+            // 增生珊瑚管排墙：若同时拥有多孔空心珊瑚与齿轮/菌群辅料，也算可合成
+            if (bp.id == "furn_coral_wall" && heldIds.Contains("mat_wood_hollow_coral") && (heldIds.Contains("mat_wood_root_gear") || heldIds.Contains("mat_wood_symbiotic_fungi")))
+            {
+                return true;
+            }
+
             // 检查核心材料是否都在背壳中
             if (bp.requiredCoreIds != null)
             {
@@ -154,11 +166,11 @@ namespace BiomechanicalCrafting
             card.transform.SetParent(cardsContainer, false);
 
             RectTransform rt = card.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(382, 120);
+            rt.sizeDelta = new Vector2(382, 126);
 
             LayoutElement le = card.AddComponent<LayoutElement>();
-            le.minHeight = 120f;
-            le.preferredHeight = 120f;
+            le.minHeight = 126f;
+            le.preferredHeight = 126f;
             le.flexibleWidth = 1f;
 
             // 卡片背景与边框
@@ -243,10 +255,10 @@ namespace BiomechanicalCrafting
             ingRT.anchorMax = new Vector2(1, 1);
             ingRT.pivot = new Vector2(0, 1);
             ingRT.anchoredPosition = new Vector2(90, -36);
-            ingRT.sizeDelta = new Vector2(-100, 44);
+            ingRT.sizeDelta = new Vector2(-100, 48);
             Text ingText = ingrGO.AddComponent<Text>();
             ingText.font = defaultFont;
-            ingText.fontSize = 12;
+            ingText.fontSize = 11;
             ingText.lineSpacing = 1.15f;
             ingText.raycastTarget = false;
 
@@ -257,7 +269,7 @@ namespace BiomechanicalCrafting
                 string mName = mat != null ? mat.materialName : cid;
                 bool isHeld = heldIds.Contains(cid);
                 string tag = isHeld ? "<color=#34D399>[✓在壳内]</color>" : "<color=#F87171>[✗缺少]</color>";
-                string sizeLabel = (mat != null && mat.isMajor) ? "<color=#FBBF24>[2x2核心]</color>" : "<color=#38BDF8>[1x1辅料]</color>";
+                string sizeLabel = (mat != null && mat.isMajor) ? "<color=#FBBF24>[2x2核心·占4格]</color>" : "<color=#38BDF8>[1x1辅料]</color>";
                 ingList.Add($"• {mName} {sizeLabel} {tag}");
             }
             if (bp.requiredAnyIds != null && bp.requiredAnyIds.Count > 0)
@@ -268,7 +280,14 @@ namespace BiomechanicalCrafting
                     if (heldIds.Contains(aid)) { hasAny = true; break; }
                 }
                 string tag = hasAny ? "<color=#34D399>[✓在壳内]</color>" : "<color=#F87171>[✗缺少]</color>";
-                ingList.Add($"• 同系辅料配件 <color=#38BDF8>[1x1辅料]</color> {tag}");
+                List<string> anyNames = new List<string>();
+                foreach (var aid in bp.requiredAnyIds)
+                {
+                    var am = BiomechanicalMaterialDatabase.GetById(aid);
+                    if (am != null) anyNames.Add(am.materialName);
+                }
+                string anyDesc = anyNames.Count > 0 ? string.Join("/", anyNames) : "同系辅料配件";
+                ingList.Add($"• 辅料 ({anyDesc}) <color=#38BDF8>[1x1]</color> {tag}");
             }
             ingText.text = string.Join("\n", ingList);
 

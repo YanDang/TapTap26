@@ -99,6 +99,16 @@ namespace BiomechanicalCrafting
         public Button btnClearAll;
         public Button btnDemoStroke;
 
+        [Header("Scene Navigation")]
+        public Button btnReturnToCombat;
+        [System.NonSerialized] public Button btnGathering;
+        [System.NonSerialized] public Button btnDeleteSelected;
+
+        [Header("Trash Bin & Deletion")]
+        [System.NonSerialized] public RectTransform trashBinRect;
+        [System.NonSerialized] public Button detailDeleteBtn;
+        private int currentDetailSlotId = -1;
+
         // Runtime Data
         private List<ShellSlotView> slotViews = new List<ShellSlotView>();
         private BiomechanicalMaterial[] slotItems = new BiomechanicalMaterial[32];
@@ -127,20 +137,95 @@ namespace BiomechanicalCrafting
         {
             Instance = this;
             GenerateProceduralSprites();
+
+            // EventSystem 处理：若全局尚无可用 EventSystem（单场景独立测试），则激活本场景预置的 EventSystem；
+            // 若在 Additive 叠加模式运行（场景数 > 1，已由战斗底座提供），本场景预置的 EventSystem（初始未激活）直接销毁，彻底消除引擎警告！
+            if (UnityEngine.EventSystems.EventSystem.current == null && FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            {
+                var myRoots = gameObject.scene.GetRootGameObjects();
+                foreach (var r in myRoots)
+                {
+                    if (r != null && r.name == "EventSystem")
+                    {
+                        r.SetActive(true);
+                        break;
+                    }
+                }
+            }
+            else if (UnityEngine.SceneManagement.SceneManager.sceneCount > 1)
+            {
+                var myRoots = gameObject.scene.GetRootGameObjects();
+                foreach (var r in myRoots)
+                {
+                    if (r != null && r.name == "EventSystem")
+                    {
+                        Destroy(r);
+                    }
+                    if (r != null && r.name == "Main Camera")
+                    {
+                        var al = r.GetComponent<AudioListener>();
+                        if (al != null) Destroy(al);
+                    }
+                }
+            }
         }
 
         void Start()
         {
+            PlayerSessionData.EnsureInitialized();
             InitUIEvents();
+            currentShellType = PlayerSessionData.currentShellType;
             SwitchShell(currentShellType);
 
-            // 填充一组初始特色材料，展现海螺壳生体风貌
-            SeedInitialMaterials();
+            // 结合采集系统：合成系统初始为空，或从全局持久化数据无缝加载
+            LoadFromPlayerSessionData();
             UpdateLiveStrokeHUD();
         }
 
         void Update()
         {
+            // ESC 键：先关弹窗，若无弹窗则退出工坊返回战斗场景
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (detailPopupPanel != null && detailPopupPanel.activeSelf)
+                {
+                    CloseDetailPopup();
+                }
+                else if (craftResultModal != null && craftResultModal.activeSelf)
+                {
+                    CancelCraftProduct();
+                }
+                else if (codexModal != null && ((codexModal.modalRoot != null && codexModal.modalRoot.activeSelf) || codexModal.gameObject.activeSelf))
+                {
+                    codexModal.Toggle();
+                }
+                else
+                {
+                    ReturnToCombatScene();
+                }
+            }
+
+            // B 键：与战斗场景按 B 打开工坊相呼应，按 B 退出工坊返回战斗场景
+            if (Input.GetKeyDown(KeyCode.B))
+            {
+                if (detailPopupPanel != null && detailPopupPanel.activeSelf)
+                {
+                    CloseDetailPopup();
+                }
+                else if (craftResultModal != null && craftResultModal.activeSelf)
+                {
+                    CancelCraftProduct();
+                }
+                else if (codexModal != null && ((codexModal.modalRoot != null && codexModal.modalRoot.activeSelf) || codexModal.gameObject.activeSelf))
+                {
+                    codexModal.Toggle();
+                }
+                else
+                {
+                    ReturnToCombatScene();
+                }
+            }
+
             // 键盘快捷测试键
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Tab))
             {
@@ -152,7 +237,6 @@ namespace BiomechanicalCrafting
             if (Input.GetKeyDown(KeyCode.Alpha1)) SwitchShell(ShellType.ConchShell);
             if (Input.GetKeyDown(KeyCode.Alpha2)) SwitchShell(ShellType.ClamShell);
             if (Input.GetKeyDown(KeyCode.Alpha3)) SwitchShell(ShellType.RustedCanShell);
-            if (Input.GetKeyDown(KeyCode.B)) { if (codexModal != null) codexModal.Toggle(); }
 
             // 满载警报静态稳定呈现（去除高频缩放闪烁，提升视觉舒适度）
             if (fullWarningBanner != null && fullWarningBanner.activeSelf)
@@ -257,6 +341,7 @@ namespace BiomechanicalCrafting
         public void SwitchShell(ShellType newType)
         {
             currentShellType = newType;
+            PlayerSessionData.currentShellType = newType;
             activeConfig = ShellConfig.CreateConfig(newType);
 
             // 更新标题与韵味文本
@@ -325,6 +410,9 @@ namespace BiomechanicalCrafting
 
             // 更新 Shell Switcher 按钮选中高亮
             UpdateShellButtonHighlights();
+
+            // 保存当前背壳类型到全局存储
+            PlayerSessionData.SaveBackpackToStorage();
         }
 
         private ShellSlotView CreateSlotViewGameObject(ShellSlotLayout layout)
@@ -716,7 +804,14 @@ namespace BiomechanicalCrafting
             {
                 if (slot.currentMaterial != null)
                 {
-                    ShowDetailPopup(slot.currentMaterial, slot.layout.isMajor);
+                    // 鼠标右键：直接删除/丢弃当前材料！
+                    if (eventData != null && eventData.button == PointerEventData.InputButton.Right)
+                    {
+                        DeleteMaterialAtSlot(slot.slotId);
+                        return;
+                    }
+
+                    ShowDetailPopup(slot.currentMaterial, slot.layout.isMajor, slot.slotId);
                 }
                 else
                 {
@@ -788,6 +883,14 @@ namespace BiomechanicalCrafting
                     sv.SetGhostDimmed(false);
                 }
 
+                // 判定是否拖入了垃圾桶回收区域
+                if (dragSourceSlot != null && IsPointerOverTrashBin(eventData))
+                {
+                    DeleteMaterialAtSlot(dragSourceSlot.slotId);
+                    dragSourceSlot = null;
+                    return;
+                }
+
                 ShellSlotView targetSlot = FindSlotUnderPointer(eventData);
                 if (dragSourceSlot != null && targetSlot != null && targetSlot != dragSourceSlot)
                 {
@@ -799,6 +902,12 @@ namespace BiomechanicalCrafting
                 UpdateBackpackFullStatus();
                 RefreshBlueprintDock();
             }
+        }
+
+        private bool IsPointerOverTrashBin(PointerEventData eventData)
+        {
+            if (trashBinRect == null || !trashBinRect.gameObject.activeInHierarchy) return false;
+            return RectTransformUtility.RectangleContainsScreenPoint(trashBinRect, eventData.position, eventData.pressEventCamera);
         }
 
         private void ExecuteReorderDrop(ShellSlotView srcView, ShellSlotView dstView)
@@ -908,6 +1017,8 @@ namespace BiomechanicalCrafting
                     Debug.Log("<color=#FF9070>[无法放置]</color> 不能将 1x1 辅料拖入 2x2 骨架核心占用的空间。");
                 }
             }
+
+            SyncSlotsToPlayerSessionData();
         }
 
         private ShellSlotView FindSlotUnderPointer(PointerEventData eventData)
@@ -1198,10 +1309,19 @@ namespace BiomechanicalCrafting
 
             if (craftResultIcon != null)
             {
-                craftResultIcon.color = prod.themeColor;
-                if (consumedMats.Count > 0 && consumedMats[0] != null)
+                var furnSprite = Resources.Load<Sprite>("FurnitureSprites/" + prod.id);
+                if (furnSprite != null)
                 {
-                    craftResultIcon.sprite = consumedMats[0].GetOrLoadSprite();
+                    craftResultIcon.sprite = furnSprite;
+                    craftResultIcon.color = Color.white;
+                }
+                else
+                {
+                    craftResultIcon.color = prod.themeColor;
+                    if (consumedMats.Count > 0 && consumedMats[0] != null)
+                    {
+                        craftResultIcon.sprite = consumedMats[0].GetOrLoadSprite();
+                    }
                 }
             }
 
@@ -1250,12 +1370,18 @@ namespace BiomechanicalCrafting
                 }
             }
 
+            if (pendingProduct != null)
+            {
+                PlayerSessionData.AddCraftedProduct(pendingProduct);
+            }
+
             if (craftResultModal != null) craftResultModal.SetActive(false);
+            SyncSlotsToPlayerSessionData();
             ResetStroke();
             UpdateBackpackFullStatus();
             RefreshBlueprintDock();
 
-            Debug.Log($"<color=#4AFF70>[生体转化成功]</color> 获得：{pendingProduct?.productName}，已腾出 {pendingConsumedSlotIndices.Count} 个背壳空格！");
+            Debug.Log($"<color=#4AFF70>[生体转化成功]</color> 获得：{pendingProduct?.productName}，已存入战术仓库，并腾出 {pendingConsumedSlotIndices.Count} 个背壳空格！");
             pendingProduct = null;
             pendingConsumedSlotIndices.Clear();
         }
@@ -1270,12 +1396,13 @@ namespace BiomechanicalCrafting
 
         #endregion
 
-        #region Floating Detail Popup
+        #region Floating Detail Popup & Deletion
 
-        public void ShowDetailPopup(BiomechanicalMaterial mat, bool isMajorSlot)
+        public void ShowDetailPopup(BiomechanicalMaterial mat, bool isMajorSlot, int slotId = -1)
         {
             if (detailPopupPanel == null || mat == null) return;
 
+            currentDetailSlotId = slotId;
             detailPopupPanel.SetActive(true);
 
             if (detailIcon != null)
@@ -1307,6 +1434,54 @@ namespace BiomechanicalCrafting
         public void CloseDetailPopup()
         {
             if (detailPopupPanel != null) detailPopupPanel.SetActive(false);
+        }
+
+        /// <summary>
+        /// 核心删除功能：从背壳中丢弃/删除指定槽位的材料。
+        /// 若为 2x2 骨架核心，则将其占用的所有 4 个关联槽位及覆盖层一并清空；
+        /// 若为 1x1 辅料，则清空该槽位。
+        /// 删除后立即同步回 PlayerSessionData，释放背包空间以供采集场景继续利用。
+        /// </summary>
+        public void DeleteMaterialAtSlot(int slotId)
+        {
+            if (slotId < 0 || slotId >= slotItems.Length) return;
+            var mat = slotItems[slotId];
+            if (mat == null) return;
+
+            string matName = mat.materialName;
+            if (mat.isMajor)
+            {
+                // 彻底清空 2x2 骨架占用的所有关联槽位
+                for (int i = 0; i < slotItems.Length; i++)
+                {
+                    if (slotItems[i] == mat)
+                    {
+                        slotItems[i] = null;
+                        if (i < slotViews.Count)
+                        {
+                            slotViews[i].Set2x2RootOverlay(false);
+                            slotViews[i].SetAs2x2Child(false, null);
+                            slotViews[i].SetMaterial(null);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                slotItems[slotId] = null;
+                if (slotId < slotViews.Count)
+                {
+                    slotViews[slotId].SetMaterial(null);
+                }
+            }
+
+            SyncSlotsToPlayerSessionData();
+            RefreshSlotVisuals();
+            UpdateBackpackFullStatus();
+            RefreshBlueprintDock();
+            UpdateLiveStrokeHUD();
+
+            Debug.Log($"<color=#FF5555>[材料已丢弃删除]</color> {matName} 已从背包槽位 #{slotId + 1} 移除，空间已释放。");
         }
 
         #endregion
@@ -1604,6 +1779,7 @@ namespace BiomechanicalCrafting
 
             if (placed)
             {
+                SyncSlotsToPlayerSessionData();
                 UpdateBackpackFullStatus();
                 RefreshBlueprintDock();
                 Debug.Log($"<color=#70D2FF>[拾取材料]</color> {randomMat.materialName} ({randomMat.SizeLabel})");
@@ -1642,6 +1818,7 @@ namespace BiomechanicalCrafting
                 }
             }
 
+            SyncSlotsToPlayerSessionData();
             UpdateBackpackFullStatus();
             RefreshBlueprintDock();
             Debug.Log("<color=#FFE850>[背壳填满]</color> 已经随机填满所有大小槽位！");
@@ -1659,10 +1836,47 @@ namespace BiomechanicalCrafting
                 sv.SetAs2x2Child(false, null);
                 sv.SetMaterial(null);
             }
+            SyncSlotsToPlayerSessionData();
             UpdateBackpackFullStatus();
             ResetStroke();
             RefreshBlueprintDock();
+            UpdateLiveStrokeHUD();
             Debug.Log("<color=#999999>[清空背壳]</color> 已清空所有槽位。");
+        }
+
+        /// <summary>
+        /// 从全局持久化数据加载背壳物品
+        /// </summary>
+        public void LoadFromPlayerSessionData()
+        {
+            PlayerSessionData.EnsureInitialized();
+            if (PlayerSessionData.shellSlotItems != null)
+            {
+                for (int i = 0; i < slotItems.Length; i++)
+                {
+                    slotItems[i] = (i < PlayerSessionData.shellSlotItems.Length) ? PlayerSessionData.shellSlotItems[i] : null;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < slotItems.Length; i++)
+                {
+                    slotItems[i] = null;
+                }
+            }
+
+            RefreshSlotVisuals();
+            UpdateBackpackFullStatus();
+            RefreshBlueprintDock();
+            UpdateLiveStrokeHUD();
+        }
+
+        /// <summary>
+        /// 同步保存当前背壳物品至全局持久化数据
+        /// </summary>
+        public void SyncSlotsToPlayerSessionData()
+        {
+            PlayerSessionData.SaveBackpackSlots(slotItems);
         }
 
         public void DemoStrokeCrafting()
@@ -1692,7 +1906,85 @@ namespace BiomechanicalCrafting
             if (btnClearAll != null) { btnClearAll.onClick.RemoveAllListeners(); btnClearAll.onClick.AddListener(ClearAllSlots); }
             if (btnDemoStroke != null) { btnDemoStroke.onClick.RemoveAllListeners(); btnDemoStroke.onClick.AddListener(DemoStrokeCrafting); }
 
+            if (btnGathering == null)
+            {
+                var gb = GameObject.Find("BtnGatheringRoom");
+                if (gb != null) btnGathering = gb.GetComponent<Button>();
+            }
+            if (btnGathering != null)
+            {
+                btnGathering.onClick.RemoveAllListeners();
+                btnGathering.onClick.AddListener(GoToCollectScene);
+            }
+
+            EnsureReturnButtonUI();
+
+            if (btnDeleteSelected == null)
+            {
+                var db = GameObject.Find("BtnDeleteSelected");
+                if (db != null) btnDeleteSelected = db.GetComponent<Button>();
+            }
+            if (btnDeleteSelected != null)
+            {
+                btnDeleteSelected.onClick.RemoveAllListeners();
+                btnDeleteSelected.onClick.AddListener(() =>
+                {
+                    if (currentDetailSlotId >= 0 && currentDetailSlotId < slotItems.Length && slotItems[currentDetailSlotId] != null)
+                    {
+                        DeleteMaterialAtSlot(currentDetailSlotId);
+                        CloseDetailPopup();
+                    }
+                    else
+                    {
+                        Debug.Log("<color=#FF9070>[丢弃提示]</color> 请先左键点击槽位材料选中，或直接鼠标右键点击槽位删除！");
+                    }
+                });
+            }
+
+            if (trashBinRect == null && shellPlateImage != null)
+            {
+                var tb = shellPlateImage.transform.Find("TrashBinDropArea");
+                if (tb != null) trashBinRect = tb.GetComponent<RectTransform>();
+            }
+            if (trashBinRect != null)
+            {
+                var tbBtn = trashBinRect.GetComponent<Button>();
+                if (tbBtn != null)
+                {
+                    tbBtn.onClick.RemoveAllListeners();
+                    tbBtn.onClick.AddListener(() =>
+                    {
+                        if (currentDetailSlotId >= 0 && currentDetailSlotId < slotItems.Length && slotItems[currentDetailSlotId] != null)
+                        {
+                            DeleteMaterialAtSlot(currentDetailSlotId);
+                            CloseDetailPopup();
+                        }
+                        else
+                        {
+                            Debug.Log("<color=#FF9070>[垃圾桶提示]</color> 请先点击选中材料后丢弃，或拖拽材料至此，或直接鼠标右键槽位删除！");
+                        }
+                    });
+                }
+            }
+            if (detailDeleteBtn == null && detailPopupPanel != null)
+            {
+                var db = detailPopupPanel.transform.Find("DetailCard/DetailDeleteBtn");
+                if (db != null) detailDeleteBtn = db.GetComponent<Button>();
+            }
+
             if (detailCloseBtn != null) { detailCloseBtn.onClick.RemoveAllListeners(); detailCloseBtn.onClick.AddListener(CloseDetailPopup); }
+            if (detailDeleteBtn != null)
+            {
+                detailDeleteBtn.onClick.RemoveAllListeners();
+                detailDeleteBtn.onClick.AddListener(() =>
+                {
+                    if (currentDetailSlotId >= 0)
+                    {
+                        DeleteMaterialAtSlot(currentDetailSlotId);
+                        CloseDetailPopup();
+                    }
+                });
+            }
             if (craftConfirmBtn != null) { craftConfirmBtn.onClick.RemoveAllListeners(); craftConfirmBtn.onClick.AddListener(ConfirmCraftProduct); }
             if (craftCancelBtn != null) { craftCancelBtn.onClick.RemoveAllListeners(); craftCancelBtn.onClick.AddListener(CancelCraftProduct); }
             if (btnBlueprintCodex != null) { btnBlueprintCodex.onClick.RemoveAllListeners(); btnBlueprintCodex.onClick.AddListener(() => { if (codexModal != null) codexModal.Toggle(); }); }
@@ -1709,6 +2001,143 @@ namespace BiomechanicalCrafting
             if (switchConchBtn != null) switchConchBtn.image.color = currentShellType == ShellType.ConchShell ? activeColor : normalColor;
             if (switchClamBtn != null) switchClamBtn.image.color = currentShellType == ShellType.ClamShell ? activeColor : normalColor;
             if (switchCanBtn != null) switchCanBtn.image.color = currentShellType == ShellType.RustedCanShell ? activeColor : normalColor;
+        }
+
+        private bool isTransitioningToCollect = false;
+
+        public void GoToCollectScene()
+        {
+            if (isTransitioningToCollect) return;
+            isTransitioningToCollect = true;
+
+            Debug.Log("<color=#70FF90>[场景跳转]</color> 正在前往采集温室 (Collect)...");
+            SyncSlotsToPlayerSessionData();
+            PlayerSessionData.SaveCraftedProductsToStorage();
+
+            if (UnityEngine.SceneManagement.SceneManager.sceneCount > 1)
+            {
+                var myScene = gameObject.scene;
+                var loadOp = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Collect", UnityEngine.SceneManagement.LoadSceneMode.Additive);
+                loadOp.completed += (_) =>
+                {
+                    UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(myScene);
+                };
+            }
+            else
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Collect");
+            }
+        }
+
+        public void ReturnToCombatScene()
+        {
+            Debug.Log("<color=#38BDF8>[ShellInventoryController] 正在同步保存背壳工坊数据并返回战斗场景...</color>");
+
+            // 1. 同步保存当前背壳背包材料与构装仓库
+            SyncSlotsToPlayerSessionData();
+            PlayerSessionData.SaveCraftedProductsToStorage();
+
+            // 2. 状态标记更新与恢复游戏时间
+            PlayerSessionData.hasJustReturnedFromCrafting = true;
+            PlayerSessionData.isCraftingOpen = false;
+            Time.timeScale = 1.0f;
+
+            // 3. 卸载叠加场景或加载单场景
+            if (UnityEngine.SceneManagement.SceneManager.sceneCount > 1)
+            {
+                Debug.Log($"<color=#70FF90>[ShellInventoryController]</color> 卸载叠加工坊场景 {gameObject.scene.name}，返回战斗场景！");
+                UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(gameObject.scene);
+            }
+            else
+            {
+                string targetScene = string.IsNullOrEmpty(PlayerSessionData.returnCombatSceneName) ? "BiomechanicalCombatScene" : PlayerSessionData.returnCombatSceneName;
+                Debug.Log($"<color=#70FF90>[ShellInventoryController]</color> 单独场景运行，加载战斗场景: {targetScene}");
+                UnityEngine.SceneManagement.SceneManager.LoadScene(targetScene);
+            }
+        }
+
+        private void EnsureReturnButtonUI()
+        {
+            // 严格在本控制器的 Canvas 或本场景内查找 TopHeader，杜绝从叠加的温室 Collect 场景中误抓取！
+            Transform header = null;
+            Canvas parentCanvas = GetComponentInParent<Canvas>();
+            if (parentCanvas != null)
+            {
+                header = parentCanvas.transform.Find("TopHeader");
+            }
+
+            if (header == null)
+            {
+                var rootGos = gameObject.scene.GetRootGameObjects();
+                foreach (var root in rootGos)
+                {
+                    if (root == null) continue;
+                    var canvas = root.GetComponentInChildren<Canvas>(true);
+                    if (canvas != null)
+                    {
+                        var th = canvas.transform.Find("TopHeader");
+                        if (th != null) { header = th; break; }
+                    }
+                }
+            }
+
+            if (header == null)
+            {
+                Debug.LogWarning("[ShellInventoryController] 未能找到本场景的 TopHeader，无法创建返回战场按钮！");
+                return;
+            }
+
+            // 检查该 Header 下是否已有现成的 BtnReturnToCombat
+            var existing = header.Find("BtnReturnToCombat");
+            if (existing != null)
+            {
+                btnReturnToCombat = existing.GetComponent<Button>();
+                if (btnReturnToCombat != null)
+                {
+                    btnReturnToCombat.onClick.RemoveAllListeners();
+                    btnReturnToCombat.onClick.AddListener(ReturnToCombatScene);
+                    return;
+                }
+            }
+
+            if (btnReturnToCombat != null)
+            {
+                btnReturnToCombat.onClick.RemoveAllListeners();
+                btnReturnToCombat.onClick.AddListener(ReturnToCombatScene);
+                return;
+            }
+
+            GameObject returnBtnGO = new GameObject("BtnReturnToCombat");
+            returnBtnGO.transform.SetParent(header, false);
+
+            RectTransform rt = returnBtnGO.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0, 0.5f);
+            rt.anchorMax = new Vector2(0, 0.5f);
+            rt.pivot = new Vector2(0, 0.5f);
+            rt.anchoredPosition = new Vector2(600, 0);
+            rt.sizeDelta = new Vector2(160, 48);
+
+            Image img = returnBtnGO.AddComponent<Image>();
+            img.color = new Color(0.85f, 0.32f, 0.22f, 0.95f);
+
+            GameObject textGO = new GameObject("Text");
+            textGO.transform.SetParent(returnBtnGO.transform, false);
+            Text txt = textGO.AddComponent<Text>();
+            txt.text = "⚔️ 返回战场 (ESC)";
+            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+            txt.fontSize = 15;
+            txt.fontStyle = FontStyle.Bold;
+            txt.alignment = TextAnchor.MiddleCenter;
+            txt.color = Color.white;
+
+            RectTransform textRT = textGO.GetComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.offsetMin = Vector2.zero;
+            textRT.offsetMax = Vector2.zero;
+
+            btnReturnToCombat = returnBtnGO.AddComponent<Button>();
+            btnReturnToCombat.onClick.AddListener(ReturnToCombatScene);
         }
 
         #endregion

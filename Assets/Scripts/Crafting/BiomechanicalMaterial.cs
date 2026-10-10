@@ -252,6 +252,11 @@ namespace BiomechanicalCrafting
             return null;
         }
 
+        public static BiomechanicalMaterial GetMaterial(string id)
+        {
+            return GetById(id);
+        }
+
         public static void Reload()
         {
             _cachedList = null;

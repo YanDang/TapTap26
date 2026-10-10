@@ -150,7 +150,7 @@ namespace BiomechanicalCrafting.Editor
             basketRT.anchorMax = new Vector2(1, 0.5f);
             basketRT.pivot = new Vector2(1, 0.5f);
             basketRT.anchoredPosition = new Vector2(-35, 0);
-            basketRT.sizeDelta = new Vector2(180, 60);
+            basketRT.sizeDelta = new Vector2(210, 60);
             controller.basketContainer = basketRT;
 
             // 篮子外框背景
@@ -163,13 +163,13 @@ namespace BiomechanicalCrafting.Editor
             iconRT.anchorMin = new Vector2(0, 0.5f);
             iconRT.anchorMax = new Vector2(0, 0.5f);
             iconRT.pivot = new Vector2(0.5f, 0.5f);
-            iconRT.anchoredPosition = new Vector2(35, 0);
+            iconRT.anchoredPosition = new Vector2(30, 0);
             iconRT.sizeDelta = new Vector2(40, 40);
             Image basketIcon = iconGO.AddComponent<Image>();
             basketIcon.color = new Color(0.95f, 0.78f, 0.28f, 1f);
             controller.basketIcon = basketIcon;
 
-            GameObject basketTxtGO = CreateText(basketGO.transform, "CountText", "0", 24, FontStyle.Bold, Color.white, TextAnchor.MiddleLeft);
+            GameObject basketTxtGO = CreateText(basketGO.transform, "CountText", "0 / 24", 22, FontStyle.Bold, Color.white, TextAnchor.MiddleLeft);
             RectTransform basketTxtRT = basketTxtGO.GetComponent<RectTransform>();
             basketTxtRT.anchorMin = new Vector2(0, 0);
             basketTxtRT.anchorMax = new Vector2(1, 1);
@@ -204,13 +204,13 @@ namespace BiomechanicalCrafting.Editor
             tipRT.anchorMax = new Vector2(0.5f, 0);
             tipRT.pivot = new Vector2(0.5f, 0);
             tipRT.anchoredPosition = new Vector2(0, 20);
-            tipRT.sizeDelta = new Vector2(680, 42);
+            tipRT.sizeDelta = new Vector2(780, 42);
 
             Image tipBg = tipGO.AddComponent<Image>();
             tipBg.color = new Color(0.06f, 0.05f, 0.04f, 0.82f);
             tipBg.raycastTarget = false;
 
-            GameObject tipTxtGO = CreateText(tipGO.transform, "Text", "🌿 药剂工艺式采集：鼠标点击或【按住左键直接划过】枝头材料，即可顺滑一笔全收！", 15, FontStyle.Normal, new Color(0.85f, 0.88f, 0.78f), TextAnchor.MiddleCenter);
+            GameObject tipTxtGO = CreateText(tipGO.transform, "Text", "🌿 药剂工艺式采集：鼠标悬停可预览材料属性，点击或【按住左键直接划过】即可顺滑一笔全收！", 15, FontStyle.Normal, new Color(0.85f, 0.88f, 0.78f), TextAnchor.MiddleCenter);
             StretchFull(tipTxtGO.GetComponent<RectTransform>());
 
             // 12. 保存场景
