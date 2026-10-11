@@ -54,11 +54,9 @@ namespace GameJam
             Inventory.I.Add(ItemId.GasVent, 2);
             Inventory.I.Add(ItemId.GasSac, 3);
             Inventory.I.Add(ItemId.GasDuct, 10);
-            Inventory.I.Add(ItemId.EelGenerator, 1);
-            Inventory.I.Add(ItemId.CoralWall, 2);
-            Inventory.I.Add(ItemId.WaterTower, 1);
-            Inventory.I.Add(ItemId.BioIncubator, 1);
             Inventory.I.Add(ItemId.Table, 2);
+            // 正式家具和废料不再开局送：从合成工坊（B）采集材料合成，成品存在合成仓库里（跨局保留）
+            gameObject.AddComponent<CraftingBridge>();
             InventoryBar.Build(hud.transform);
             gameObject.AddComponent<GasNetwork>();
             gameObject.AddComponent<BuildController>().Init(Resources.Load<Material>("Materials/SpriteBillboard"));

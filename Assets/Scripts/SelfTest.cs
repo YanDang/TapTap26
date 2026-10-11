@@ -31,6 +31,7 @@ namespace GameJam
         {
             Application.targetFrameRate = 60;
             GameInput.Disabled = true;
+            BackupCraftingSave();                    // 合成仓库 / 背壳背包存在 PlayerPrefs：自测前备份并清空，结束时还原
             yield return new WaitForSecondsRealtime(0.5f);
             if (Shots)
             {
@@ -52,7 +53,8 @@ namespace GameJam
                                "GasLineFlowAndBreak", "GasSacBurstAndTaunt", "BuildFromInventory", "PlayerKicksGasFurniture",
                                "EelGeneratorDischarge", "CoralWallBlockAndThorns", "WaterTowerWetAndMoist", "IncubatorPacify", "ChaseGiveUpToFurniture",
                                "BuildFormalFromInventory", "PlaceAnimationAndDeploy", "PlaceInterruptedRefunds", "WallsConnect",
-                               "TableFromInventory", "EnemiesSpawnInStation" };
+                               "TableFromInventory", "EnemiesSpawnInStation",
+                               "CraftedProductsFeedInventory", "CraftRecipeMakesFurniture", "WorkshopOpenGatherReturn" };
             foreach (var t in tests)
             {
                 Clear();
@@ -63,6 +65,7 @@ namespace GameJam
                 catch (Exception ex) { Check(false, "invoke " + ex.Message); }
                 if (r != null) yield return Guard(r);
             }
+            RestoreCraftingSave();
             Log($"RESULT pass={_pass} fail={_fail}");
             var path = Path.Combine(Application.dataPath, "..", "selftest.txt");
             File.WriteAllText(path, _log.ToString());
@@ -693,6 +696,134 @@ namespace GameJam
             yield return Until(() => e.furnitureTarget != null, 1f);
             Check(e.gaveUpChases == 1 && e.furnitureTarget == t, "hero too far: gives up the chase and goes for the far furniture");
             Destroy(t.gameObject);
+        }
+
+        // ------------------------------------------------------------------ 采集 / 合成接入（2026-10-11）
+        static readonly string[] CraftingPrefKeys = { "TAP_CRAFTED_PRODUCTS_DATA_V2", "TAP_SHELL_BACKPACK_DATA" };
+        readonly System.Collections.Generic.Dictionary<string, string> _savedPrefs = new System.Collections.Generic.Dictionary<string, string>();
+
+        void BackupCraftingSave()
+        {
+            foreach (var k in CraftingPrefKeys) if (PlayerPrefs.HasKey(k)) _savedPrefs[k] = PlayerPrefs.GetString(k);
+            PlayerSessionData.ClearCraftedProducts();
+            ClearBackpack();
+        }
+
+        void RestoreCraftingSave()
+        {
+            foreach (var k in CraftingPrefKeys)
+            {
+                if (_savedPrefs.TryGetValue(k, out var v)) PlayerPrefs.SetString(k, v);
+                else PlayerPrefs.DeleteKey(k);
+            }
+            PlayerPrefs.Save();
+            Log($"  crafting save restored ({_savedPrefs.Count} keys)");
+        }
+
+        static void ClearBackpack()
+        {
+            for (int i = 0; i < PlayerSessionData.shellSlotItems.Length; i++) PlayerSessionData.shellSlotItems[i] = null;
+            PlayerSessionData.SaveBackpackToStorage();
+        }
+
+        // 合成仓库里的成品直接出现在物品栏：数量跟着仓库走；摆一件扣一件；被打断原样退回（品质等数据不丢）
+        IEnumerator CraftedProductsFeedInventory()
+        {
+            yield return ClearFurniture();
+            P.Teleport(FarFromEverything());
+            PlayerSessionData.ClearCraftedProducts();
+            var inv = Inventory.I;
+            Check(inv.Count(ItemId.CoralWall) == 0 && inv.Count(ItemId.GasCyst) == 0, "empty crafting warehouse: no crafted items in the inventory");
+            var wall = new BiomechanicalCrafting.CraftedProduct { id = "furn_coral_wall", productName = "精制·增生珊瑚管排墙", qualityTier = "精制", nodeCount = 4, totalG = 120 };
+            PlayerSessionData.AddCraftedProduct(wall);
+            PlayerSessionData.AddCraftedProduct(new BiomechanicalCrafting.CraftedProduct { id = "scrap_gas_cyst", productName = "膨胀的气囊疙瘩", isAberrantScrap = true });
+            PlayerSessionData.AddCraftedProduct(new BiomechanicalCrafting.CraftedProduct { id = "furn_hydro_cannon", productName = "高压自愈喷水炮" });
+            Check(inv.Count(ItemId.CoralWall) == 1 && inv.Count(ItemId.GasCyst) == 1 && inv.Count(ItemId.HydroCannon) == 1, "crafted products show up as inventory items");
+            var b = BuildController.I;
+            b.Select(ItemId.HydroCannon);
+            Check(!b.Active, "a product without combat effects yet can't be selected for placing");
+            yield return Until(() => !P.Invulnerable, 3f);
+            var spot = FindSpot(ItemId.CoralWall);
+            if (!spot.HasValue || !b.RequestPlace(ItemId.CoralWall, spot.Value)) { Check(false, "placing a crafted wall started"); yield break; }
+            Check(inv.Count(ItemId.CoralWall) == 0 && !PlayerSessionData.GetCraftedProducts().Contains(wall), "placing takes the product out of the crafting warehouse");
+            yield return new WaitForSecondsRealtime(0.2f);
+            P.TakeHit(null);
+            Check(PlayerSessionData.GetCraftedProducts().Contains(wall) && wall.qualityTier == "精制", "interrupted: the very same product (with its quality) goes back");
+            var gs = FindSpot(ItemId.GasCyst);
+            var cyst = gs.HasValue ? b.PlaceItem(ItemId.GasCyst, gs.Value) : null;
+            Check(cyst is GasCyst && inv.Count(ItemId.GasCyst) == 0, "a crafted scrap (gas cyst) can be placed in combat");
+            if (cyst) Destroy(cyst.gameObject);
+            PlayerSessionData.ClearCraftedProducts();
+        }
+
+        // 程序同学的合成规则（ShellCraftingRecipe）：砗磲绝缘厚壳 + 电鳗放电肌束 → 电鳗发电机组；随便两样不成配方 → 废料
+        IEnumerator CraftRecipeMakesFurniture()
+        {
+            var M = (System.Func<string, BiomechanicalCrafting.BiomechanicalMaterial>)BiomechanicalCrafting.BiomechanicalMaterialDatabase.GetById;
+            var gen = BiomechanicalCrafting.ShellCraftingRecipe.Evaluate(new System.Collections.Generic.List<BiomechanicalCrafting.BiomechanicalMaterial>
+                { M("mat_elec_clam_shell"), M("mat_elec_muscle_bundle") });
+            Check(gen != null && gen.id == "furn_eel_generator", $"clam shell + muscle bundle → eel generator ({gen?.id})");
+            var scrap = BiomechanicalCrafting.ShellCraftingRecipe.Evaluate(new System.Collections.Generic.List<BiomechanicalCrafting.BiomechanicalMaterial>
+                { M("mat_gas_aerosol_liquid"), M("mat_water_sponge_filter") });
+            Check(scrap != null && scrap.isAberrantScrap, $"no recipe → an aberrant scrap ({scrap?.id})");
+            int n0 = Inventory.I.Count(ItemId.EelGenerator);
+            PlayerSessionData.AddCraftedProduct(gen);
+            Check(Inventory.I.Count(ItemId.EelGenerator) == n0 + 1, "the crafted generator is usable from the inventory");
+            PlayerSessionData.ClearCraftedProducts();
+            yield return null;
+        }
+
+        // 合成工坊：打开 → 战斗冻结、叠加 Mix 场景、我们的相机仍是主相机 → 去采集温室采一个材料进背包 → 回工坊 → 返回战斗，一切恢复
+        IEnumerator WorkshopOpenGatherReturn()
+        {
+            yield return ClearFurniture();
+            P.Teleport(FarFromEverything());
+            ClearBackpack();
+            var e = Spawn(EnemyKind.Beast, new Vector3(6f, 0, 0));
+            e.aggroRange = 30f;
+            yield return Until(() => e.state == EnemyAI.State.Chase, 2f);
+            var ourCam = CameraRig.I.GetComponent<Camera>();
+            int r0 = CraftingBridge.returns;
+            Check(CraftingBridge.Open(), $"the workshop opens ({CraftingBridge.LastRefusal})");
+            Check(CraftingBridge.IsOpen && Time.timeScale == 0f, "combat is frozen while the workshop is open");
+            yield return Until(() => BiomechanicalCrafting.ShellInventoryController.Instance && BiomechanicalCrafting.ShellInventoryController.Instance.gameObject.scene.isLoaded, 5f);
+            var mix = BiomechanicalCrafting.ShellInventoryController.Instance;
+            Check(mix && UnityEngine.SceneManagement.SceneManager.sceneCount == 2, "the Mix scene is loaded on top of the battle");
+            yield return null;
+            Check(Camera.main == ourCam, "our camera is still Camera.main (the workshop camera is untagged)");
+            Check(!HUD.I.GetComponent<Canvas>().enabled, "our HUD is hidden behind the workshop");
+            var ep = e.Pos; var pp = P.Pos;
+            yield return new WaitForSecondsRealtime(0.8f);
+            Check(DirUtil.Flat(e.Pos - ep).magnitude < 0.01f && DirUtil.Flat(P.Pos - pp).magnitude < 0.01f, "enemy and hero don't move while the workshop is open");
+            Shot("14_workshop_mix");
+            if (!mix) yield break;
+
+            mix.GoToCollectScene();
+            yield return Until(() => CollectSceneController.Instance && CollectSceneController.Instance.gameObject.scene.isLoaded &&
+                                     UnityEngine.SceneManagement.SceneManager.sceneCount == 2, 5f);
+            Check(CollectSceneController.Instance && UnityEngine.SceneManagement.SceneManager.sceneCount == 2, "Mix → Collect (greenhouse) swaps the overlay scene");
+            yield return new WaitForSecondsRealtime(0.5f);
+            Shot("15_workshop_collect");
+            int occ0 = PlayerSessionData.GetOccupiedSlotCount();
+            HarvestItemNode node = null;
+            foreach (var n in FindObjectsOfType<HarvestItemNode>()) if (n.gameObject.activeInHierarchy) { node = n; break; }
+            if (node) node.TryHarvest();
+            yield return null;
+            Check(node && PlayerSessionData.GetOccupiedSlotCount() > occ0, $"harvesting puts a material into the shell backpack ({occ0} → {PlayerSessionData.GetOccupiedSlotCount()})");
+
+            CollectSceneController.Instance.GoToCraftingScene();
+            yield return Until(() => BiomechanicalCrafting.ShellInventoryController.Instance && BiomechanicalCrafting.ShellInventoryController.Instance != mix &&
+                                     BiomechanicalCrafting.ShellInventoryController.Instance.gameObject.scene.isLoaded, 5f);
+            mix = BiomechanicalCrafting.ShellInventoryController.Instance;
+            Check(mix && mix.gameObject.scene.name == CraftingBridge.MixScene, "Collect → back to the workshop");
+            if (!mix) yield break;
+            mix.ReturnToCombatScene();
+            yield return Until(() => CraftingBridge.returns > r0 && UnityEngine.SceneManagement.SceneManager.sceneCount == 1, 5f);
+            Check(!CraftingBridge.IsOpen && Time.timeScale == 1f && UnityEngine.SceneManagement.SceneManager.sceneCount == 1, "return to combat: overlay unloaded, time resumes");
+            Check(HUD.I.GetComponent<Canvas>().enabled, "HUD is back");
+            yield return new WaitForSecondsRealtime(0.5f);
+            Check(DirUtil.Flat(e.Pos - ep).magnitude > 0.05f, "the enemy moves again");
+            ClearBackpack();
         }
 
         // 场景里的桌子已经清掉了（桌子改成物品栏里自己摆）：要用桌子的测试自己摆一张

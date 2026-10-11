@@ -552,6 +552,7 @@ namespace GameJam
         // ------------------------------------------------------------------ update
         void Update()
         {
+            if (CraftingBridge.IsOpen) return;                // 合成工坊开着：主角也冻结（主角用的是真实时间，timeScale = 0 停不住它）
             float dt = TimeManager.PlayerDelta;
             if (_knockVel.sqrMagnitude > 0.01f && !Dead)
             {   // 被气爆弹开的滑行（被缠住时不动）

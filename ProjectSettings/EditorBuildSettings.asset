@@ -7,5 +7,11 @@ EditorBuildSettings:
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/Main.unity
-    guid: dea20fd57c6c50f4eaa778dcf252d5a8
+    guid: d34d54b710cabbe4196504965d4cae6b
+  - enabled: 1
+    path: Assets/Crafting/Scenes/Mix.unity
+    guid: 23de9d0428d76a44784bbb58261cc64c
+  - enabled: 1
+    path: Assets/Crafting/Scenes/Collect.unity
+    guid: 39ccce0a1d5fc784ca347098737cf60e
   m_configObjects: {}

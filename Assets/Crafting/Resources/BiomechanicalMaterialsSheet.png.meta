@@ -1,0 +1,932 @@
+fileFormatVersion: 2
+guid: 1e0003ba3a057ea43a7881d5ae46f6b5
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 1
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: mat_gas_bubble_sac
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 552
+        width: 136
+        height: 138
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 26b672492b5832241a58e4f7b14d703d
+      internalID: -7920633706104648095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_gas_valve_pipe
+      rect:
+        serializedVersion: 2
+        x: 155
+        y: 555
+        width: 124
+        height: 120
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 715f39a1e73bb5c42ad68deb2a141a21
+      internalID: -5729730654494820639
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_gas_float_bladder
+      rect:
+        serializedVersion: 2
+        x: 285
+        y: 555
+        width: 115
+        height: 125
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f9438c81bd85b7e40a20b01ddf60e25c
+      internalID: 4427799785902589882
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_gas_vortex_cartilage
+      rect:
+        serializedVersion: 2
+        x: 410
+        y: 555
+        width: 110
+        height: 115
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a5db05e7317b45d45a793189c49555aa
+      internalID: -9004213572602741360
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_gas_inflatable_duct
+      rect:
+        serializedVersion: 2
+        x: 532
+        y: 553
+        width: 125
+        height: 122
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4de93b78d55d45a42b1c2fe50de76d6f
+      internalID: -4325365298974569403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_gas_aerosol_liquid
+      rect:
+        serializedVersion: 2
+        x: 670
+        y: 555
+        width: 95
+        height: 120
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 58d8e2b33b2e17a47b5a52dab81bc2e6
+      internalID: 739719890504602684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_gas_pressure_antenna
+      rect:
+        serializedVersion: 2
+        x: 780
+        y: 553
+        width: 105
+        height: 122
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a279c27a0d56a934cab4ef72865fa639
+      internalID: 674553016373415145
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_gas_suction_skin
+      rect:
+        serializedVersion: 2
+        x: 895
+        y: 553
+        width: 118
+        height: 122
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df0f0ee697d366d47b1427530f1af5f9
+      internalID: -5415796017356760272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_elec_clam_shell
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 375
+        width: 130
+        height: 155
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: adbf7243ceab28b44a7ce94b8953aa8f
+      internalID: 4225218543763714561
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_elec_muscle_bundle
+      rect:
+        serializedVersion: 2
+        x: 158
+        y: 372
+        width: 105
+        height: 168
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8fa27f9d016060546918c44f714dc847
+      internalID: -4447157181153065534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_elec_electrolyte_drop
+      rect:
+        serializedVersion: 2
+        x: 275
+        y: 385
+        width: 95
+        height: 135
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3a7d14a2cf8ef174a8c35bb77d08de50
+      internalID: -7535488793482402613
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_elec_piezo_chip
+      rect:
+        serializedVersion: 2
+        x: 380
+        y: 385
+        width: 100
+        height: 125
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b65bf6fcd6b44204ebd621c806029073
+      internalID: -2734214945658752462
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_elec_pulse_membrane
+      rect:
+        serializedVersion: 2
+        x: 488
+        y: 385
+        width: 102
+        height: 120
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2ed0dec103a0e0b4aa10de52b226a917
+      internalID: 6796353575609586114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_elec_magnetic_coil
+      rect:
+        serializedVersion: 2
+        x: 590
+        y: 385
+        width: 90
+        height: 130
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 560fcdc688078014298ec12009a82625
+      internalID: -5880997708964979297
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_elec_silver_nerve
+      rect:
+        serializedVersion: 2
+        x: 680
+        y: 455
+        width: 95
+        height: 80
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e7b16f8b662376546a62b1f016e07f45
+      internalID: 5007791826159071505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_elec_overload_valve
+      rect:
+        serializedVersion: 2
+        x: 680
+        y: 360
+        width: 95
+        height: 90
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ed241dc5db5bf3a4d806d7c4c0f4b048
+      internalID: 278621275461766280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_elec_cooling_ribs
+      rect:
+        serializedVersion: 2
+        x: 780
+        y: 460
+        width: 110
+        height: 80
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ab70c0901b560404aa703b04fb4b5f8c
+      internalID: -224248681302197294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_elec_flange_plug
+      rect:
+        serializedVersion: 2
+        x: 785
+        y: 357
+        width: 105
+        height: 95
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c8a1bf9061978b4dbf7be51296d5e51
+      internalID: -8671769939809321695
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_wood_coral_plate
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 202
+        width: 120
+        height: 138
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3142e54fc3ba7e54798af65ec51130c5
+      internalID: 1054177839071466853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_wood_hollow_coral
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 208
+        width: 120
+        height: 132
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d0a0c1eaf24acc74fbcd4fd8482de9b5
+      internalID: -8288048018533037982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_wood_root_gear
+      rect:
+        serializedVersion: 2
+        x: 272
+        y: 213
+        width: 124
+        height: 122
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4cf36c0e09dfabe418bc66e23ddd7871
+      internalID: 1927740857880652759
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_wood_symbiotic_fungi
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 205
+        width: 125
+        height: 130
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e2228991d614e8f48bcd213b9961cdbb
+      internalID: -3643974967515998361
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_wood_calcified_valve
+      rect:
+        serializedVersion: 2
+        x: 528
+        y: 205
+        width: 122
+        height: 130
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e4dfe7fd3784906488ac836d16d444d4
+      internalID: 5326814953767885526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_wood_rubber_seal
+      rect:
+        serializedVersion: 2
+        x: 658
+        y: 208
+        width: 115
+        height: 122
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b82947ca25f1d1347b012d7bc8bbc053
+      internalID: -6845149133675279023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_wood_titanium_patch
+      rect:
+        serializedVersion: 2
+        x: 780
+        y: 207
+        width: 112
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 90ceef0fcfcae5b43907b9dffb377256
+      internalID: 2951919826804932916
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_wood_spring_fascia
+      rect:
+        serializedVersion: 2
+        x: 898
+        y: 208
+        width: 115
+        height: 130
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e9225d7ced86f03488f9ce9b43fae163
+      internalID: 3885035752584807731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_water_ventricle
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 30
+        width: 118
+        height: 130
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bfac29f8af227814baf03dc3e8fca370
+      internalID: -8411984591477897185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_water_sponge_filter
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 30
+        width: 96
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 000059cbdfa04314bb108b10f09cc405
+      internalID: 3406363446217985872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_water_siphon_tube
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 33
+        width: 104
+        height: 122
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2cfd96a7f1aff394fb7b8dbd5c540081
+      internalID: -2118522926633639279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_water_viscous_gel
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 34
+        width: 98
+        height: 118
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 68a772a4c19739047bbc03c638c95e8a
+      internalID: -1906362336693562882
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_water_algae_filament
+      rect:
+        serializedVersion: 2
+        x: 432
+        y: 30
+        width: 95
+        height: 125
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 70849f351241da14597aa0eecb9d0df9
+      internalID: -7916327063994853558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_water_keratin_nozzle
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 30
+        width: 92
+        height: 122
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7a2b43cfd7a6d244cb2b607040f11d5b
+      internalID: -4212911477487344787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_water_patrol_lens
+      rect:
+        serializedVersion: 2
+        x: 622
+        y: 36
+        width: 100
+        height: 112
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 60cc57c09f5680242bd43093dbe75ad1
+      internalID: -2633015790486708228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_water_neon_powder
+      rect:
+        serializedVersion: 2
+        x: 725
+        y: 32
+        width: 95
+        height: 118
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 57c1dec883baaaa4fa187ac1150714ae
+      internalID: 8450656542574291813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_water_logic_chip
+      rect:
+        serializedVersion: 2
+        x: 826
+        y: 35
+        width: 85
+        height: 115
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 47ce620fd595bbd41af7066c76ad5b65
+      internalID: 7050013082955923604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mat_water_alloy_grapple
+      rect:
+        serializedVersion: 2
+        x: 918
+        y: 30
+        width: 102
+        height: 125
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8347bf73961645148ac4259136488a19
+      internalID: -1662371603802253354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      mat_elec_clam_shell: 4225218543763714561
+      mat_elec_cooling_ribs: -224248681302197294
+      mat_elec_electrolyte_drop: -7535488793482402613
+      mat_elec_flange_plug: -8671769939809321695
+      mat_elec_magnetic_coil: -5880997708964979297
+      mat_elec_muscle_bundle: -4447157181153065534
+      mat_elec_overload_valve: 278621275461766280
+      mat_elec_piezo_chip: -2734214945658752462
+      mat_elec_pulse_membrane: 6796353575609586114
+      mat_elec_silver_nerve: 5007791826159071505
+      mat_gas_aerosol_liquid: 739719890504602684
+      mat_gas_bubble_sac: -7920633706104648095
+      mat_gas_float_bladder: 4427799785902589882
+      mat_gas_inflatable_duct: -4325365298974569403
+      mat_gas_pressure_antenna: 674553016373415145
+      mat_gas_suction_skin: -5415796017356760272
+      mat_gas_valve_pipe: -5729730654494820639
+      mat_gas_vortex_cartilage: -9004213572602741360
+      mat_water_algae_filament: -7916327063994853558
+      mat_water_alloy_grapple: -1662371603802253354
+      mat_water_keratin_nozzle: -4212911477487344787
+      mat_water_logic_chip: 7050013082955923604
+      mat_water_neon_powder: 8450656542574291813
+      mat_water_patrol_lens: -2633015790486708228
+      mat_water_siphon_tube: -2118522926633639279
+      mat_water_sponge_filter: 3406363446217985872
+      mat_water_ventricle: -8411984591477897185
+      mat_water_viscous_gel: -1906362336693562882
+      mat_wood_calcified_valve: 5326814953767885526
+      mat_wood_coral_plate: 1054177839071466853
+      mat_wood_hollow_coral: -8288048018533037982
+      mat_wood_root_gear: 1927740857880652759
+      mat_wood_rubber_seal: -6845149133675279023
+      mat_wood_spring_fascia: 3885035752584807731
+      mat_wood_symbiotic_fungi: -3643974967515998361
+      mat_wood_titanium_patch: 2951919826804932916
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

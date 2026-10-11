@@ -5,20 +5,22 @@ using UnityEngine.UI;
 namespace GameJam
 {
     /// <summary>
-    /// 屏幕下方的物品栏：8 个格子（图标 + 数量 + 数字键），右边是负重，上方是选中物品的说明 / 摆放提示。
-    /// 点格子或按 1–8 选中物品 → 进入摆放模式（BuildController）；再点一次同一格 / 右键 / Esc 取消。
+    /// 屏幕下方的物品栏：10 个格子（图标 + 数量 + 数字键），右边是负重，左边是“合成工坊”按钮，上方是选中物品的说明 / 摆放提示。
+    /// 格子是动态的：只显示手上有的物品（按 Inventory.Infos 的顺序往前排），合成出新东西会自动出现。
+    /// 点格子或按 1–9 / 0 选中物品 → 进入摆放模式（BuildController）；再点一次同一格 / 右键 / Esc 取消。
     /// 鼠标在物品栏上时，点击不会传给主角（GameInput 先问 HandleInput）。
     /// </summary>
     public class InventoryBar : MonoBehaviour
     {
         public static InventoryBar I;
-        public const int SlotCount = 8;
+        public const int SlotCount = 10;
         const float SlotSize = 92f, Gap = 8f;
 
         Font _font;
         RectTransform _bar;
         readonly List<Slot> _slots = new List<Slot>();
         Text _weight, _info;
+        RectTransform _workshopBtn;
 
         class Slot
         {
@@ -67,7 +69,6 @@ namespace GameJam
                 s.icon.preserveAspect = true;
                 s.key = Label(s.rect, (i + 1).ToString(), 18, TextAnchor.UpperLeft, new Vector2(8, -4), new Vector2(SlotSize - 10, SlotSize - 8));
                 s.count = Label(s.rect, "", 24, TextAnchor.LowerRight, new Vector2(-8, 4), new Vector2(SlotSize - 10, SlotSize - 8));
-                if (i < Inventory.Infos.Length) s.item = Inventory.Infos[i].id;
                 _slots.Add(s);
             }
 
@@ -75,6 +76,17 @@ namespace GameJam
             var wr = _weight.rectTransform;
             wr.anchorMin = wr.anchorMax = new Vector2(1f, 0.5f); wr.pivot = new Vector2(0f, 0.5f);
             wr.anchoredPosition = new Vector2(14, 0);
+
+            // 合成工坊按钮（物品栏左边）：打开程序同学的采集 / 合成工坊（CraftingBridge）
+            _workshopBtn = NewRect("WorkshopButton", _bar);
+            _workshopBtn.anchorMin = _workshopBtn.anchorMax = new Vector2(0f, 0.5f);
+            _workshopBtn.pivot = new Vector2(1f, 0.5f);
+            _workshopBtn.anchoredPosition = new Vector2(-12f, 0f);
+            _workshopBtn.sizeDelta = new Vector2(132f, SlotSize);
+            var wb = _workshopBtn.gameObject.AddComponent<Image>();
+            wb.color = new Color(0.12f, 0.42f, 0.45f, 0.92f); wb.raycastTarget = false;
+            var wt = Label(_workshopBtn, "合成工坊\n<size=18>(B)</size>", 24, TextAnchor.MiddleCenter, Vector2.zero, new Vector2(132f, SlotSize));
+            wt.supportRichText = true;
 
             _info = Label(_bar, "", 22, TextAnchor.LowerCenter, Vector2.zero, new Vector2(1400, 60));
             var ir = _info.rectTransform;
@@ -110,14 +122,16 @@ namespace GameJam
         }
 
         // ---------------------------------------------------------------- 输入
-        public bool MouseOver => _bar && RectTransformUtility.RectangleContainsScreenPoint(_bar, Input.mousePosition, null);
+        public bool MouseOver => _bar && (RectTransformUtility.RectangleContainsScreenPoint(_bar, Input.mousePosition, null) || OverWorkshop);
+        bool OverWorkshop => _workshopBtn && RectTransformUtility.RectangleContainsScreenPoint(_workshopBtn, Input.mousePosition, null);
 
         /// <summary>GameInput 每帧先调它。返回 true = 这次输入被物品栏吃掉了（不再传给主角 / 摆放模式）。</summary>
         public bool HandleInput()
         {
             for (int i = 0; i < SlotCount; i++)
-                if (Input.GetKeyDown(KeyCode.Alpha1 + i)) { Toggle(i); return true; }
+                if (Input.GetKeyDown(i < 9 ? KeyCode.Alpha1 + i : KeyCode.Alpha0)) { Toggle(i); return true; }
             if (!MouseOver) return false;
+            if (OverWorkshop && Input.GetMouseButtonDown(0)) { CraftingBridge.Open(); return true; }
             if (Input.GetMouseButtonDown(0))
                 for (int i = 0; i < _slots.Count; i++)
                     if (RectTransformUtility.RectangleContainsScreenPoint(_slots[i].rect, Input.mousePosition, null)) { Toggle(i); break; }
@@ -141,14 +155,24 @@ namespace GameJam
             var inv = Inventory.I;
             var b = BuildController.I;
             if (inv == null) return;
+            // 只显示手上有的物品（选中的那件用完前也留着），按 Infos 顺序往前排
+            int k = 0;
+            foreach (var info in Inventory.Infos)
+            {
+                if (k >= _slots.Count) break;
+                if (inv.Count(info.id) <= 0 && !(b && b.Selected == info.id)) continue;
+                var slot = _slots[k++];
+                if (slot.item != info.id) { slot.item = info.id; slot.icon.sprite = Inventory.IconOf(info.id); }
+            }
+            for (; k < _slots.Count; k++) { _slots[k].item = null; _slots[k].icon.sprite = null; }
+
             foreach (var s in _slots)
             {
                 bool has = s.item.HasValue;
                 int n = has ? inv.Count(s.item.Value) : 0;
                 bool sel = has && b && b.Selected == s.item;
                 s.icon.enabled = has;
-                if (has && !s.icon.sprite) s.icon.sprite = Resources.Load<Sprite>("Furniture/" + Inventory.InfoOf(s.item.Value).icon);
-                s.icon.color = n > 0 ? Color.white : new Color(1, 1, 1, 0.3f);
+                s.icon.color = n > 0 && Inventory.InfoOf(s.item ?? 0).placeable ? Color.white : new Color(1, 1, 1, 0.35f);
                 s.count.text = has ? n.ToString() : "";
                 s.frame.color = sel ? new Color(1f, 0.85f, 0.3f) : new Color(0.35f, 0.42f, 0.55f, 0.9f);
                 s.rect.localScale = Vector3.one * (sel ? 1.06f : 1f);
@@ -168,7 +192,7 @@ namespace GameJam
             }
             else
             {
-                _info.text = $"按 1–{Inventory.Infos.Length} 或点格子：摆放家具";
+                _info.text = "按 1–9 / 0 或点格子：摆放家具　　B / 左边按钮：去合成工坊（采集材料、合成家具）";
                 _info.color = new Color(1, 1, 1, 0.55f);
             }
         }
