@@ -19,8 +19,11 @@ namespace GameJam
         public float hero2DScale = 0.3f;       // 原图约 7 单位高，缩到与场景角色相当
         public float hero2DSpringInertia = 0.6f;
         [Header("战斗家具")]
-        public bool spawnGasCysts = true;      // 气囊疙瘩：敌人走进去就范围爆炸
-        public bool spawnScrapFurniture = true; // 另外 4 个废料：痉挛金属团 / 烂泥珊瑚泥潭 / 嘶鸣排气瓣 / 共生残渣路障
+        // 2026-10-11 用户：测试场景里的杂物和家具全部清掉，家具 / 桌子都从物品栏自己摆；下面几个开关默认关
+        public bool spawnTables = false;       // 开局在场景里摆桌子（现在桌子在物品栏第 8 格）
+        public bool spawnGasCysts = false;     // 气囊疙瘩：敌人走进去就范围爆炸
+        public bool spawnScrapFurniture = false; // 另外 4 个废料：痉挛金属团 / 烂泥珊瑚泥潭 / 嘶鸣排气瓣 / 共生残渣路障
+        public bool spawnFormalFurniture = false; // 4 个正式家具直接摆在场景里（2026-10-11 起改为从物品栏自己摆，默认关）
         [Header("敌人外观：鱿鱼怪（2D 骨骼）")]
         public bool useSquidEnemies = true;    // false = 回到旧的昆虫序列帧
         public float squidHeight = 3.2f;       // 鱿鱼在场景里的高度（世界单位）
@@ -31,6 +34,7 @@ namespace GameJam
         Vector3 _spawn;
         readonly List<Vector3> _entrances = new List<Vector3>(), _buildZones = new List<Vector3>();
         float _nextWave = -1;
+        Bounds _stationArea;
         SpriteRenderer _marker, _lockRing;
         float _markerT;
 
@@ -44,21 +48,37 @@ namespace GameJam
             _spriteMat = Resources.Load<Material>("Materials/SpriteBillboard");
             ReadAnchors();
             SetupCamera();
-            HUD.Build();
+            var hud = HUD.Build();
+            // 物品栏 + 气系生产线（摆放模式、气体网络）；开局先给一批气系原料和正式家具试玩（还没有采集系统）
+            Inventory.I = new Inventory();
+            Inventory.I.Add(ItemId.GasVent, 2);
+            Inventory.I.Add(ItemId.GasSac, 3);
+            Inventory.I.Add(ItemId.GasDuct, 10);
+            Inventory.I.Add(ItemId.EelGenerator, 1);
+            Inventory.I.Add(ItemId.CoralWall, 2);
+            Inventory.I.Add(ItemId.WaterTower, 1);
+            Inventory.I.Add(ItemId.BioIncubator, 1);
+            Inventory.I.Add(ItemId.Table, 2);
+            InventoryBar.Build(hud.transform);
+            gameObject.AddComponent<GasNetwork>();
+            gameObject.AddComponent<BuildController>().Init(Resources.Load<Material>("Materials/SpriteBillboard"));
             gameObject.AddComponent<GameInput>();
 
             player = SpawnPlayer(_spawn);
             CameraRig.I.target = player.transform;
             CameraRig.I.Snap();
 
-            int n = 0;
-            foreach (var b in _buildZones) if (n++ < 3) KickableTable.Build(b + new Vector3(1.5f, 0, -1f), 0);
-            foreach (var off in new[] { new Vector3(2.4f, 0, 1.4f), new Vector3(-2.6f, 0, 2.6f) })
+            if (spawnTables)
             {
-                var pos = _spawn + off;
-                bool clear = true;
-                foreach (var t in KickableTable.All) if (DirUtil.Flat(t.transform.position - pos).magnitude < 2.2f) clear = false;
-                if (clear) KickableTable.Build(pos, off.x > 0 ? 15 : -20);
+                int n = 0;
+                foreach (var b in _buildZones) if (n++ < 3) KickableTable.Build(b + new Vector3(1.5f, 0, -1f), 0);
+                foreach (var off in new[] { new Vector3(2.4f, 0, 1.4f), new Vector3(-2.6f, 0, 2.6f) })
+                {
+                    var pos = _spawn + off;
+                    bool clear = true;
+                    foreach (var t in KickableTable.All) if (DirUtil.Flat(t.transform.position - pos).magnitude < 2.2f) clear = false;
+                    if (clear) KickableTable.Build(pos, off.x > 0 ? 15 : -20);
+                }
             }
 
             // 战斗家具（家具合成原型 Mix_v02 的废料）：在出生点周围找空地摆开，离桌子和彼此都留出距离
@@ -73,6 +93,15 @@ namespace GameJam
                 PlaceFurniture(p => MudCoral.Build(p, _spriteMat), 5.5f, 1.8f);
                 PlaceFurniture(p => SymbioticSludge.Build(p, _spriteMat), 5.5f, 2.4f);
                 PlaceFurniture(p => ScreamingValve.Build(p, _spriteMat), 8f, 2.4f);   // 嘲讽范围大，放远一点
+            }
+            if (spawnFormalFurniture)
+            {
+                // 水塔和珊瑚墙挨着放（水汽里墙自愈快）；墙横在出生点外圈，挡住从外面过来的怪
+                var tower = PlaceFurniture(p => WaterTower.Build(p, _spriteMat), 7f, 2.6f);
+                if (tower) PlaceFurniture(p => CoralWall.Build(p, WallYaw(p), _spriteMat), 2.2f, 1.6f, tower.Pos);
+                else PlaceFurniture(p => CoralWall.Build(p, WallYaw(p), _spriteMat), 6.5f, 3f);
+                PlaceFurniture(p => EelGenerator.Build(p, _spriteMat), 6f, 2.4f);
+                PlaceFurniture(p => BioIncubator.Build(p, _spriteMat), 9.5f, 2.6f);   // 安抚范围大，放远一点
             }
 
             _marker = FlatSprite("MoveMarker", "ui_move_marker", 0.8f, new Color(0.5f, 1f, 0.9f, 0f));
@@ -96,6 +125,14 @@ namespace GameJam
                 else if (role.Contains("BuildZone")) _buildZones.Add(p);
             }
             if (_entrances.Count == 0) { _entrances.Add(new Vector3(-8, 0, 4)); _entrances.Add(new Vector3(8, 0, 4)); }
+            // 中央建筑的地基：怪物出生区（往里收 1 m，离墙远一点）
+            var found = GameObject.Find("Station_Foundation");
+            var r = found ? found.GetComponent<Renderer>() : null;
+            if (r)
+            {
+                var b = r.bounds;
+                _stationArea = new Bounds(new Vector3(b.center.x, 0, b.center.z), new Vector3(Mathf.Max(0.5f, b.size.x - 2f), 0, Mathf.Max(0.5f, b.size.z - 2f)));
+            }
         }
 
         void SetupCamera()
@@ -239,39 +276,70 @@ namespace GameJam
             return e;
         }
 
+        /// <summary>
+        /// 怪物只从地图中央的建筑（贝壳生态站 Repairable_Shell_Ecostation）里出来（用户 2026-10-11）：
+        /// 在站台地基范围内（往里收一圈，避开墙和控制台）随机找没被挡住的点。场景里没有这个建筑时退回旧的入口锚点。
+        /// </summary>
+        public Vector3 EnemySpawnPoint()
+        {
+            const int notCharacters = ~(1 << 10);
+            if (_stationArea.size.sqrMagnitude > 0.01f)
+                for (int tries = 0; tries < 20; tries++)
+                {
+                    var p = new Vector3(Random.Range(_stationArea.min.x, _stationArea.max.x), 0, Random.Range(_stationArea.min.z, _stationArea.max.z));
+                    if (!Physics.CheckCapsule(p + Vector3.up * 0.45f, p + Vector3.up * 1.4f, 0.4f, notCharacters & ~(1 << 9), QueryTriggerInteraction.Ignore)) return p;
+                }
+            var ent = _entrances[Random.Range(0, _entrances.Count)];
+            return Vector3.Lerp(ent, _spawn, 0.45f) + new Vector3(Random.Range(-1.5f, 1.5f), 0, Random.Range(-1.5f, 1.5f));
+        }
+
+        public bool InStation(Vector3 p) => _stationArea.size.sqrMagnitude > 0.01f &&
+                                            p.x >= _stationArea.min.x - 0.6f && p.x <= _stationArea.max.x + 0.6f &&
+                                            p.z >= _stationArea.min.z - 0.6f && p.z <= _stationArea.max.z + 0.6f;
+
         public void SpawnWave()
         {
-            int i = 0;
             for (int k = 0; k < humanoidsPerWave + beastsPerWave; k++)
             {
-                var ent = _entrances[i++ % _entrances.Count];
-                var p = Vector3.Lerp(ent, _spawn, 0.45f) + new Vector3(Random.Range(-1.5f, 1.5f), 0, Random.Range(-1.5f, 1.5f));
+                var p = EnemySpawnPoint();
                 // 鱿鱼一律是非人形（黄光可格挡 / 红光抓取），没有钟表 QTE
                 SpawnEnemy(useSquidEnemies || k >= humanoidsPerWave ? EnemyKind.Beast : EnemyKind.Humanoid, p);
+                Vfx.Spawn("VFX_ArrowBurst", p + Vector3.up * 0.6f, 0, 1f, false, null, new Color(1f, 0.55f, 0.65f));
             }
         }
 
-        /// <summary>在出生点周围半径 radius 的一圈上找一个离桌子、其他家具都至少 clearance 的位置摆家具。</summary>
-        void PlaceFurniture(System.Func<Vector3, CombatFurniture> build, float radius, float clearance)
+        /// <summary>
+        /// 在 center（默认出生点）周围半径 radius 的一圈上找一个离桌子、其他家具都至少 clearance 的位置摆家具。
+        /// 放不下返回 null。
+        /// </summary>
+        CombatFurniture PlaceFurniture(System.Func<Vector3, CombatFurniture> build, float radius, float clearance, Vector3? center = null)
         {
+            var c = center ?? _spawn;
             for (int ring = 0; ring < 4; ring++)
                 for (int i = 0; i < 12; i++)
                 {
                     float a = (i * 30f + ring * 15f + radius * 37f) * Mathf.Deg2Rad;
-                    var pos = _spawn + new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * (radius + ring * 1.5f);
+                    var pos = c + new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * (radius + ring * 1.5f);
                     bool clear = true;
                     foreach (var t in KickableTable.All) if (DirUtil.Flat(t.transform.position - pos).magnitude < clearance + 0.8f) clear = false;
                     foreach (var f in CombatFurniture.All)
                         if (f && DirUtil.Flat(f.Pos - pos).magnitude < clearance + (f is MudCoral m ? m.poolRadius : 0.6f)) clear = false;
                     if (!clear || !OnFlatFloor(pos, clearance)) continue;
-                    build(pos);
-                    return;
+                    return build(pos);
                 }
-            Debug.LogWarning($"[家具] 出生点周围找不到空地放 {build.Method.Name}（半径 {radius}、间距 {clearance}）");
+            Debug.LogWarning($"[家具] 找不到空地放 {build.Method.Name}（半径 {radius}、间距 {clearance}）");
+            return null;
+        }
+
+        /// <summary>珊瑚墙的走向：横在出生点外圈（和“出生点 → 墙”的方向垂直）。</summary>
+        float WallYaw(Vector3 p)
+        {
+            var d = DirUtil.Flat(p - _spawn);
+            return d.sqrMagnitude < 1e-4f ? 0f : Mathf.Atan2(-d.x, -d.z) * Mathf.Rad2Deg;
         }
 
         /// <summary>pos 是不是在平坦地面上（地面高度≈0、上方没有墙或道具）。场景里没有地面碰撞体时不检查。</summary>
-        bool OnFlatFloor(Vector3 pos, float clearance)
+        public bool OnFlatFloor(Vector3 pos, float clearance)
         {
             const int notCharacters = ~(1 << 10);
             if (!Physics.Raycast(_spawn + Vector3.up * 5f, Vector3.down, out var floor, 10f, notCharacters, QueryTriggerInteraction.Ignore))

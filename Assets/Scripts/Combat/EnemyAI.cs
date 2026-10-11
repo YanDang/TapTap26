@@ -16,10 +16,13 @@ namespace GameJam
     ///   主角被缠 / 被丢 / 起身期间（PlayerController.Unavailable）其他怪不发起攻击，同一时间只有一只在抓。
     /// 目标（ThinkTarget，用户 2026-10-09）：嘲讽中的家具（排气瓣）在范围内 → 打它；否则检测范围（aggroRange）内有玩家 → 打玩家；
     ///   都没有 → 去打 furnitureSearchRange 内最近的战斗家具。锁定家具后打到它坏为止，玩家走近也不理（嘲讽可以改锁另一件家具）。
+    ///   追玩家追到离主角超过 chaseGiveUpRange（用户 2026-10-11）→ 放弃追击，转去打 giveUpFurnitureRange 内最近的家具。
+    ///   走路被挡路的家具（珊瑚墙、共生残渣）卡住 → 转头打挡路的那件。
+    /// 被培养箱安抚（Pacified）：不攻击、走到培养箱旁发呆，挨打立刻醒。
     /// </summary>
     public class EnemyAI : Unit
     {
-        public enum State { Idle, Chase, Attack, Recover, Stagger, Stunned, Pending, Executing, Dead, GrabWindup, Grabbing }
+        public enum State { Idle, Chase, Attack, Recover, Stagger, Stunned, Pending, Executing, Dead, GrabWindup, Grabbing, Pacified }
 
         public static readonly List<EnemyAI> All = new List<EnemyAI>();
         public static EnemyAI Grabber;                     // 正在抓（前摇或缠住）的那只
@@ -53,11 +56,41 @@ namespace GameJam
         public SquidFace squidFace;
         [Header("家具目标")]
         public float furnitureSearchRange = 9f;           // 检测范围内没有玩家时，去打这个范围内的家具
+        public float chaseGiveUpRange = 10f;              // 追玩家时离主角超过这个距离就放弃追击
+        public float giveUpFurnitureRange = 20f;          // 放弃追击后去打这个范围内最近的家具
         public CombatFurniture furnitureTarget;            // 锁定的家具（非空时只打它）
+        public int gaveUpChases;                           // 放弃追击的次数（自测用）
 
         float _t, _impactT, _attackEnd, _nextAttack, _tick;
-        float _slowUntil = -1f, _slowFactor = 1f;
+        float _slowUntil = -1f, _slowFactor = 1f, _wetUntil = -1f, _blockedT;
+        bool _chasingPlayer;
+        BioIncubator _pacifier;
         Vector3 _knockVel;
+
+        /// <summary>被水塔淋湿 seconds 秒（湿身挨电系家具的电多受伤害）。</summary>
+        public void Wet(float seconds) { _wetUntil = Mathf.Max(_wetUntil, Time.time + seconds); }
+        public bool IsWet => Time.time < _wetUntil;
+
+        public bool Pacified => state == State.Pacified;
+        public bool CanBePacified => !Dead && (state == State.Idle || state == State.Chase || state == State.Recover) && Grabber != this;
+
+        /// <summary>被培养箱安抚 seconds 秒：不攻击，走到培养箱旁发呆。</summary>
+        public void Pacify(float seconds, BioIncubator by)
+        {
+            if (!CanBePacified) return;
+            CloseClock();
+            if (squid) squid.Interrupt();
+            state = State.Pacified; _t = seconds;
+            _pacifier = by;
+            furnitureTarget = null; _chasingPlayer = false;
+        }
+
+        void WakeFromPacify()
+        {
+            _pacifier = null;
+            state = State.Chase;
+            _nextAttack = Time.time + 0.8f;
+        }
 
         /// <summary>减速：速度乘以 factor，持续 seconds 秒（多个来源取最慢的）。</summary>
         public void Slow(float factor, float seconds)
@@ -73,24 +106,60 @@ namespace GameJam
             _knockVel = DirUtil.Flat(dir).normalized * distance * 8f;
         }
 
-        // 已经在追玩家时放宽到 1.6 倍才放弃（避免玩家在边界来回时怪物在玩家和家具之间反复横跳）
-        bool PlayerInRange => player && !player.Dead &&
-                              (DirUtil.Flat(player.Pos - Pos).magnitude < aggroRange * (state == State.Chase && !furnitureTarget ? 1.6f : 1f) ||
-                               player.LockTarget == this);
+        // 发现玩家用 aggroRange；已经在追玩家时一直追到 chaseGiveUpRange 才放弃（避免玩家在边界来回时怪物反复横跳）。
+        // 玩家锁定了它也一样，超出 chaseGiveUpRange 就不追了。
+        bool PlayerInRange
+        {
+            get
+            {
+                if (!player || player.Dead) return false;
+                float d = DirUtil.Flat(player.Pos - Pos).magnitude;
+                return d < aggroRange || ((_chasingPlayer || player.LockTarget == this) && d < chaseGiveUpRange);
+            }
+        }
 
         /// <summary>选目标。返回有没有目标（家具或玩家）。</summary>
         bool ThinkTarget()
         {
+            bool wasChasing = _chasingPlayer;
+            bool playerInRange = PlayerInRange;                         // 先判断（用的是上一帧在不在追玩家）
+            _chasingPlayer = false;
             if (furnitureTarget && !furnitureTarget.Targetable) furnitureTarget = null;
             var taunt = CombatFurniture.TauntingNear(Pos);
             if (taunt) furnitureTarget = taunt;                         // 嘲讽：强行吸引（可以从玩家或别的家具转过来）
             if (furnitureTarget) return true;                           // 已锁定家具：玩家来了也不理
-            if (PlayerInRange) return true;
+            if (playerInRange) { _chasingPlayer = true; return true; }
+            if (wasChasing)
+            {   // 玩家跑远了：放弃追击，转去打家具（找得更远一些）
+                gaveUpChases++;
+                furnitureTarget = CombatFurniture.NearestTargetable(Pos, giveUpFurnitureRange);
+                return furnitureTarget != null;
+            }
             furnitureTarget = CombatFurniture.NearestTargetable(Pos, furnitureSearchRange);
             return furnitureTarget != null;
         }
 
-        Vector3 TargetPos => furnitureTarget ? furnitureTarget.Pos : player ? player.Pos : Pos;
+        /// <summary>
+        /// 走路有没有被挡住：沿 dir 想走 want 米，实际前进不到三成，累计 0.6 秒 → 身边有挡路的家具（墙 / 残渣）就改打它。
+        /// </summary>
+        void CheckBlocked(Vector3 before, Vector3 dir, float want, float dt)
+        {
+            if (want < 1e-4f) return;
+            float got = Vector3.Dot(DirUtil.Flat(Pos - before), dir.normalized);
+            _blockedT = got < want * 0.3f ? _blockedT + dt : Mathf.Max(0f, _blockedT - dt);
+            if (_blockedT < 0.6f) return;
+            _blockedT = 0f;
+            CombatFurniture best = null; float bd = float.MaxValue;
+            foreach (var f in CombatFurniture.All)
+            {
+                if (!f || !f.Blocks || !f.Targetable || f == furnitureTarget) continue;
+                float d = DirUtil.Flat(f.AimPoint(Pos) - Pos).magnitude;
+                if (d <= attackRange + f.hitRadius + 0.4f && d < bd) { bd = d; best = f; }
+            }
+            if (best) { furnitureTarget = best; _chasingPlayer = false; }
+        }
+
+        Vector3 TargetPos => furnitureTarget ? furnitureTarget.AimPoint(Pos) : player ? player.Pos : Pos;
         bool _impactDone;
         ClockQTE _clock;
         GameObject _stars;
@@ -165,6 +234,7 @@ namespace GameJam
             if (knock > 0) MoveBy(DirUtil.Flat(dir).normalized * knock);
             if (hp <= 0) { hp = 0; Die(); return; }
             if (state == State.Grabbing) return;           // 缠住期间不会被打断（掉血照算）
+            if (state == State.Pacified) _pacifier = null; // 被安抚中挨打：醒过来（下面进入硬直，之后回到追击）
             bool attacking = state == State.Attack || state == State.GrabWindup;   // 抓取前摇：只有重击（打断型）能打断
             if (state == State.Pending) return;            // keep it execution-ready
             if (!attacking || interrupt)
@@ -295,11 +365,13 @@ namespace GameJam
                     if (!ThinkTarget()) { state = State.Idle; break; }
                     if (furnitureTarget)
                     {   // 打家具：走到家具旁边就打（家具本身有半径），不会抓取
-                        var fv = DirUtil.Flat(furnitureTarget.Pos - Pos);
+                        var fv = DirUtil.Flat(furnitureTarget.AimPoint(Pos) - Pos);
                         Face(fv);
                         if (fv.magnitude > attackRange + furnitureTarget.hitRadius)
                         {
+                            var before = Pos;
                             MoveBy((fv.normalized * speed * SpeedMul + Separation() + AvoidPlayer(fv)) * dt);
+                            CheckBlocked(before, fv, speed * SpeedMul * dt, dt);
                             anim.Play("Walk", facing);
                         }
                         else
@@ -314,7 +386,9 @@ namespace GameJam
                     Face(v);
                     if (v.magnitude > attackRange)
                     {
+                        var before = Pos;
                         MoveBy((v.normalized * speed * SpeedMul + Separation()) * dt);
+                        CheckBlocked(before, v, speed * SpeedMul * dt, dt);
                         anim.Play("Walk", facing);
                     }
                     else
@@ -341,7 +415,7 @@ namespace GameJam
                         CloseClock();
                         if (furnitureTarget)
                         {   // 打家具：不会顺手打到玩家
-                            if (DirUtil.Flat(furnitureTarget.Pos - Pos).magnitude <= hitRange + furnitureTarget.hitRadius)
+                            if (DirUtil.Flat(furnitureTarget.AimPoint(Pos) - Pos).magnitude <= hitRange + furnitureTarget.hitRadius)
                                 furnitureTarget.HitByEnemy(this, 1);
                         }
                         else if (player && DirUtil.Flat(player.Pos - Pos).magnitude <= hitRange)
@@ -436,6 +510,26 @@ namespace GameJam
                 case State.Executing:
                     break;
 
+                case State.Pacified:
+                {   // 被培养箱安抚：慢慢走到培养箱旁边发呆，不攻击
+                    _t -= dt;
+                    glow = 0.3f + 0.1f * Mathf.Sin(Time.time * 3f);
+                    if (_t <= 0f || !_pacifier || !_pacifier.Alive) { WakeFromPacify(); break; }
+                    var pv = DirUtil.Flat(_pacifier.Pos - Pos);
+                    if (pv.magnitude > 1.4f)
+                    {
+                        Face(pv);
+                        MoveBy((pv.normalized * speed * 0.5f * SpeedMul + Separation()) * dt);
+                        anim.Play("Walk", facing);
+                    }
+                    else
+                    {
+                        MoveBy(Separation() * dt);
+                        anim.Play("Idle", facing);
+                    }
+                    break;
+                }
+
                 case State.Dead:
                     _t += dt;
                     if (_t > 2.5f) Destroy(gameObject);
@@ -445,7 +539,7 @@ namespace GameJam
             anim.SetDir(facing);
             if (squid) squid.energy = state == State.Stunned || state == State.Pending || state == State.Executing ? 0.25f : 1f;
             if (squidFace) squidFace.angry = IsAngry;
-            ApplyFlash(glow, state == State.Pending ? PendingGlow :
+            ApplyFlash(glow, state == State.Pending ? PendingGlow : state == State.Pacified ? BioIncubator.Glow :
                              state == State.GrabWindup || state == State.Grabbing ? GrabGlow : AttackGlow);
         }
 

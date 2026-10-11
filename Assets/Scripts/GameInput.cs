@@ -13,6 +13,9 @@ namespace GameJam
             var p = GameManager.I ? GameManager.I.player : null;
             var cam = Camera.main;
             if (!p || !cam) return;
+            // 物品栏优先（点格子、数字键），其次是摆放模式；都不是才是主角的操作
+            if (InventoryBar.I && InventoryBar.I.HandleInput()) return;
+            if (BuildController.I && BuildController.I.Active) { BuildController.I.HandleInput(); return; }
             if (Input.GetMouseButtonDown(1))
             {
                 var ray = cam.ScreenPointToRay(Input.mousePosition);

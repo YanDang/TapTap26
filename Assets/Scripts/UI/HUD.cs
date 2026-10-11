@@ -54,10 +54,10 @@ namespace GameJam
                 Anchor(im.rectTransform, new Vector2(30 + i * 46, -176));
                 _hearts.Add(im);
             }
-            var hint = Label(transform, "右键：移动 / 点敌人锁定战斗      左键：踢家具 · 格挡 · 处决      战斗中右键地面：闪避 + 精灵之箭",
+            var hint = Label(transform, "右键：移动 / 点敌人锁定战斗　　左键：格挡 · 处决 · 踢　　按住左键：蓄力　　战斗中右键地面：缩壳翻滚 + 重拳",
                              22, TextAnchor.LowerCenter, Vector2.zero, new Vector2(1600, 40));
             var r = hint.rectTransform;
-            r.anchorMin = r.anchorMax = new Vector2(0.5f, 0); r.pivot = new Vector2(0.5f, 0); r.anchoredPosition = new Vector2(0, 18);
+            r.anchorMin = r.anchorMax = new Vector2(0.5f, 0); r.pivot = new Vector2(0.5f, 0); r.anchoredPosition = new Vector2(0, 214);   // 物品栏和它的说明文字上方
             hint.color = new Color(1, 1, 1, 0.75f);
         }
 
@@ -149,7 +149,7 @@ namespace GameJam
                 kv.Value.root.position = cam.WorldToScreenPoint(e.Pos + Vector3.up * 2.25f);
                 kv.Value.fill.rectTransform.sizeDelta = new Vector2(80f * e.hp / e.maxHp, 6);
                 bool pending = e.state == EnemyAI.State.Pending;
-                kv.Value.label.text = pending ? "处决!" : (e.state == EnemyAI.State.Stunned ? "眩晕" : "");
+                kv.Value.label.text = pending ? "处决!" : (e.state == EnemyAI.State.Stunned ? "眩晕" : e.state == EnemyAI.State.Pacified ? "安抚" : "");
                 kv.Value.label.color = pending ? new Color(1f, 0.85f, 0.3f) : Color.white;
                 kv.Value.label.transform.localScale = Vector3.one * (pending ? 1f + 0.15f * Mathf.Sin(Time.unscaledTime * 12f) : 1f);
             }

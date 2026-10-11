@@ -17,14 +17,22 @@ namespace GameJam
         public int hp;
         public float hitRadius = 0.6f;          // 怪物攻击它时，攻击距离额外加上这个（家具本身的半径）
         public float respawnSeconds = 12f;      // 坏掉后多久在原地重生（0 = 不重生）
+        public bool destroyOnBreak;             // 玩家从物品栏摆的：坏了就没了（BuildController 设置）
         public int timesHit;
 
         public bool Alive { get; protected set; } = true;
+        /// <summary>正在播部署动画（FurnitureDeploy）：还没起作用，怪物也不会把它当目标。</summary>
+        public bool Deploying { get; set; }
         public Vector3 Pos => transform.position;
+        /// <summary>从 from 过来打它时瞄准的点（默认中心；管道这种细长的取离 from 最近的点）。</summary>
+        public virtual Vector3 AimPoint(Vector3 from) => Pos;
+
         /// <summary>怪物能不能把它当攻击目标。</summary>
         public virtual bool Targetable => Alive;
         /// <summary>正在嘲讽时的范围（0 = 不嘲讽）。</summary>
         public virtual float TauntRange => 0f;
+        /// <summary>有碰撞体、会挡路（珊瑚墙、共生残渣）：怪物被它挡住走不动时会转头打它。</summary>
+        public virtual bool Blocks => false;
 
         protected Transform holder, spriteT;
         protected SpriteRenderer sr, ring;
@@ -39,8 +47,8 @@ namespace GameJam
             CombatFurniture best = null; float bd = range;
             foreach (var f in All)
             {
-                if (!f || !f.Targetable) continue;
-                float d = DirUtil.Flat(f.Pos - p).magnitude;
+                if (!f || !f.Targetable || f.Deploying) continue;
+                float d = DirUtil.Flat(f.AimPoint(p) - p).magnitude;
                 if (d < bd) { bd = d; best = f; }
             }
             return best;
@@ -52,12 +60,18 @@ namespace GameJam
             CombatFurniture best = null; float bd = float.MaxValue;
             foreach (var f in All)
             {
-                if (!f || !f.Targetable || f.TauntRange <= 0f) continue;
+                if (!f || !f.Targetable || f.Deploying || f.TauntRange <= 0f) continue;
                 float d = DirUtil.Flat(f.Pos - p).magnitude;
                 if (d <= f.TauntRange && d < bd) { bd = d; best = f; }
             }
             return best;
         }
+
+        /// <summary>玩家的攻击（普攻、砸击、踢）能不能打到它。气系家具可以，其他废料默认不行。</summary>
+        public virtual bool PlayerCanHit => false;
+
+        /// <summary>被玩家打了一下（默认和被怪物打一样）。</summary>
+        public virtual void HitByPlayer(int dmg) => HitByEnemy(null, dmg);
 
         /// <summary>被怪物打了一下。</summary>
         public virtual void HitByEnemy(EnemyAI e, int dmg)
@@ -76,6 +90,7 @@ namespace GameJam
             if (ring) ring.enabled = false;
             _respawnT = respawnSeconds;
             CameraRig.I?.Shake(0.2f, 0.2f);
+            if (destroyOnBreak) { respawnSeconds = 0f; Destroy(gameObject, 0.6f); }
         }
 
         protected virtual void Respawn()
