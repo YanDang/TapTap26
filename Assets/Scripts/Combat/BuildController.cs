@@ -79,14 +79,28 @@ namespace GameJam
         static PlayerController Player => GameManager.I ? GameManager.I.player : null;
 
         /// <summary>家具的作用范围（虚影下面画圈；0 = 不画）。</summary>
-        static float RangeOf(ItemId id) => id == ItemId.EelGenerator ? 2.2f : id == ItemId.WaterTower ? 3.2f : id == ItemId.BioIncubator ? 4.5f : 0f;
+        static float RangeOf(ItemId id)
+        {
+            switch (id)
+            {
+                case ItemId.EelGenerator: return 2.2f;
+                case ItemId.WaterTower: return 3.2f;
+                case ItemId.BioIncubator: return 4.5f;
+                case ItemId.GasCyst: return 2.6f;          // 爆炸半径
+                case ItemId.SpasmMetal: return 0.8f;       // 触发半径
+                case ItemId.MudCoral: return 2.4f;         // 泥潭
+                case ItemId.ScreamingValve: return 7f;     // 嘲讽范围
+                default: return 0f;
+            }
+        }
 
-        static Sprite IconOf(ItemId id) => Resources.Load<Sprite>("Furniture/" + Inventory.InfoOf(id).icon);
+        static Sprite IconOf(ItemId id) => Inventory.IconOf(id);
 
         // ---------------------------------------------------------------- 选择
         public void Select(ItemId id)
         {
             if (Inventory.I == null || Inventory.I.Count(id) <= 0) { Say($"{Inventory.InfoOf(id).name}用完了"); return; }
+            if (!Inventory.InfoOf(id).placeable) { Say($"{Inventory.InfoOf(id).name}的战斗效果还没做，暂时不能摆"); return; }
             var p = Player;
             if (p) p.CancelLeftHold();
             Selected = id;
@@ -207,6 +221,11 @@ namespace GameJam
                 case ItemId.CoralWall: c = CoralWall.Build(s.pos, s.yaw, _mat); break;
                 case ItemId.WaterTower: c = WaterTower.Build(s.pos, _mat); break;
                 case ItemId.BioIncubator: c = BioIncubator.Build(s.pos, _mat); break;
+                case ItemId.GasCyst: c = GasCyst.Build(s.pos, _mat); break;
+                case ItemId.SpasmMetal: c = SpasmMetal.Build(s.pos, _mat); break;
+                case ItemId.MudCoral: c = MudCoral.Build(s.pos, _mat); break;
+                case ItemId.ScreamingValve: c = ScreamingValve.Build(s.pos, _mat); break;
+                case ItemId.SymbioticSludge: c = SymbioticSludge.Build(s.pos, _mat); break;
                 default: c = KickableTable.Build(s.pos, WallYaw(s.pos) - wallTurn); break;   // 桌子横着摆，长边对着主角
             }
             if (c is CombatFurniture f && !(f is GasNode)) { f.respawnSeconds = 0f; f.destroyOnBreak = true; placedFurniture++; }
@@ -217,7 +236,7 @@ namespace GameJam
         /// <summary>立刻摆一件（不播主角动作，家具照样播部署动画；自测 / 演示用）。返回生成的物体。</summary>
         public GameObject PlaceNow(ItemId id, Vector3 mouse)
         {
-            if (id == ItemId.GasDuct) return null;
+            if (id == ItemId.GasDuct || !Inventory.InfoOf(id).placeable) return null;
             var s = Resolve(id, mouse);
             if (!CanPlaceAt(id, s, out var why)) { Say(why); return null; }
             if (!Inventory.I.Take(id, 1)) { Say($"{Inventory.InfoOf(id).name}用完了"); return null; }
@@ -238,21 +257,22 @@ namespace GameJam
         /// </summary>
         public bool RequestPlace(ItemId id, Vector3 mouse)
         {
-            if (id == ItemId.GasDuct) return false;
+            if (id == ItemId.GasDuct || !Inventory.InfoOf(id).placeable) return false;
             var p = Player;
             if (p && p.Placing) return false;                    // 上一件还没放完：这次点击不算
             var s = Resolve(id, mouse);
             if (!CanPlaceAt(id, s, out var why)) { Say(why); return false; }
             if (!Inventory.I.Take(id, 1)) { Say($"{Inventory.InfoOf(id).name}用完了"); return false; }
+            var taken = Inventory.I.LastTaken;                  // 合成产物：扣掉的那一件（退还时原样放回）
             if (!p) { FurnitureDeploy.Begin(Spawn(id, s), IconOf(id), null); return true; }
             bool started = p.BeginPlace(s.pos,
                 () =>
                 {
-                    if (!CanPlaceAt(id, s, out var why2)) { Inventory.I.Add(id, 1); Say(why2); return; }   // 放的过程中被占了
+                    if (!CanPlaceAt(id, s, out var why2)) { Inventory.I.Refund(id, taken); Say(why2); return; }   // 放的过程中被占了
                     FurnitureDeploy.Begin(Spawn(id, s), IconOf(id), p.PlaceHandPos);
                 },
-                () => { Inventory.I.Add(id, 1); Say("被打断了，没放出去"); });
-            if (!started) { Inventory.I.Add(id, 1); Say("现在腾不出手"); }
+                () => { Inventory.I.Refund(id, taken); Say("被打断了，没放出去"); });
+            if (!started) { Inventory.I.Refund(id, taken); Say("现在腾不出手"); }
             return started;
         }
 

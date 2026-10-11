@@ -145,7 +145,13 @@ public static class GameJamBuilder
         root.AddComponent<GameManager>();
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
-        EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(MainScene, true) };
+        // 程序同学的采集 / 合成场景（CraftingBridge 叠加加载，场景名 Mix / Collect 在对方代码里写死）
+        EditorBuildSettings.scenes = new[]
+        {
+            new EditorBuildSettingsScene(MainScene, true),
+            new EditorBuildSettingsScene("Assets/Crafting/Scenes/Mix.unity", true),
+            new EditorBuildSettingsScene("Assets/Crafting/Scenes/Collect.unity", true),
+        };
     }
 
     // 用户 2026-10-11：测试场景里的杂物全部删掉，只留地面、水渠、中央建筑（怪物出生点）和地图边缘的石头 / 废墟墙。
@@ -192,7 +198,7 @@ public static class GameJamBuilder
     {
         var opts = new BuildPlayerOptions
         {
-            scenes = new[] { MainScene },
+            scenes = new[] { MainScene, "Assets/Crafting/Scenes/Mix.unity", "Assets/Crafting/Scenes/Collect.unity" },   // 采集 / 合成场景由 CraftingBridge 叠加加载
             locationPathName = "Builds/Windows/gamejam.exe",
             target = BuildTarget.StandaloneWindows64,
             options = BuildOptions.None

@@ -41,7 +41,7 @@ namespace GameJam
 
         void Apply()
         {
-            float ts = Hitstop ? 0f : (SlowMo ? slowScale : 1f);
+            float ts = Hitstop || CraftingBridge.IsOpen ? 0f : (SlowMo ? slowScale : 1f);   // 合成工坊开着 = 战斗暂停
             UnityEngine.Time.timeScale = ts;
             UnityEngine.Time.fixedDeltaTime = 0.02f * Mathf.Max(ts, 0.05f);
         }

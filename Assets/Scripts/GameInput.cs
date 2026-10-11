@@ -9,7 +9,7 @@ namespace GameJam
 
         void Update()
         {
-            if (Disabled) return;
+            if (Disabled || CraftingBridge.IsOpen) return;     // 合成工坊开着：输入交给工坊
             var p = GameManager.I ? GameManager.I.player : null;
             var cam = Camera.main;
             if (!p || !cam) return;
