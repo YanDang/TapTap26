@@ -50,6 +50,12 @@ public class WaterTowerAuraBehavior : BiomechanicalAuraBase
             }
         }
 
+        // 建造模式/战术时停期间：保持光环范围圈显示供布防参考，但暂停水气脉冲！
+        if (IsCombatPaused)
+        {
+            return;
+        }
+
         // 脉动喷水周期
         pulseTimer += Time.deltaTime;
         if (pulseTimer >= 2.0f)

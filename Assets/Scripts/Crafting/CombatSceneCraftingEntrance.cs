@@ -96,6 +96,12 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
                     );
                 }
             }
+
+            // 实时刷新建造坞的构装卡片列表，确保工坊合成的构装即时呈现在抽屉中
+            if (BuildDockUI.Instance != null)
+            {
+                BuildDockUI.Instance.PopulateCards();
+            }
         }
 
         if (PlayerSessionData.isCraftingOpen) return;
@@ -199,9 +205,12 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
         stylesInit = true;
     }
 
+    [Tooltip("隐藏旧版 IMGUI 代码式界面（顶部血条与底部大按键）")]
+    public bool hideLegacyGUI = true;
+
     void OnGUI()
     {
-        if (PlayerSessionData.isCraftingOpen) return;
+        if (hideLegacyGUI || PlayerSessionData.isCraftingOpen) return;
 
         if (gameModeManager == null) gameModeManager = FindObjectOfType<GameModeManager>();
         if (gameModeManager != null && gameModeManager.IsBuildMode)
@@ -224,7 +233,7 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
         DrawTopHUD();
 
         // 2. 绘制【屏幕下方紧凑底座】(~22%高度)：左侧摇杆 + 右侧紧凑大按键
-        float dockHeight = virtualH * bottomDockRatio;
+        float dockHeight = Mathf.Max(virtualH * bottomDockRatio, 130f);
         float dockTopY = virtualH - dockHeight;
         DrawBottomDock(dockTopY, dockHeight);
 
@@ -473,6 +482,15 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
             {
                 player.PerformManualAttack();
             }
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (whitePixelTex != null)
+        {
+            Destroy(whitePixelTex);
+            whitePixelTex = null;
         }
     }
 }

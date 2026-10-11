@@ -28,8 +28,9 @@ public class PneumaticBedAuraBehavior : BiomechanicalAuraBase
         ResetPlayerBuff();
     }
 
-    void OnDestroy()
+    protected override void OnDestroy()
     {
+        base.OnDestroy();
         ResetPlayerBuff();
     }
 

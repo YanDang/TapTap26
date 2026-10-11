@@ -77,7 +77,7 @@ public class IsometricPathfinder : MonoBehaviour
                 if (groundTilemap == null)
                     groundTilemap = System.Array.Find(tms, t => t.name == "Tilemap") ?? (tms.Length > 0 ? tms[0] : null);
                 if (buildTilemap == null)
-                    buildTilemap = System.Array.Find(tms, t => t.name != "Tilemap") ?? groundTilemap;
+                    buildTilemap = System.Array.Find(tms, t => t.name != "Tilemap" && t != groundTilemap);
             }
         }
     }
@@ -113,7 +113,7 @@ public class IsometricPathfinder : MonoBehaviour
         if (groundTilemap == null || !groundTilemap.HasTile(cell))
             return false;
 
-        if (buildTilemap != null && buildTilemap.HasTile(cell))
+        if (buildTilemap != null && buildTilemap != groundTilemap && buildTilemap.HasTile(cell))
             return false;
 
         if (DynamicBlockedCells.Contains(cell))

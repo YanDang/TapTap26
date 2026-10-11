@@ -57,6 +57,7 @@ public class CameraController : MonoBehaviour
     // 鼠标状态
     private Vector2 lastMousePosition;
     private bool isMouseDragging = false;
+    private bool isDragBlockedByUI = false;
 
     // 触控状态
     private Vector2 lastTouchPosition;
@@ -232,20 +233,26 @@ public class CameraController : MonoBehaviour
         // 鼠标拖拽平移（仅在自由视角 / 建造模式下生效）
         if (Input.GetMouseButtonDown(mouseDragButton))
         {
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            bool overUI = (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) ||
+                          (BuildDockUI.Instance != null && BuildDockUI.Instance.IsPointerOverDrawer(Input.mousePosition));
+
+            if (overUI)
             {
+                isDragBlockedByUI = true;
                 isMouseDragging = false;
                 return;
             }
+
+            isDragBlockedByUI = false;
             isMouseDragging = true;
             lastMousePosition = Input.mousePosition;
         }
         else if (Input.GetMouseButton(mouseDragButton))
         {
-            if (!isMouseDragging)
+            if (isDragBlockedByUI || !isMouseDragging)
             {
-                isMouseDragging = true;
-                lastMousePosition = Input.mousePosition;
+                isMouseDragging = false;
+                return;
             }
 
             Vector2 currentMousePos = Input.mousePosition;
@@ -262,6 +269,7 @@ public class CameraController : MonoBehaviour
         else
         {
             isMouseDragging = false;
+            isDragBlockedByUI = false;
         }
     }
 

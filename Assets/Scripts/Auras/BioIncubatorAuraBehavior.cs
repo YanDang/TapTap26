@@ -34,6 +34,12 @@ public class BioIncubatorAuraBehavior : BiomechanicalAuraBase
         if (rangeRing != null && !rangeRing.activeSelf) rangeRing.SetActive(true);
         UpdateRingPulse(2.4f, 0.07f);
 
+        // 建造模式/战术时停期间：保持光环范围圈显示供布防参考，但暂停诱引与反戈！
+        if (IsCombatPaused)
+        {
+            return;
+        }
+
         // 1. 心智诱引脉冲（温和聚怪微牵引）
         lureTimer += Time.deltaTime;
         if (lureTimer >= 1.2f)

@@ -235,6 +235,15 @@ public class FurnitureObject : MonoBehaviour
     {
         AllFurniture.Remove(this);
         UnregisterFromGrid();
+
+        if (promptRing != null)
+        {
+            var sr = promptRing.GetComponent<SpriteRenderer>();
+            if (sr != null && sr.material != null)
+            {
+                Destroy(sr.material);
+            }
+        }
     }
 
     private void RegisterToGrid()
@@ -316,7 +325,7 @@ public class FurnitureObject : MonoBehaviour
                 }
 
                 // 2. 障碍物碰撞检测：如果撞上防御方块/栅栏/建筑，立即撞停！
-                if (pathfinder.buildTilemap != null && pathfinder.buildTilemap.HasTile(currentCell))
+                if (pathfinder.buildTilemap != null && pathfinder.buildTilemap != pathfinder.groundTilemap && pathfinder.buildTilemap.HasTile(currentCell))
                 {
                     if (DamageTextManager.Instance != null)
                     {
@@ -378,7 +387,7 @@ public class FurnitureObject : MonoBehaviour
             Vector3Int cell = pathfinder.WorldToCell(transform.position);
 
             // 1. 若当前格无地面或被建筑占位，回退搜索临近空格
-            if (!pathfinder.groundTilemap.HasTile(cell) || (pathfinder.buildTilemap != null && pathfinder.buildTilemap.HasTile(cell)))
+            if (!pathfinder.groundTilemap.HasTile(cell) || (pathfinder.buildTilemap != null && pathfinder.buildTilemap != pathfinder.groundTilemap && pathfinder.buildTilemap.HasTile(cell)))
             {
                 cell = pathfinder.FindNearestWalkableNeighbor(cell, cell);
             }
@@ -390,7 +399,7 @@ public class FurnitureObject : MonoBehaviour
                 Vector3Int bestCell = cell;
                 foreach (var pos in pathfinder.groundTilemap.cellBounds.allPositionsWithin)
                 {
-                    if (pathfinder.groundTilemap.HasTile(pos) && (pathfinder.buildTilemap == null || !pathfinder.buildTilemap.HasTile(pos)))
+                    if (pathfinder.groundTilemap.HasTile(pos) && (pathfinder.buildTilemap == null || pathfinder.buildTilemap == pathfinder.groundTilemap || !pathfinder.buildTilemap.HasTile(pos)))
                     {
                         float d = Vector3.Distance(transform.position, pathfinder.groundTilemap.GetCellCenterWorld(pos));
                         if (d < minD)

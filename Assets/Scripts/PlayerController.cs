@@ -63,6 +63,10 @@ public class PlayerController : MonoBehaviour
     [Header("Visuals (角色表现)")]
     public SpriteRenderer playerRenderer;
     public Transform shadowTransform;
+    [Tooltip("骨骼动画控制器组件")]
+    public Animator playerAnimator;
+    [Tooltip("骨骼动画根节点（用于整体左右镜像翻转）")]
+    public Transform visualRoot;
     public float walkBobAmount = 0.07f;
     public float walkBobFrequency = 14f;
 
@@ -110,6 +114,7 @@ public class PlayerController : MonoBehaviour
     private readonly List<Vector3> waypoints = new List<Vector3>();
     private int currentWaypointIndex = 0;
     private bool isMoving = false;
+    private bool isMovingByKeyboard = false;
 
     // 手势识别
     private Vector2 pointerDownPos;
@@ -135,6 +140,9 @@ public class PlayerController : MonoBehaviour
     private float markerTimer = 0f;
 
     private Camera cam;
+    private Coroutine hurtCoroutine = null;
+    private SpriteRenderer[] cachedVisualRenderers = null;
+    private Color[] cachedOriginalColors = null;
 
     [HideInInspector] public float moveSpeedMultiplier = 1f;
     [HideInInspector] public float staminaCostMultiplier = 1f;
@@ -215,7 +223,7 @@ public class PlayerController : MonoBehaviour
             if (groundTilemap == null)
                 groundTilemap = System.Array.Find(tms, t => t.name == "Tilemap") ?? (tms.Length > 0 ? tms[0] : null);
             if (buildTilemap == null)
-                buildTilemap = System.Array.Find(tms, t => t.name != "Tilemap") ?? groundTilemap;
+                buildTilemap = System.Array.Find(tms, t => t.name != "Tilemap" && t != groundTilemap);
         }
 
         if (pathfinder == null)
@@ -229,13 +237,48 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (playerRenderer == null)
+        if (playerAnimator == null)
+            playerAnimator = GetComponentInChildren<Animator>();
+        if (visualRoot == null && playerAnimator != null)
+            visualRoot = playerAnimator.transform;
+
+        if (visualRoot == null && playerRenderer == null)
             playerRenderer = GetComponentInChildren<SpriteRenderer>();
 
         if (equippedWeapon == null)
             equippedWeapon = WeaponData.CreateDefault();
 
         CreateMarkerObject();
+        CacheOriginalColors();
+    }
+
+    void OnDisable()
+    {
+        if (hurtCoroutine != null)
+        {
+            StopCoroutine(hurtCoroutine);
+            hurtCoroutine = null;
+        }
+        ResetVisualColors();
+    }
+
+    public bool IsFacingLeft => visualRoot != null ? visualRoot.localScale.x < 0 : (playerRenderer != null && playerRenderer.flipX);
+
+    /// <summary>
+    /// 统一设置角色左右朝向（兼容单个 SpriteRenderer 与复合骨骼动画节点整体镜像翻转）
+    /// </summary>
+    public void SetVisualFacing(bool faceLeft)
+    {
+        if (visualRoot != null)
+        {
+            Vector3 s = visualRoot.localScale;
+            s.x = (faceLeft ? -1f : 1f) * Mathf.Abs(s.y);
+            visualRoot.localScale = s;
+        }
+        else if (playerRenderer != null)
+        {
+            playerRenderer.flipX = faceLeft;
+        }
     }
 
     private void CreateMarkerObject()
@@ -273,6 +316,12 @@ public class PlayerController : MonoBehaviour
         UpdateAutoAttack(); // 怪物在攻击范围内时自动触发近战攻击
         UpdateMovement();
         UpdateMarkerAnimation();
+
+        // 空格键 / J 键手动攻击（测试与战斗兼顾）
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.J))
+        {
+            TriggerManualAttack();
+        }
     }
 
     private void HandleInput()
@@ -410,10 +459,7 @@ public class PlayerController : MonoBehaviour
                     if (playerDist <= 1.95f)
                     {
                         Vector3 kickDir = new Vector3(swipeDir.x, swipeDir.y, 0f).normalized;
-                        if (playerRenderer != null)
-                        {
-                            playerRenderer.flipX = kickDir.x < 0;
-                        }
+                        SetVisualFacing(kickDir.x < 0);
 
                         touchedFurn.Kick(kickDir);
 
@@ -567,10 +613,7 @@ public class PlayerController : MonoBehaviour
                     {
                         // 满足近身且手指划过家具：角色顺应手指滑动方向将家具飞速踢出冲撞！
                         Vector3 kickDir = new Vector3(swipeDir.x, swipeDir.y, 0f).normalized;
-                        if (playerRenderer != null)
-                        {
-                            playerRenderer.flipX = kickDir.x < 0;
-                        }
+                        SetVisualFacing(kickDir.x < 0);
 
                         touchedFurn.Kick(kickDir);
 
@@ -747,10 +790,7 @@ public class PlayerController : MonoBehaviour
         Vector3 throwDir = diff.normalized;
         float dist = diff.magnitude;
 
-        if (playerRenderer != null)
-        {
-            playerRenderer.flipX = throwDir.x < 0;
-        }
+        SetVisualFacing(throwDir.x < 0);
 
         var f = heldFurniture;
         DropFurniture();
@@ -849,10 +889,7 @@ public class PlayerController : MonoBehaviour
 
         if (!isMoving && !isRolling && !isAttackingAnim)
         {
-            if (playerRenderer != null)
-            {
-                playerRenderer.flipX = currentTarget.transform.position.x < transform.position.x;
-            }
+            SetVisualFacing(currentTarget.transform.position.x < transform.position.x);
         }
     }
 
@@ -920,8 +957,30 @@ public class PlayerController : MonoBehaviour
         float v = Input.GetAxisRaw("Vertical");
         if (Mathf.Abs(h) > 0.05f || Mathf.Abs(v) > 0.05f)
         {
+            isMovingByKeyboard = true;
             MoveWithInput(new Vector2(h, v).normalized);
         }
+        else
+        {
+            isMovingByKeyboard = false;
+        }
+    }
+
+    /// <summary>
+    /// 手动释放普通攻击（支持空挥与锁定攻击）
+    /// </summary>
+    public void TriggerManualAttack()
+    {
+        if (attackCooldownTimer > 0f || isAttackingAnim) return;
+
+        // 若当前未锁定敌人，但在前方附近有怪物，自动辅助锁定
+        if (currentTarget == null || !currentTarget.IsAlive)
+        {
+            currentTarget = FindEnemyNear(transform.position, 3.5f);
+        }
+
+        attackCooldownTimer = CurrentAttackInterval;
+        StartCoroutine(PerformAttackRoutine());
     }
 
     /// <summary>
@@ -931,8 +990,9 @@ public class PlayerController : MonoBehaviour
     {
         if (!canMove || isRolling || moveDir.sqrMagnitude < 0.01f) return;
 
-        // 摇杆主动输入时打断点击寻路
-        StopMovement();
+        // 摇杆/键盘输入时打断点击寻路路径
+        isMoving = false;
+        waypoints.Clear();
 
         Vector3 nextPos = transform.position + new Vector3(moveDir.x, moveDir.y, 0f) * (EffectiveMoveSpeed * Time.deltaTime);
 
@@ -942,17 +1002,22 @@ public class PlayerController : MonoBehaviour
 
         bool canPass = true;
         if (groundTilemap != null && !groundTilemap.HasTile(nextCell)) canPass = false;
-        if (buildTilemap != null && buildTilemap.HasTile(nextCell)) canPass = false;
+        if (buildTilemap != null && buildTilemap != groundTilemap && buildTilemap.HasTile(nextCell)) canPass = false;
         if (IsometricPathfinder.DynamicBlockedCells.Contains(nextCell)) canPass = false;
 
         if (canPass)
         {
             transform.position = nextPos;
-            if (playerRenderer != null)
-            {
-                if (moveDir.x > 0.05f) playerRenderer.flipX = false;
-                else if (moveDir.x < -0.05f) playerRenderer.flipX = true;
 
+            if (moveDir.x > 0.05f) SetVisualFacing(false);
+            else if (moveDir.x < -0.05f) SetVisualFacing(true);
+
+            if (playerAnimator != null)
+            {
+                playerAnimator.SetFloat("Speed", 1f);
+            }
+            else if (playerRenderer != null)
+            {
                 float bob = Mathf.Abs(Mathf.Sin(Time.time * walkBobFrequency)) * walkBobAmount;
                 playerRenderer.transform.localPosition = new Vector3(0f, bob, 0f);
             }
@@ -961,11 +1026,20 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator PerformAttackRoutine()
     {
-        if (currentTarget == null || !currentTarget.IsAlive) yield break;
-
         isAttackingAnim = true;
-        Vector3 enemyPos = currentTarget.transform.position;
-        Vector3 attackDir = (enemyPos - transform.position).normalized;
+        Vector3 attackDir = (visualRoot != null && visualRoot.localScale.x < 0) ? Vector3.left : Vector3.right;
+
+        if (currentTarget != null && currentTarget.IsAlive)
+        {
+            Vector3 enemyPos = currentTarget.transform.position;
+            attackDir = (enemyPos - transform.position).normalized;
+            SetVisualFacing(attackDir.x < 0);
+        }
+
+        if (playerAnimator != null)
+        {
+            playerAnimator.SetTrigger("Attack");
+        }
 
         float dmg = CurrentAttackDamage;
         float guardBreak = CurrentGuardBreakPower;
@@ -973,27 +1047,30 @@ public class PlayerController : MonoBehaviour
         // 生成斩击光弧或重砸特效
         SpawnSlashEffect(attackDir, heldFurniture != null);
 
-        // 攻击微突进动作
-        if (playerRenderer != null)
+        // 攻击微突进动作（仅对静态 Sprite 生效，骨骼动画自带攻击动效）
+        if (playerRenderer != null && visualRoot == null)
         {
             playerRenderer.transform.localPosition = attackDir * (heldFurniture != null ? 0.22f : 0.15f);
         }
 
-        float hitDist = Vector2.Distance(transform.position, enemyPos);
-        if (hitDist <= attackRange * 1.35f)
+        if (currentTarget != null && currentTarget.IsAlive)
         {
-            // 造成伤害并削弱破防值
-            currentTarget.TakeDamage(dmg, guardBreak, transform.position);
-
-            // 命中敌人恢复 8 点精力
-            currentStamina = Mathf.Min(maxStamina, currentStamina + 8f);
-
-            // 机制落地（需求5）：若是手持家具攻击，瞬间砸碎销毁，造成破片碎裂范围爆发！
-            if (heldFurniture != null)
+            float hitDist = Vector2.Distance(transform.position, currentTarget.transform.position);
+            if (hitDist <= attackRange * 1.35f)
             {
-                var f = heldFurniture;
-                DropFurniture();
-                f.TriggerShatterBurst();
+                // 造成伤害并削弱破防值
+                currentTarget.TakeDamage(dmg, guardBreak, transform.position);
+
+                // 命中敌人恢复 8 点精力
+                currentStamina = Mathf.Min(maxStamina, currentStamina + 8f);
+
+                // 机制落地（需求5）：若是手持家具攻击，瞬间砸碎销毁，造成破片碎裂范围爆发！
+                if (heldFurniture != null)
+                {
+                    var f = heldFurniture;
+                    DropFurniture();
+                    f.TriggerShatterBurst();
+                }
             }
         }
 
@@ -1003,6 +1080,8 @@ public class PlayerController : MonoBehaviour
         {
             playerRenderer.transform.localPosition = Vector3.zero;
         }
+
+        yield return new WaitForSeconds(0.2f);
         isAttackingAnim = false;
     }
 
@@ -1019,8 +1098,12 @@ public class PlayerController : MonoBehaviour
 
         var sr = slashGo.AddComponent<SpriteRenderer>();
         sr.sprite = spriteToUse;
-        var unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
-        if (unlitShader != null) sr.material = new Material(unlitShader);
+        if (sharedSlashMaterial == null)
+        {
+            var unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+            if (unlitShader != null) sharedSlashMaterial = new Material(unlitShader);
+        }
+        if (sharedSlashMaterial != null) sr.sharedMaterial = sharedSlashMaterial;
 
         // 手持家具猛砸为烈焰金橙色，常规剑击为青白银弧
         sr.color = isHeavySmash ? new Color(1f, 0.6f, 0.15f, 0.95f) : new Color(0.9f, 0.95f, 1f, 0.9f);
@@ -1028,6 +1111,8 @@ public class PlayerController : MonoBehaviour
 
         StartCoroutine(AnimateSlash(slashGo, sr, isHeavySmash));
     }
+
+    private static Material sharedSlashMaterial;
 
     private IEnumerator AnimateSlash(GameObject go, SpriteRenderer sr, bool isHeavy)
     {
@@ -1081,7 +1166,7 @@ public class PlayerController : MonoBehaviour
             bool canPass = true;
             if (groundTilemap != null && !groundTilemap.HasTile(nextCell))
                 canPass = false;
-            if (buildTilemap != null && buildTilemap.HasTile(nextCell))
+            if (buildTilemap != null && buildTilemap != groundTilemap && buildTilemap.HasTile(nextCell))
                 canPass = false;
 
             if (canPass)
@@ -1089,7 +1174,12 @@ public class PlayerController : MonoBehaviour
                 transform.position = nextPos;
             }
 
-            if (playerRenderer != null)
+            if (visualRoot != null)
+            {
+                float currentAngle = Mathf.Lerp(0f, totalSpin, t);
+                visualRoot.localRotation = Quaternion.Euler(0f, 0f, currentAngle);
+            }
+            else if (playerRenderer != null)
             {
                 float currentAngle = Mathf.Lerp(0f, totalSpin, t);
                 playerRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, currentAngle);
@@ -1098,6 +1188,10 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
 
+        if (visualRoot != null)
+        {
+            visualRoot.localRotation = Quaternion.identity;
+        }
         if (playerRenderer != null)
         {
             playerRenderer.transform.localRotation = Quaternion.identity;
@@ -1112,6 +1206,10 @@ public class PlayerController : MonoBehaviour
     {
         if (isRolling || !isMoving || waypoints.Count == 0 || currentWaypointIndex >= waypoints.Count)
         {
+            if (playerAnimator != null && !isMovingByKeyboard)
+            {
+                playerAnimator.SetFloat("Speed", 0f);
+            }
             if (!isAttackingAnim && playerRenderer != null && !isRolling)
             {
                 playerRenderer.transform.localPosition = Vector3.zero;
@@ -1121,17 +1219,18 @@ public class PlayerController : MonoBehaviour
 
         Vector3 currentTargetWp = waypoints[currentWaypointIndex];
 
-        if (playerRenderer != null)
-        {
-            if (currentTargetWp.x > transform.position.x + 0.02f)
-                playerRenderer.flipX = false;
-            else if (currentTargetWp.x < transform.position.x - 0.02f)
-                playerRenderer.flipX = true;
-        }
+        if (currentTargetWp.x > transform.position.x + 0.02f)
+            SetVisualFacing(false);
+        else if (currentTargetWp.x < transform.position.x - 0.02f)
+            SetVisualFacing(true);
 
         transform.position = Vector3.MoveTowards(transform.position, currentTargetWp, EffectiveMoveSpeed * Time.deltaTime);
 
-        if (playerRenderer != null)
+        if (playerAnimator != null)
+        {
+            playerAnimator.SetFloat("Speed", 1f);
+        }
+        else if (playerRenderer != null)
         {
             float bob = Mathf.Abs(Mathf.Sin(Time.time * walkBobFrequency)) * walkBobAmount;
             playerRenderer.transform.localPosition = new Vector3(0f, bob, 0f);
@@ -1146,6 +1245,10 @@ public class PlayerController : MonoBehaviour
             {
                 isMoving = false;
                 waypoints.Clear();
+                if (playerAnimator != null && !isMovingByKeyboard)
+                {
+                    playerAnimator.SetFloat("Speed", 0f);
+                }
                 if (playerRenderer != null)
                 {
                     playerRenderer.transform.localPosition = Vector3.zero;
@@ -1157,7 +1260,12 @@ public class PlayerController : MonoBehaviour
     public void StopMovement()
     {
         isMoving = false;
+        isMovingByKeyboard = false;
         waypoints.Clear();
+        if (playerAnimator != null)
+        {
+            playerAnimator.SetFloat("Speed", 0f);
+        }
         if (playerRenderer != null && !isRolling)
         {
             playerRenderer.transform.localPosition = Vector3.zero;
@@ -1196,7 +1304,7 @@ public class PlayerController : MonoBehaviour
     {
         if (heldFurniture == null) return;
 
-        Vector3 dropPos = optionalDropPos ?? (transform.position + (playerRenderer != null && playerRenderer.flipX ? Vector3.left * 0.6f : Vector3.right * 0.6f));
+        Vector3 dropPos = optionalDropPos ?? (transform.position + (IsFacingLeft ? Vector3.left * 0.6f : Vector3.right * 0.6f));
         FurnitureObject f = heldFurniture;
         heldFurniture = null;
         f.PutDown(dropPos);
@@ -1215,7 +1323,7 @@ public class PlayerController : MonoBehaviour
         var furn = FurnitureObject.GetNearestPlaced(transform.position, 1.95f);
         if (furn == null) return;
 
-        Vector3 kickDir = (playerRenderer != null && playerRenderer.flipX ? Vector3.left : Vector3.right);
+        Vector3 kickDir = (IsFacingLeft ? Vector3.left : Vector3.right);
         if (currentTarget != null && currentTarget.IsAlive)
         {
             kickDir = (currentTarget.transform.position - furn.transform.position).normalized;
@@ -1290,7 +1398,7 @@ public class PlayerController : MonoBehaviour
         {
             dir = (currentTarget.transform.position - transform.position).normalized;
         }
-        else if (playerRenderer != null && playerRenderer.flipX)
+        else if (IsFacingLeft)
         {
             dir = Vector2.left;
         }
@@ -1332,6 +1440,50 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
+    private void CacheOriginalColors()
+    {
+        if (cachedVisualRenderers != null && cachedVisualRenderers.Length > 0) return;
+
+        if (visualRoot != null)
+        {
+            cachedVisualRenderers = visualRoot.GetComponentsInChildren<SpriteRenderer>(true);
+        }
+        else if (playerRenderer != null)
+        {
+            cachedVisualRenderers = new SpriteRenderer[] { playerRenderer };
+        }
+
+        if (cachedVisualRenderers != null)
+        {
+            cachedOriginalColors = new Color[cachedVisualRenderers.Length];
+            for (int i = 0; i < cachedVisualRenderers.Length; i++)
+            {
+                if (cachedVisualRenderers[i] != null)
+                {
+                    Color c = cachedVisualRenderers[i].color;
+                    // 防止受击泛红状态已被污染固化，若检测到纯红则兜底恢复默认纯白
+                    if (c.r > 0.9f && c.g < 0.25f && c.b < 0.25f)
+                        c = Color.white;
+                    cachedOriginalColors[i] = c;
+                }
+            }
+        }
+    }
+
+    public void ResetVisualColors()
+    {
+        if (cachedVisualRenderers != null && cachedOriginalColors != null)
+        {
+            for (int i = 0; i < cachedVisualRenderers.Length; i++)
+            {
+                if (cachedVisualRenderers[i] != null)
+                {
+                    cachedVisualRenderers[i].color = cachedOriginalColors[i];
+                }
+            }
+        }
+    }
+
     public void TakeDamage(float damage)
     {
         if (IsInvulnerable) return;
@@ -1344,17 +1496,36 @@ public class PlayerController : MonoBehaviour
             DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.4f, $"-{damage:0}", new Color(1f, 0.25f, 0.25f));
         }
 
-        StartCoroutine(PlayerHurtRoutine());
+        if (hurtCoroutine != null)
+        {
+            StopCoroutine(hurtCoroutine);
+        }
+        hurtCoroutine = StartCoroutine(PlayerHurtRoutine());
     }
 
     private IEnumerator PlayerHurtRoutine()
     {
-        if (playerRenderer != null)
+        CacheOriginalColors();
+
+        if (cachedVisualRenderers != null && cachedVisualRenderers.Length > 0)
         {
-            playerRenderer.color = Color.red;
-            yield return new WaitForSeconds(0.1f);
-            playerRenderer.color = Color.white;
+            // 受击受创闪烁：高亮绯红闪烁（保留贴图透明度和明暗），闪烁时间 0.12s
+            Color hurtFlashColor = new Color(1f, 0.35f, 0.35f, 1f);
+            for (int i = 0; i < cachedVisualRenderers.Length; i++)
+            {
+                if (cachedVisualRenderers[i] != null)
+                {
+                    hurtFlashColor.a = cachedOriginalColors != null ? cachedOriginalColors[i].a : 1f;
+                    cachedVisualRenderers[i].color = hurtFlashColor;
+                }
+            }
+
+            yield return new WaitForSeconds(0.12f);
+
+            // 彻底还原至缓存的绝对真实原始色，彻底解决连续受击叠加导致的永久变红 Bug
+            ResetVisualColors();
         }
+        hurtCoroutine = null;
     }
 
     private void ShowMarker(Vector3 position, Color color)
@@ -1388,6 +1559,19 @@ public class PlayerController : MonoBehaviour
             {
                 markerObject.SetActive(false);
             }
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (markerRenderer != null && markerRenderer.material != null)
+        {
+            Destroy(markerRenderer.material);
+        }
+        if (sharedSlashMaterial != null)
+        {
+            Destroy(sharedSlashMaterial);
+            sharedSlashMaterial = null;
         }
     }
 }

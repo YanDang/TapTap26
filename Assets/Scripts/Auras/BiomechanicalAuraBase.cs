@@ -73,6 +73,19 @@ public abstract class BiomechanicalAuraBase : MonoBehaviour
     }
 
     /// <summary>
+    /// 全局战斗是否处于暂停状态（例如建造模式下战术时停布防）
+    /// </summary>
+    public static bool IsCombatPaused
+    {
+        get
+        {
+            if (EnemyController.isAIPaused) return true;
+            if (BuildDockUI.Instance != null && BuildDockUI.Instance.isDrawerOpen) return true;
+            return false;
+        }
+    }
+
+    /// <summary>
     /// 光环温和呼吸微动效果
     /// </summary>
     protected void UpdateRingPulse(float frequency = 3.5f, float amplitude = 0.06f)
@@ -82,5 +95,14 @@ public abstract class BiomechanicalAuraBase : MonoBehaviour
         float sin = Mathf.Sin(Time.time * frequency) * amplitude;
         float currentScale = (baseRingRadius * 2f) * (1f + sin);
         rangeRing.transform.localScale = new Vector3(currentScale, currentScale, 1f);
+    }
+
+    protected virtual void OnDestroy()
+    {
+        if (ringMaterial != null)
+        {
+            Destroy(ringMaterial);
+            ringMaterial = null;
+        }
     }
 }

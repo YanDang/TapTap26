@@ -34,6 +34,12 @@ public class HydroCannonAuraBehavior : BiomechanicalAuraBase
         if (rangeRing != null && !rangeRing.activeSelf) rangeRing.SetActive(true);
         UpdateRingPulse(2.5f, 0.05f);
 
+        // 建造模式/战术时停期间：保持光环范围圈显示供布防参考，但暂停水炮发射！
+        if (IsCombatPaused)
+        {
+            return;
+        }
+
         // 检测是否在电鳗电机的常驻电网中（攻速提升 25%）
         isOverclocked = EelGeneratorAuraBehavior.IsPositionPowered(transform.position);
 
@@ -51,6 +57,8 @@ public class HydroCannonAuraBehavior : BiomechanicalAuraBase
             }
         }
     }
+
+    private static Material sharedWaterBladeMaterial;
 
     private bool TryFireAtNearestEnemy()
     {
@@ -96,9 +104,19 @@ public class HydroCannonAuraBehavior : BiomechanicalAuraBase
         Destroy(bladeGO.GetComponent<Collider>());
 
         var mr = bladeGO.GetComponent<MeshRenderer>();
-        var unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
-        if (unlitShader != null) mr.material = new Material(unlitShader);
-        mr.material.color = new Color(0.2f, 0.9f, 1f, 0.9f);
+        if (sharedWaterBladeMaterial == null)
+        {
+            var unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+            if (unlitShader != null)
+            {
+                sharedWaterBladeMaterial = new Material(unlitShader);
+                sharedWaterBladeMaterial.color = new Color(0.2f, 0.9f, 1f, 0.9f);
+            }
+        }
+        if (sharedWaterBladeMaterial != null)
+        {
+            mr.sharedMaterial = sharedWaterBladeMaterial;
+        }
         mr.sortingOrder = 25;
 
         var proj = bladeGO.AddComponent<WaterBladeProjectile>();

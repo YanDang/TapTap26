@@ -43,9 +43,12 @@ public class EnemyController : MonoBehaviour
 
     [Header("Visuals (外观与特效)")]
     public SpriteRenderer monsterRenderer;
+    public Transform visualRoot;
+    public Animator enemyAnimator;
     public Transform shadowTransform;
     public Sprite clawSlashSprite;
     public Sprite targetRingSprite;
+    private SpriteRenderer[] visualRenderers;
 
     [Header("Pathfinding (智能绕障寻路)")]
     public IsometricPathfinder pathfinder;
@@ -126,8 +129,27 @@ public class EnemyController : MonoBehaviour
 
         spawnPosition = transform.position;
 
+        if (visualRoot == null)
+        {
+            var vr = transform.Find("VisualRoot");
+            if (vr != null) visualRoot = vr;
+        }
+
+        if (visualRoot != null)
+        {
+            visualRenderers = visualRoot.GetComponentsInChildren<SpriteRenderer>(true);
+            if (enemyAnimator == null)
+            {
+                enemyAnimator = visualRoot.GetComponentInChildren<Animator>();
+            }
+        }
+
         if (monsterRenderer == null)
-            monsterRenderer = GetComponentInChildren<SpriteRenderer>();
+        {
+            var v = transform.Find("Visual");
+            if (v != null) monsterRenderer = v.GetComponent<SpriteRenderer>();
+            else monsterRenderer = GetComponentInChildren<SpriteRenderer>();
+        }
 
         if (monsterRenderer != null)
         {
@@ -139,6 +161,17 @@ public class EnemyController : MonoBehaviour
             originalScale = monsterRenderer.transform.localScale;
             if (originalScale.magnitude < 0.1f) originalScale = Vector3.one;
             monsterRenderer.transform.localScale = originalScale;
+        }
+        else if (visualRenderers != null && visualRenderers.Length > 0)
+        {
+            originalColor = visualRenderers[0].color;
+            if (originalColor.a < 0.1f) originalColor = Color.white;
+            originalColor.a = 1f;
+        }
+
+        if (enemyAnimator == null)
+        {
+            enemyAnimator = GetComponentInChildren<Animator>();
         }
 
         if (pathfinder == null)
@@ -164,9 +197,75 @@ public class EnemyController : MonoBehaviour
             monsterRenderer.transform.localScale = originalScale;
             monsterRenderer.transform.localPosition = Vector3.zero;
         }
+        SetVisualColor(originalColor);
+        SetVisualFacing(false);
+        SetMoveAnimation(false);
+
         if (hpBarRoot != null) hpBarRoot.SetActive(true);
         UpdateHealthBar();
         UpdateGuardBar();
+    }
+
+    public void SetVisualFacing(bool faceLeft)
+    {
+        if (visualRoot != null)
+        {
+            Vector3 s = visualRoot.localScale;
+            s.x = (faceLeft ? -1f : 1f) * Mathf.Abs(s.y > 0.001f ? s.y : 1f);
+            visualRoot.localScale = s;
+        }
+        else if (monsterRenderer != null)
+        {
+            monsterRenderer.flipX = faceLeft;
+        }
+    }
+
+    public void SetMoveAnimation(bool moving)
+    {
+        if (enemyAnimator != null)
+        {
+            enemyAnimator.SetFloat("Speed", moving ? 1f : 0f);
+        }
+    }
+
+    public void SetVisualColor(Color color)
+    {
+        if (monsterRenderer != null) monsterRenderer.color = color;
+        if (visualRenderers != null)
+        {
+            for (int i = 0; i < visualRenderers.Length; i++)
+            {
+                if (visualRenderers[i] != null) visualRenderers[i].color = color;
+            }
+        }
+    }
+
+    public void SetVisualAlpha(float alpha)
+    {
+        if (monsterRenderer != null)
+        {
+            Color c = originalColor;
+            c.a = alpha;
+            monsterRenderer.color = c;
+        }
+        if (visualRenderers != null)
+        {
+            for (int i = 0; i < visualRenderers.Length; i++)
+            {
+                if (visualRenderers[i] != null)
+                {
+                    Color c = visualRenderers[i].color;
+                    c.a = alpha;
+                    visualRenderers[i].color = c;
+                }
+            }
+        }
+    }
+
+    public void SetVisualPosition(Vector3 localPos)
+    {
+        if (visualRoot != null) visualRoot.localPosition = localPos;
+        else if (monsterRenderer != null) monsterRenderer.transform.localPosition = localPos;
     }
 
     private void CreateTargetRing()
@@ -209,7 +308,7 @@ public class EnemyController : MonoBehaviour
     {
         hpBarRoot = new GameObject("HPBar");
         hpBarRoot.transform.SetParent(transform, false);
-        hpBarRoot.transform.localPosition = new Vector3(0f, 0.85f, 0f);
+        hpBarRoot.transform.localPosition = new Vector3(0f, 1.35f, 0f);
 
         var unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
 
@@ -264,20 +363,23 @@ public class EnemyController : MonoBehaviour
         if (isDead) return;
 
         // 建造模式或合成工坊/温室开启下全局时停冻结，给玩家静谧布防空间
-        if (isAIPaused || PlayerSessionData.isCraftingOpen) return;
+        if (isAIPaused || PlayerSessionData.isCraftingOpen)
+        {
+            SetMoveAnimation(false);
+            return;
+        }
 
         // 麻痹硬直拦截（电鳗发电机、弹力金属等触发）
         if (paralysisTimer > 0f)
         {
+            SetMoveAnimation(false);
             paralysisTimer -= Time.deltaTime;
-            if (monsterRenderer != null)
+            float shake = Mathf.Sin(Time.time * 30f) * 0.04f;
+            SetVisualPosition(new Vector3(shake, 0f, 0f));
+
+            if (paralysisTimer <= 0f)
             {
-                float shake = Mathf.Sin(Time.time * 30f) * 0.04f;
-                monsterRenderer.transform.localPosition = new Vector3(shake, 0f, 0f);
-            }
-            if (paralysisTimer <= 0f && monsterRenderer != null)
-            {
-                monsterRenderer.transform.localPosition = Vector3.zero;
+                SetVisualPosition(Vector3.zero);
             }
             return;
         }
@@ -297,11 +399,8 @@ public class EnemyController : MonoBehaviour
             {
                 isPacified = false;
                 pacifiedTargetEnemy = null;
-                if (monsterRenderer != null)
-                {
-                    monsterRenderer.color = originalColor;
-                    monsterRenderer.transform.localPosition = Vector3.zero;
-                }
+                SetVisualColor(originalColor);
+                SetVisualPosition(Vector3.zero);
                 if (DamageTextManager.Instance != null)
                 {
                     DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.7f, "💢 驯化解除!", Color.red, 0.10f);
@@ -317,12 +416,10 @@ public class EnemyController : MonoBehaviour
         // 瘫痪状态更新
         if (isStaggered)
         {
+            SetMoveAnimation(false);
             staggerTimer -= Time.deltaTime;
-            if (monsterRenderer != null)
-            {
-                float shake = Mathf.Sin(Time.time * 28f) * 0.04f;
-                monsterRenderer.transform.localPosition = new Vector3(shake, 0f, 0f);
-            }
+            float shake = Mathf.Sin(Time.time * 28f) * 0.04f;
+            SetVisualPosition(new Vector3(shake, 0f, 0f));
 
             if (staggerTimer <= 0f) RecoverFromStagger();
             return;
@@ -334,7 +431,11 @@ public class EnemyController : MonoBehaviour
         if (targetPlayer == null)
             targetPlayer = FindObjectOfType<PlayerController>();
 
-        if (targetPlayer == null || isAttacking) return;
+        if (targetPlayer == null || isAttacking)
+        {
+            if (isAttacking) SetMoveAnimation(false);
+            return;
+        }
 
         float dist = Vector2.Distance(transform.position, targetPlayer.transform.position);
 
@@ -378,16 +479,21 @@ public class EnemyController : MonoBehaviour
         float distToSpawn = Vector2.Distance(transform.position, spawnPosition);
         if (distToSpawn > 0.4f)
         {
+            Vector3 moveDir = (spawnPosition - transform.position).normalized;
+            SetVisualFacing(moveDir.x < -0.05f);
+            SetMoveAnimation(true);
             transform.position = Vector3.MoveTowards(transform.position, spawnPosition, (moveSpeed * 0.5f) * Time.deltaTime);
         }
         else
         {
+            SetMoveAnimation(false);
             if (monsterRenderer != null) monsterRenderer.transform.localPosition = Vector3.zero;
         }
     }
 
     private void UpdateAlertState(float distToPlayer)
     {
+        SetMoveAnimation(false);
         alertTimer -= Time.deltaTime;
 
         // 玩家重新接近，再次发现！
@@ -420,8 +526,10 @@ public class EnemyController : MonoBehaviour
             float distToEnemy = Vector2.Distance(transform.position, currentTargetEnemy.transform.position);
             if (distToEnemy <= attackRange * 1.15f && attackCooldownTimer <= 0f)
             {
+                SetMoveAnimation(false);
                 attackCooldownTimer = attackCooldown;
                 currentTargetEnemy.TakeDamage(attackDamage, 30f, transform.position);
+                if (enemyAnimator != null) enemyAnimator.SetTrigger("Attack");
                 SpawnClawEffect();
                 if (DamageTextManager.Instance != null)
                 {
@@ -432,10 +540,10 @@ public class EnemyController : MonoBehaviour
 
             Vector3 enemyDir = (currentTargetEnemy.transform.position - transform.position).normalized;
             transform.position = Vector3.MoveTowards(transform.position, currentTargetEnemy.transform.position, moveSpeed * slowMultiplier * Time.deltaTime);
-            if (monsterRenderer != null)
+            SetVisualFacing(enemyDir.x < -0.05f);
+            SetMoveAnimation(true);
+            if (monsterRenderer != null && enemyAnimator == null)
             {
-                if (enemyDir.x > 0.05f) monsterRenderer.flipX = false;
-                else if (enemyDir.x < -0.05f) monsterRenderer.flipX = true;
                 float bob = Mathf.Abs(Mathf.Sin(Time.time * 8f)) * 0.03f;
                 monsterRenderer.transform.localPosition = new Vector3(0f, bob, 0f);
             }
@@ -449,6 +557,7 @@ public class EnemyController : MonoBehaviour
         // 游击战术支持：玩家拉开距离超过 loseTargetRange，丢失目标进入警觉搜寻态
         if (distToPlayer > loseTargetRange)
         {
+            SetMoveAnimation(false);
             aiState = EnemyAIState.Alert;
             alertTimer = 2.5f;
             if (DamageTextManager.Instance != null)
@@ -461,6 +570,7 @@ public class EnemyController : MonoBehaviour
         // 进入近战范围且冷却就绪，发动带危险圈的前摇挥击
         if (distToPlayer <= attackRange && attackCooldownTimer <= 0f)
         {
+            SetMoveAnimation(false);
             attackCoroutine = StartCoroutine(PerformAttackRoutine());
             return;
         }
@@ -471,11 +581,13 @@ public class EnemyController : MonoBehaviour
 
     private void UpdateBreakBarrierState(float distToPlayer)
     {
+        SetMoveAnimation(false);
         var blockingFurn = FurnitureObject.GetNearestPlaced(transform.position, 1.4f);
         if (blockingFurn != null && attackCooldownTimer <= 0f)
         {
             attackCooldownTimer = attackCooldown;
             blockingFurn.TakeHit(attackDamage, this);
+            if (enemyAnimator != null) enemyAnimator.SetTrigger("Attack");
             if (DamageTextManager.Instance != null)
             {
                 DamageTextManager.Instance.ShowText(blockingFurn.transform.position + Vector3.up * 0.5f, "💥 撞击路障!", new Color(1f, 0.5f, 0.2f), 0.09f);
@@ -533,6 +645,7 @@ public class EnemyController : MonoBehaviour
                     {
                         aiState = EnemyAIState.BreakBarrier;
                     }
+                    SetMoveAnimation(false);
                     return;
                 }
             }
@@ -546,12 +659,11 @@ public class EnemyController : MonoBehaviour
             Vector3 moveDir = (targetWp - transform.position).normalized;
 
             transform.position = Vector3.MoveTowards(transform.position, targetWp, moveSpeed * slowMultiplier * Time.deltaTime);
+            SetVisualFacing(moveDir.x < -0.05f);
+            SetMoveAnimation(true);
 
-            if (monsterRenderer != null)
+            if (monsterRenderer != null && enemyAnimator == null)
             {
-                if (moveDir.x > 0.05f) monsterRenderer.flipX = false;
-                else if (moveDir.x < -0.05f) monsterRenderer.flipX = true;
-
                 float bob = Mathf.Abs(Mathf.Sin(Time.time * 8f)) * 0.03f;
                 monsterRenderer.transform.localPosition = new Vector3(0f, bob, 0f);
             }
@@ -561,6 +673,10 @@ public class EnemyController : MonoBehaviour
                 currentWaypointIndex++;
             }
         }
+        else
+        {
+            SetMoveAnimation(false);
+        }
     }
 
     /// <summary>
@@ -569,12 +685,17 @@ public class EnemyController : MonoBehaviour
     private IEnumerator PerformAttackRoutine()
     {
         isAttacking = true;
+        SetMoveAnimation(false);
 
-        // 1. 身体蓄力泛红并微涨
+        // 1. 身体蓄力泛红并微涨，触发攻击动画
+        SetVisualColor(new Color(1f, 0.35f, 0.15f, 1f));
         if (monsterRenderer != null)
         {
-            monsterRenderer.color = new Color(1f, 0.35f, 0.15f, 1f);
             monsterRenderer.transform.localScale = originalScale * 1.2f;
+        }
+        if (enemyAnimator != null)
+        {
+            enemyAnimator.SetTrigger("Attack");
         }
 
         // 2. 激活地面危险判定圈 (Danger Zone Indicator)
@@ -602,12 +723,12 @@ public class EnemyController : MonoBehaviour
             yield return null;
         }
 
-        // 4. 隐藏判定圈，恢复体型
+        // 4. 隐藏判定圈，恢复体型与原色
         if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
 
+        SetVisualColor(originalColor);
         if (monsterRenderer != null)
         {
-            monsterRenderer.color = originalColor;
             monsterRenderer.transform.localScale = originalScale;
         }
 
@@ -725,6 +846,7 @@ public class EnemyController : MonoBehaviour
     {
         isStaggered = true;
         staggerTimer = staggerDuration;
+        SetMoveAnimation(false);
 
         if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
 
@@ -740,10 +862,7 @@ public class EnemyController : MonoBehaviour
             DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 1.0f, "⚡ STAGGERED!", new Color(1f, 0.85f, 0.15f), 0.13f);
         }
 
-        if (monsterRenderer != null)
-        {
-            monsterRenderer.color = new Color(0.7f, 0.7f, 1f, 1f);
-        }
+        SetVisualColor(new Color(0.7f, 0.7f, 1f, 1f));
     }
 
     public void RecoverFromStagger()
@@ -752,11 +871,8 @@ public class EnemyController : MonoBehaviour
         currentGuardBreak = maxGuardBreak;
         UpdateGuardBar();
 
-        if (monsterRenderer != null)
-        {
-            monsterRenderer.color = originalColor;
-            monsterRenderer.transform.localPosition = Vector3.zero;
-        }
+        SetVisualColor(originalColor);
+        SetVisualPosition(Vector3.zero);
 
         if (DamageTextManager.Instance != null)
         {
@@ -766,24 +882,23 @@ public class EnemyController : MonoBehaviour
 
     private IEnumerator DamageFlashRoutine(Vector3 attackerPos)
     {
-        if (monsterRenderer == null) yield break;
-
         Vector3 pushDir = (transform.position - attackerPos).normalized;
         pushDir.z = 0;
         transform.position += pushDir * 0.08f;
 
-        monsterRenderer.color = Color.red;
+        SetVisualColor(Color.red);
         yield return new WaitForSeconds(0.08f);
 
         if (!isStaggered)
-            monsterRenderer.color = originalColor;
+            SetVisualColor(originalColor);
         else
-            monsterRenderer.color = new Color(0.7f, 0.7f, 1f, 1f);
+            SetVisualColor(new Color(0.7f, 0.7f, 1f, 1f));
     }
 
     private void Die()
     {
         isDead = true;
+        SetMoveAnimation(false);
         if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
         if (attackCoroutine != null)
         {
@@ -816,11 +931,9 @@ public class EnemyController : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             float t = elapsed / dur;
+            SetVisualAlpha(1f - t);
             if (monsterRenderer != null)
             {
-                Color c = originalColor;
-                c.a = 1f - t;
-                monsterRenderer.color = c;
                 monsterRenderer.transform.localScale = originalScale * (1f - t * 0.4f);
             }
             yield return null;
@@ -831,6 +944,7 @@ public class EnemyController : MonoBehaviour
         foreach (var col in colliders) col.enabled = false;
 
         if (monsterRenderer != null) monsterRenderer.enabled = false;
+        if (visualRoot != null) visualRoot.gameObject.SetActive(false);
 
         if (!autoRespawn)
         {
@@ -869,6 +983,10 @@ public class EnemyController : MonoBehaviour
             monsterRenderer.transform.localScale = originalScale;
             monsterRenderer.transform.localPosition = Vector3.zero;
         }
+        if (visualRoot != null)
+        {
+            visualRoot.gameObject.SetActive(true);
+        }
         foreach (var col in colliders) col.enabled = true;
 
         // 复活淡入
@@ -878,15 +996,12 @@ public class EnemyController : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             float t = elapsed / dur;
-            if (monsterRenderer != null)
-            {
-                Color c = originalColor;
-                c.a = t;
-                monsterRenderer.color = c;
-            }
+            SetVisualAlpha(t);
             yield return null;
         }
-        if (monsterRenderer != null) monsterRenderer.color = originalColor;
+        SetVisualColor(originalColor);
+        SetVisualFacing(false);
+        SetMoveAnimation(false);
 
         if (hpBarRoot != null) hpBarRoot.SetActive(true);
         UpdateHealthBar();
@@ -1016,11 +1131,8 @@ public class EnemyController : MonoBehaviour
         }
 
         // 2. 驯化期间呈现持续粉红光晕特效，清晰昭示其已“反戈投诚”
-        if (monsterRenderer != null)
-        {
-            float pulse = Mathf.PingPong(Time.time * 3.5f, 0.5f);
-            monsterRenderer.color = Color.Lerp(originalColor, new Color(1f, 0.45f, 0.8f, 1f), pulse + 0.35f);
-        }
+        float pulse = Mathf.PingPong(Time.time * 3.5f, 0.5f);
+        SetVisualColor(Color.Lerp(originalColor, new Color(1f, 0.45f, 0.8f, 1f), pulse + 0.35f));
 
         // 3. 目标筛选：优先锁定除自身外的最近活跃【敌对怪物】（!other.isPacified）
         if (pacifiedTargetEnemy == null || !pacifiedTargetEnemy.IsAlive || pacifiedTargetEnemy.isPacified)
@@ -1048,11 +1160,13 @@ public class EnemyController : MonoBehaviour
             float dist = Vector2.Distance(transform.position, pacifiedTargetEnemy.transform.position);
             if (dist <= attackRange * 1.25f)
             {
+                SetMoveAnimation(false);
                 if (attackCooldownTimer <= 0f)
                 {
                     attackCooldownTimer = attackCooldown;
                     float dmg = attackDamage * 1.5f; // 驯化狂暴加成 150% 伤害
                     pacifiedTargetEnemy.TakeDamage(dmg, 45f, transform.position);
+                    if (enemyAnimator != null) enemyAnimator.SetTrigger("Attack");
                     SpawnClawEffect();
 
                     // 让被攻击的敌怪产生仇恨反击，激发怪兽互殴激烈场面
@@ -1072,12 +1186,11 @@ public class EnemyController : MonoBehaviour
                 // 追击敌对怪物
                 Vector3 moveDir = (pacifiedTargetEnemy.transform.position - transform.position).normalized;
                 transform.position = Vector3.MoveTowards(transform.position, pacifiedTargetEnemy.transform.position, moveSpeed * 1.35f * slowMultiplier * Time.deltaTime);
+                SetVisualFacing(moveDir.x < -0.05f);
+                SetMoveAnimation(true);
 
-                if (monsterRenderer != null)
+                if (monsterRenderer != null && enemyAnimator == null)
                 {
-                    if (moveDir.x > 0.05f) monsterRenderer.flipX = false;
-                    else if (moveDir.x < -0.05f) monsterRenderer.flipX = true;
-
                     float bob = Mathf.Abs(Mathf.Sin(Time.time * 8f)) * 0.03f;
                     monsterRenderer.transform.localPosition = new Vector3(0f, bob, 0f);
                 }
@@ -1099,19 +1212,22 @@ public class EnemyController : MonoBehaviour
                 {
                     Vector3 followDir = (targetPlayer.transform.position - transform.position).normalized;
                     transform.position = Vector3.MoveTowards(transform.position, targetPlayer.transform.position, moveSpeed * slowMultiplier * Time.deltaTime);
+                    SetVisualFacing(followDir.x < -0.05f);
+                    SetMoveAnimation(true);
 
-                    if (monsterRenderer != null)
+                    if (monsterRenderer != null && enemyAnimator == null)
                     {
-                        if (followDir.x > 0.05f) monsterRenderer.flipX = false;
-                        else if (followDir.x < -0.05f) monsterRenderer.flipX = true;
-
                         float bob = Mathf.Abs(Mathf.Sin(Time.time * 8f)) * 0.03f;
                         monsterRenderer.transform.localPosition = new Vector3(0f, bob, 0f);
                     }
                 }
-                else if (monsterRenderer != null)
+                else
                 {
-                    monsterRenderer.transform.localPosition = Vector3.zero;
+                    SetMoveAnimation(false);
+                    if (monsterRenderer != null)
+                    {
+                        monsterRenderer.transform.localPosition = Vector3.zero;
+                    }
                 }
             }
 
@@ -1123,6 +1239,38 @@ public class EnemyController : MonoBehaviour
                 if (DamageTextManager.Instance != null)
                 {
                     DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "❤️ 忠诚护卫中", new Color(1f, 0.55f, 0.85f), 0.09f);
+                }
+            }
+        }
+    }
+
+    void OnDestroy()
+    {
+        AllEnemies.Remove(this);
+
+        // 统一清理动态创建的 Native 材质球，防止显存与 Native 内存泄漏
+        if (targetRingRenderer != null && targetRingRenderer.material != null)
+        {
+            Destroy(targetRingRenderer.material);
+        }
+
+        if (dangerZoneObject != null)
+        {
+            var mr = dangerZoneObject.GetComponent<MeshRenderer>();
+            if (mr != null && mr.material != null)
+            {
+                Destroy(mr.material);
+            }
+        }
+
+        if (hpBarRoot != null)
+        {
+            var renderers = hpBarRoot.GetComponentsInChildren<MeshRenderer>(true);
+            foreach (var r in renderers)
+            {
+                if (r != null && r.material != null)
+                {
+                    Destroy(r.material);
                 }
             }
         }

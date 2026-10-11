@@ -42,6 +42,10 @@ public class GameModeManager : MonoBehaviour
     // 当前是否在建造模式
     public bool IsBuildMode { get; private set; } = false;
 
+    [Header("Combat Pause in Build Mode (建造模式战斗时停设置)")]
+    [Tooltip("建造模式下是否启用战术时停（冻结敌人行动与战场构装攻击，给予安全布防环境；若为 false 则敌人与家具均保持实时交火）")]
+    public bool pauseCombatInBuildMode = true;
+
     void Start()
     {
         // 自动查找引用
@@ -85,12 +89,15 @@ public class GameModeManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 进入建造模式：允许自由平移拖拽视角，锁定角色与战斗
-    /// </summary>
     public void EnterBuildMode()
     {
+        EnterBuildMode(false);
+    }
+
+    public void EnterBuildMode(bool ignoreStaminaCost)
+    {
         // 机制落地（需求4）：消耗 30 点精力开启建造模式，避免无成本频繁开启
-        if (playerController != null)
+        if (!ignoreStaminaCost && playerController != null)
         {
             if (!playerController.ConsumeStamina(playerController.buildModeStaminaCost))
             {
@@ -109,8 +116,8 @@ public class GameModeManager : MonoBehaviour
 
         IsBuildMode = true;
 
-        // 机制落地（需求4 - 塞尔达式时停）：建造模式下怪物冻结停滞，给予安全布防环境！
-        EnemyController.isAIPaused = true;
+        // 机制落地：建造模式下战术时停，冻结敌人与家具攻击，给予安全布防环境！
+        EnemyController.isAIPaused = pauseCombatInBuildMode;
 
         // 切换摄像机为自由平移视角模式
         if (cameraController != null)

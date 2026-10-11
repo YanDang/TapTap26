@@ -36,18 +36,7 @@ namespace BiomechanicalCrafting.Editor
             adapter.genericFurniturePrefab = lavaPrefab;
             adapter.autoSpawnShowcaseOnStart = false;
 
-            // 3. 配置 CombatSynergyHUD
-            var synergyHudObj = GameObject.Find("CombatSynergyHUD");
-            if (synergyHudObj == null)
-            {
-                synergyHudObj = new GameObject("CombatSynergyHUD");
-            }
-            if (synergyHudObj.GetComponent<CombatSynergyHUD>() == null)
-            {
-                synergyHudObj.AddComponent<CombatSynergyHUD>();
-            }
-
-            // 4. 配置 CombatSceneCraftingEntrance
+            // 3. 配置 CombatSceneCraftingEntrance
             var entrance = Object.FindObjectOfType<CombatSceneCraftingEntrance>();
             if (entrance != null)
             {

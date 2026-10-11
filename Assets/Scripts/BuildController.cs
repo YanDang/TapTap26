@@ -128,11 +128,21 @@ public class BuildController : MonoBehaviour
             }
             if (buildTilemap == null)
             {
-                buildTilemap = targetTilemap ?? System.Array.Find(tms, t => t.name != "Tilemap") ?? groundTilemap;
+                // 仅寻找独立于地面层的建筑图层（名称不包含 ground/Tilemap）
+                buildTilemap = (targetTilemap != null && targetTilemap != groundTilemap) ? targetTilemap : null;
+                if (buildTilemap == null)
+                {
+                    buildTilemap = System.Array.Find(tms, t => t != groundTilemap && t.name.IndexOf("ground", System.StringComparison.OrdinalIgnoreCase) < 0 && t.name != "Tilemap");
+                }
+            }
+            // 确保 targetTilemap 和 buildTilemap 绝不与 groundTilemap 混淆
+            if (buildTilemap == groundTilemap)
+            {
+                buildTilemap = null;
             }
             targetTilemap = buildTilemap;
 
-            // 自动将建造层抬高到方块顶面高度，使放置的物品自然站在方块顶面上！
+            // 自动将建筑层抬高到方块顶面高度，使放置的物品自然站在方块顶面上！
             if (buildTilemap != null && buildTilemap != groundTilemap)
             {
                 buildTilemap.transform.localPosition = new Vector3(0f, groundHeightOffset, 0f);
@@ -223,7 +233,10 @@ public class BuildController : MonoBehaviour
             {
                 if (isPointerDown && !hasMovedBeyondThreshold && (Time.time - pointerDownTime) <= clickMaxDuration)
                 {
-                    OnCellClicked(touch.position);
+                    if (!IsPointerOverUI(touch.fingerId))
+                    {
+                        OnCellClicked(touch.position);
+                    }
                 }
                 isPointerDown = false;
             }
@@ -252,7 +265,10 @@ public class BuildController : MonoBehaviour
             {
                 if (isPointerDown && !hasMovedBeyondThreshold && (Time.time - pointerDownTime) <= clickMaxDuration)
                 {
-                    OnCellClicked(Input.mousePosition);
+                    if (!IsPointerOverUI(-1))
+                    {
+                        OnCellClicked(Input.mousePosition);
+                    }
                 }
                 isPointerDown = false;
             }
@@ -277,6 +293,17 @@ public class BuildController : MonoBehaviour
 
     private bool IsPointerOverUI(int fingerId)
     {
+        Vector2 screenPos = Input.mousePosition;
+        if (fingerId >= 0 && Input.touchCount > fingerId)
+        {
+            screenPos = Input.GetTouch(fingerId).position;
+        }
+
+        if (BuildDockUI.Instance != null && BuildDockUI.Instance.IsPointerOverDrawer(screenPos))
+        {
+            return true;
+        }
+
         if (EventSystem.current == null) return false;
         if (fingerId >= 0)
             return EventSystem.current.IsPointerOverGameObject(fingerId);
@@ -336,9 +363,9 @@ public class BuildController : MonoBehaviour
             return CellAction.Delete;
         }
 
-        // 2. 检查建筑层上是否已有物品/栅栏（可拆除）
+        // 2. 检查建筑层上是否已有物品/栅栏（可拆除，且必须严格排除地面层）
         var bTilemap = buildTilemap != null ? buildTilemap : targetTilemap;
-        if (bTilemap != null && bTilemap.HasTile(cellPos))
+        if (bTilemap != null && bTilemap != groundTilemap && bTilemap.HasTile(cellPos))
         {
             return CellAction.Delete;
         }
@@ -407,13 +434,23 @@ public class BuildController : MonoBehaviour
             }
         }
 
+        var adapter = BiomechanicalCombatAdapter.Instance ?? FindObjectOfType<BiomechanicalCombatAdapter>();
         // 放置工坊联动生体构装
-        if (selectedProduct != null && BiomechanicalCombatAdapter.Instance != null)
+        if (selectedProduct != null && adapter != null)
         {
-            var spawned = BiomechanicalCombatAdapter.Instance.SpawnProductAtCell(selectedProduct, cellPos, spawnPos);
+            var spawned = adapter.SpawnProductAtCell(selectedProduct, cellPos, spawnPos);
             if (spawned != null)
             {
                 Debug.Log($"[BuildSystem] 成功放置生体构装: {selectedProduct.productName} 于格子 {cellPos}");
+
+                var placedProduct = selectedProduct;
+
+                // 实时通知 BuildDockUI 扣除卡片并更新抽屉状态
+                if (BuildDockUI.Instance != null)
+                {
+                    BuildDockUI.Instance.OnProductPlaced(placedProduct);
+                }
+
                 // 若该物品已全部放置，更新或清空当前选中项以便重新从仓库选择
                 var products = PlayerSessionData.GetCraftedProducts();
                 if (!products.Contains(selectedProduct))
@@ -427,7 +464,7 @@ public class BuildController : MonoBehaviour
 
         if (DamageTextManager.Instance != null)
         {
-            DamageTextManager.Instance.ShowText(spawnPos + Vector3.up * 0.6f, "⚠️ 仓库中暂无可用构装，请按 [B] 前往工坊合成！", new Color(1f, 0.4f, 0.4f), 0.12f);
+            DamageTextManager.Instance.ShowText(spawnPos + Vector3.up * 0.6f, "⚠️ 仓库中暂无可用构装，请前往工坊合成！", new Color(1f, 0.4f, 0.4f), 0.12f);
         }
         ClearSelection();
     }
@@ -444,10 +481,17 @@ public class BuildController : MonoBehaviour
             // 若属于生体构装，回收返回仓库
             if (furn.originalProduct != null)
             {
-                PlayerSessionData.AddCraftedProduct(furn.originalProduct);
+                var recycledProd = furn.originalProduct;
+                PlayerSessionData.AddCraftedProduct(recycledProd);
                 if (DamageTextManager.Instance != null)
                 {
-                    DamageTextManager.Instance.ShowText(fPos + Vector3.up * 0.6f, $"♻️ 回收入库: {furn.originalProduct.productName}", new Color(0.3f, 0.9f, 1f), 0.12f);
+                    DamageTextManager.Instance.ShowText(fPos + Vector3.up * 0.6f, $"♻️ 回收入库: {recycledProd.productName}", new Color(0.3f, 0.9f, 1f), 0.12f);
+                }
+
+                // 实时通知 BuildDockUI 将回收家具重新加回抽屉
+                if (BuildDockUI.Instance != null)
+                {
+                    BuildDockUI.Instance.OnProductRecycled(recycledProd);
                 }
             }
             else
@@ -464,9 +508,9 @@ public class BuildController : MonoBehaviour
             return;
         }
 
-        // 2. 检查并删除建筑层方块
+        // 2. 检查并删除建筑层方块（严格禁止删除地面层 groundTilemap！）
         var bTilemap = buildTilemap != null ? buildTilemap : targetTilemap;
-        if (bTilemap != null && bTilemap.HasTile(cellPos))
+        if (bTilemap != null && bTilemap != groundTilemap && bTilemap.HasTile(cellPos))
         {
             var oldTile = bTilemap.GetTile(cellPos);
             string tileName = oldTile != null ? oldTile.name : "物品";
@@ -561,9 +605,12 @@ public class BuildController : MonoBehaviour
 
     private Vector2 warehouseScrollPos = Vector2.zero;
 
+    [Tooltip("隐藏旧版 IMGUI 代码式构装仓库")]
+    public bool hideLegacyDock = true;
+
     void OnGUI()
     {
-        if (!isBuildMode) return;
+        if (hideLegacyDock || !isBuildMode) return;
 
         float dockHeight = 125f;
         float dockY = Screen.height - dockHeight;
@@ -639,5 +686,17 @@ public class BuildController : MonoBehaviour
         }
 
         GUI.EndScrollView();
+    }
+
+    void OnDestroy()
+    {
+        if (highlightRenderer != null && highlightRenderer.material != null)
+        {
+            Destroy(highlightRenderer.material);
+        }
+        if (ghostPreviewRenderer != null && ghostPreviewRenderer.material != null)
+        {
+            Destroy(ghostPreviewRenderer.material);
+        }
     }
 }

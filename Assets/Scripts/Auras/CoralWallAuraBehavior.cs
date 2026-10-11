@@ -28,8 +28,9 @@ public class CoralWallAuraBehavior : BiomechanicalAuraBase
         }
     }
 
-    void OnDestroy()
+    protected override void OnDestroy()
     {
+        base.OnDestroy();
         if (parentFurniture != null)
         {
             parentFurniture.onHitTaken -= OnFurnitureHit;
@@ -61,6 +62,11 @@ public class CoralWallAuraBehavior : BiomechanicalAuraBase
 
         if (rangeRing != null && !rangeRing.activeSelf) rangeRing.SetActive(true);
         UpdateRingPulse(2.0f, 0.04f);
+
+        if (IsCombatPaused)
+        {
+            return;
+        }
 
         if (outOfCombatTimer > 0f)
         {

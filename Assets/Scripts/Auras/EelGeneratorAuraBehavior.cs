@@ -48,6 +48,12 @@ public class EelGeneratorAuraBehavior : BiomechanicalAuraBase
         if (rangeRing != null && !rangeRing.activeSelf) rangeRing.SetActive(true);
         UpdateRingPulse(4.2f, 0.08f);
 
+        // 建造模式/战术时停期间：保持光环范围圈显示供布防参考，但暂停电击攻击！
+        if (IsCombatPaused)
+        {
+            return;
+        }
+
         timer += Time.deltaTime;
         if (timer >= interval)
         {

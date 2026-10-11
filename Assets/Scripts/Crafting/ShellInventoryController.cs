@@ -1373,6 +1373,10 @@ namespace BiomechanicalCrafting
             if (pendingProduct != null)
             {
                 PlayerSessionData.AddCraftedProduct(pendingProduct);
+                if (BuildDockUI.Instance != null)
+                {
+                    BuildDockUI.Instance.PopulateCards();
+                }
             }
 
             if (craftResultModal != null) craftResultModal.SetActive(false);
