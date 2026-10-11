@@ -102,6 +102,15 @@ namespace GameJam
                 .K(0.30f, new Pose { body = new Vector2(0.55f, -0.35f), bodyRot = -8, chest = -16, arm = Arm(3.0f, 1.2f), hand = Hand(2.4f, 2.9f), fwdLegs = new Vector2(0.4f, 0f), squash = 0.12f })
                 .K(0.45f, new Pose { body = new Vector2(0.5f, -0.3f), bodyRot = -6, chest = -12, arm = Arm(3.0f, 1.3f), hand = Hand(2.4f, 2.9f), fwdLegs = new Vector2(0.4f, 0f), squash = 0.05f })
                 .K(0.8f, zero);
+            // 放置家具（约 1 s）：钳子伸到背后壳里掏 → 掏出“家具胶囊”举过头顶 → 身体前倾往前一抛（hit = 抛出的瞬间）→ 站稳
+            c["Place"] = new Clip { hit = 0.56f }
+                .K(0f, zero)
+                .K(0.18f, new Pose { body = new Vector2(-0.15f, -0.25f), bodyRot = 6, chest = 14, arm = Arm(-0.9f, 4.6f), hand = Hand(1.6f, 3.8f), squash = 0.05f })
+                .K(0.34f, new Pose { body = new Vector2(-0.25f, -0.15f), bodyRot = 9, chest = 18, arm = Arm(-1.2f, 4.9f), hand = Hand(1.5f, 3.9f), squash = 0.06f })
+                .K(0.48f, new Pose { body = new Vector2(-0.2f, 0.25f), bodyRot = 4, chest = 6, arm = Arm(0.6f, 6.6f), hand = Hand(2.2f, 4.4f), backLegs = new Vector2(-0.15f, 0f), squash = -0.05f })
+                .K(0.56f, new Pose { body = new Vector2(0.45f, -0.2f), bodyRot = -7, chest = -12, arm = Arm(3.3f, 4.4f), hand = Hand(2.4f, 3.2f), fwdLegs = new Vector2(0.3f, 0f), squash = 0.06f })
+                .K(0.70f, new Pose { body = new Vector2(0.35f, -0.15f), bodyRot = -5, chest = -8, arm = Arm(3.0f, 4.0f), hand = Hand(2.4f, 3.2f), fwdLegs = new Vector2(0.3f, 0f), squash = 0.03f })
+                .K(1.0f, zero);
             // 受击：往后一仰
             c["Hurt"] = new Clip()
                 .K(0f, zero)

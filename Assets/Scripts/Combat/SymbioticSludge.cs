@@ -18,6 +18,7 @@ namespace GameJam
         float _regenT, _seed;
         readonly List<Chunk> _chunks = new List<Chunk>();
         public int ChunkCount => _chunks.Count;
+        public override bool Blocks => Alive;
 
         class Chunk { public Transform t; public SpriteRenderer sr; public float life; }
 

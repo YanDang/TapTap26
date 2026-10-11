@@ -140,11 +140,39 @@ public static class GameJamBuilder
         AssetDatabase.DeleteAsset(MainScene);
         if (!AssetDatabase.CopyAsset(HermesScene, MainScene)) { Debug.LogError("copy scene failed"); return; }
         var scene = EditorSceneManager.OpenScene(MainScene, OpenSceneMode.Single);
+        RemoveClutter();
         var root = new GameObject("GameRoot");
         root.AddComponent<GameManager>();
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(MainScene, true) };
+    }
+
+    // 用户 2026-10-11：测试场景里的杂物全部删掉，只留地面、水渠、中央建筑（怪物出生点）和地图边缘的石头 / 废墟墙。
+    // 只改拷贝出来的 Main.unity，Hermes 的原场景不动。
+    static readonly string[] ClutterGroups =
+    {
+        "Algae_Water_Resource_Garden",   // 左边的藻类水池 + 3 个培养台
+        "Lightning_Jellyfish_Nursery",   // 右边的水母育苗台
+        "Open_Building_Plaza",           // 中间的建造网格圈
+    };
+    static readonly string[] ClutterPrefixes = { "Moss_Islet", "Foreground_Coral_", "Harvest_" };
+
+    static void RemoveClutter()
+    {
+        int n = 0;
+        foreach (var name in ClutterGroups)
+        {
+            var g = GameObject.Find(name);
+            if (g) { UnityEngine.Object.DestroyImmediate(g); n++; }
+        }
+        foreach (var t in UnityEngine.Object.FindObjectsOfType<Transform>(true))
+        {
+            if (!t) continue;
+            foreach (var pre in ClutterPrefixes)
+                if (t.name.StartsWith(pre)) { UnityEngine.Object.DestroyImmediate(t.gameObject); n++; break; }
+        }
+        Debug.Log($"[GameJamBuilder] removed {n} clutter objects");
     }
 
     static void ConfigurePlayer()

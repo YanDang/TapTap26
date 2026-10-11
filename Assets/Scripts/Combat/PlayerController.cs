@@ -14,7 +14,7 @@ namespace GameJam
     /// </summary>
     public class PlayerController : Unit
     {
-        public enum State { Idle, Move, Chase, Attack, Parry, Kick, Hurt, Execute, Roll, Backflip, Dead, Charge, Smash, ShellPunch, Grabbed, Thrown }
+        public enum State { Idle, Move, Chase, Attack, Parry, Kick, Hurt, Execute, Roll, Backflip, Dead, Charge, Smash, ShellPunch, Grabbed, Thrown, Place }
 
         [Header("Tuning")]
         public float moveSpeed = 4.5f;
@@ -62,6 +62,42 @@ namespace GameJam
         int _attackAlt;
         float _leftDownAt = -1f, _chargeLevel;
         KickableTable _tapTable;           // 战斗中在桌子旁按下：短按松开才踢
+        CombatFurniture _tapFurn, _kickFurn;  // 同上，气系家具（玩家能踢破）
+        Vector3 _knockVel;
+        public int kickFurnitureDamage = 6;
+
+        /// <summary>被弹开（气爆等）：沿 dir 滑出约 distance 米，不掉血、不打断当前动作。</summary>
+        public void Knockback(Vector3 dir, float distance)
+        {
+            if (Dead) return;
+            _knockVel = DirUtil.Flat(dir).normalized * distance * 8f;
+        }
+
+        /// <summary>离主角 range 内最近、玩家能打的家具（气系）。</summary>
+        CombatFurniture NearestHittableFurniture(float range)
+        {
+            CombatFurniture best = null; float bd = range;
+            foreach (var f in CombatFurniture.All)
+            {
+                if (!f || !f.PlayerCanHit) continue;
+                float d = DirUtil.Flat(f.AimPoint(Pos) - Pos).magnitude - f.hitRadius;
+                if (d < bd) { bd = d; best = f; }
+            }
+            return best;
+        }
+
+        /// <summary>攻击顺带打到气系家具（扇形：dir + 角度；角度 ≥ 180 = 圆形）。</summary>
+        void HitFurniture(Vector3 center, Vector3 dir, float range, float angle, int dmg)
+        {
+            foreach (var f in CombatFurniture.All.ToArray())
+            {
+                if (!f || !f.PlayerCanHit) continue;
+                var v = DirUtil.Flat(f.AimPoint(center) - center);
+                if (v.magnitude > range + f.hitRadius) continue;
+                if (angle < 180f && v.sqrMagnitude > 0.01f && Vector3.Angle(dir, v) > angle) continue;
+                f.HitByPlayer(dmg);
+            }
+        }
         bool _leftHeld;
         Vector3 _moveTarget, _a, _b, _dir;
         EnemyAI _execTarget;
@@ -69,7 +105,7 @@ namespace GameJam
 
         public float DodgeRemaining => Mathf.Max(0, _dodgeReady - Time.unscaledTime);
         public float ParryRemaining => Mathf.Max(0, _parryReady - Time.unscaledTime);
-        bool Busy => state == State.Execute || state == State.Roll || state == State.Backflip || state == State.Dead ||
+        bool Busy => state == State.Execute || state == State.Roll || state == State.Backflip || state == State.Dead || state == State.Place ||
                     state == State.Smash || state == State.ShellPunch || Unavailable;
 
         /// <summary>被缠住 / 被丢出去 / 躺地起身中：不能操作，其他怪也不会发起攻击。</summary>
@@ -100,6 +136,52 @@ namespace GameJam
                 case Dir.Right: return r;
                 default: return -f;
             }
+        }
+
+        // ------------------------------------------------------------------ 放置家具（2026-10-11）
+        public const float PlaceTime = 1.0f, PlaceRelease = 0.56f;   // 整个动作 1 s；0.56 s 抛出胶囊（= HeroActions "Place" 的 hit）
+        System.Action _placeRelease, _placeCancel;
+        public int places;
+        public bool Placing => state == State.Place;
+
+        /// <summary>胶囊从哪飞出去：钳子的位置（换算回公告板拉近之前的世界坐标）。</summary>
+        public Vector3 PlaceHandPos
+        {
+            get
+            {
+                var cam = Camera.main;
+                if (hero && cam) return hero.PunchTipWorld + cam.transform.forward * 2f;
+                return Pos + Vector3.up * 1.2f;
+            }
+        }
+
+        /// <summary>
+        /// 播放置动画：面朝 target，掏壳 → 举起 → 抛出。抛出瞬间调 release（BuildController 在那时生成家具 + 部署动画），
+        /// 抛出前被打断（受击 / 被抓）调 cancel（退还物品）。正在忙（翻滚、处决、蓄力等）时返回 false。
+        /// </summary>
+        public bool BeginPlace(Vector3 target, System.Action release, System.Action cancel)
+        {
+            if (Dead || Busy) return false;
+            if (state != State.Idle && state != State.Move && state != State.Chase && state != State.Attack) return false;
+            CancelLeftHold();
+            _placeRelease = release; _placeCancel = cancel;
+            _t = 0; _flag1 = false;
+            _dir = DirUtil.Flat(target - Pos);
+            _dir = _dir.sqrMagnitude > 1e-4f ? _dir.normalized : FacingVector();
+            Face(_dir);
+            state = State.Place;
+            anim.Play("Idle", facing, true);
+            if (hero) hero.Play("Place");
+            return true;
+        }
+
+        /// <summary>放置动画还没抛出就被打断：退还物品。</summary>
+        void CancelPlace()
+        {
+            if (state != State.Place || _flag1) return;
+            var c = _placeCancel;
+            _placeRelease = _placeCancel = null;
+            c?.Invoke();
         }
 
         // ------------------------------------------------------------------ commands
@@ -146,16 +228,25 @@ namespace GameJam
             }
             // 4. kick furniture（寄居蟹战斗中：短按才踢，按住是蓄力，在 LeftRelease 里判定）
             var t = KickableTable.Nearest(Pos, kickRange);
+            var kf = t == null ? NearestHittableFurniture(kickRange) : null;
             if (t != null && state != State.Kick && !(InCombat && hero)) { StartKick(t); return; }
+            if (kf != null && state != State.Kick && !(InCombat && hero)) { StartKickFurniture(kf); return; }
             // 5. 寄居蟹：先记下按下时刻，按住 = 蓄力（点屏幕哪里都一样），松开得快 = 踢桌子 / 空挡
             if (InCombat && hero)
             {
                 _leftHeld = true; _leftDownAt = Time.unscaledTime;
-                _tapTable = t;
+                _tapTable = t; _tapFurn = kf;
                 return;
             }
             // 5. parry whiff (combat only), still costs the cooldown
             if (InCombat && ParryRemaining <= 0) Whiff();
+        }
+
+        /// <summary>进入摆放模式等：放弃这次按住的左键（正在蓄力就取消蓄力）。</summary>
+        public void CancelLeftHold()
+        {
+            _leftHeld = false; _tapTable = null; _tapFurn = null;
+            if (state == State.Charge) { if (hero) hero.Stop(); state = InCombat ? State.Chase : State.Idle; }
         }
 
         public void LeftRelease()
@@ -166,6 +257,7 @@ namespace GameJam
             if (Busy) return;
             if (Time.unscaledTime - _leftDownAt >= chargeHoldDelay) return;
             if (_tapTable && state != State.Kick) { StartKick(_tapTable); _tapTable = null; return; }
+            if (_tapFurn && state != State.Kick) { StartKickFurniture(_tapFurn); _tapFurn = null; return; }
             if (InCombat && ParryRemaining <= 0) Whiff();
         }
 
@@ -233,6 +325,7 @@ namespace GameJam
             foreach (var e in EnemyAI.All.ToArray())
                 if (!e.Dead && DirUtil.Flat(e.Pos - center).magnitude <= radius)
                     e.TakeDamage(dmg, DirUtil.Flat(e.Pos - Pos).normalized, 0.4f + 0.5f * lv, true);
+            HitFurniture(center, _dir, radius, 180f, dmg);
             TimeManager.I.DoHitstop(0.05f + 0.1f * lv);
             CameraRig.I?.Shake(0.25f + 0.45f * lv, 0.25f + 0.2f * lv);
             if (lv > 0.95f) ScreenFX.I?.Pulse();
@@ -258,6 +351,7 @@ namespace GameJam
             foreach (var e in EnemyAI.All.ToArray())
                 if (!e.Dead && DirUtil.Flat(e.Pos - tip).magnitude <= punchRadius)
                     e.TakeDamage(punchDamage, DirUtil.Flat(e.Pos - Pos).normalized, 0.8f, true);
+            HitFurniture(tip, Vector3.zero, punchRadius, 180f, punchDamage);
             TimeManager.I.DoHitstop(0.12f);
             CameraRig.I?.Shake(0.7f, 0.5f);
             ScreenFX.I?.Pulse();
@@ -276,6 +370,7 @@ namespace GameJam
                 if (v.magnitude <= attackRange + 0.5f + rangeBonus && Vector3.Angle(dir, v) <= 70f)
                     e.TakeDamage(dmg < 0 ? attackDamage : dmg, v.normalized, knock, false);
             }
+            HitFurniture(Pos, dir, attackRange + 0.5f + rangeBonus, 70f, dmg < 0 ? attackDamage : dmg);
             Vfx.Spawn("VFX_Slash", Pos + dir * 0.6f + Vector3.up * 0.9f, DirUtil.ScreenAngle(dir) - 90f, 0.9f, true);
         }
 
@@ -339,8 +434,19 @@ namespace GameJam
             anim.Play("BackflipArrow", facing, true, 1f);
         }
 
+        void StartKickFurniture(CombatFurniture f)
+        {
+            _kickTable = null; _kickFurn = f; _t = 0; _flag1 = false;
+            _dir = DirUtil.Flat(f.AimPoint(Pos) - Pos).normalized;
+            Face(_dir);
+            state = State.Kick;
+            anim.Play("KickTable", facing, true, 1.2f);
+            if (hero) hero.Play("Stomp");
+        }
+
         void StartKick(KickableTable t)
         {
+            _kickFurn = null;
             _kickTable = t; _t = 0; _flag1 = false;
             _dir = DirUtil.Flat(t.transform.position - Pos).normalized;
             Face(_dir);
@@ -357,10 +463,11 @@ namespace GameJam
             switch (state)
             {
                 case State.Idle: case State.Move: case State.Chase: case State.Attack: case State.Parry:
-                case State.Kick: case State.Hurt: case State.Charge: break;
+                case State.Kick: case State.Hurt: case State.Charge: case State.Place: break;
                 default: return false;
             }
             _leftHeld = false;
+            CancelPlace();
             _grabber = by; _t = 0;
             state = State.Grabbed;
             if (TimeManager.SlowMo) TimeManager.I.EndSlowMo();
@@ -420,6 +527,7 @@ namespace GameJam
         public bool TakeHit(EnemyAI src, int dmg = 1)
         {
             if (Dead || Invulnerable) return false;
+            CancelPlace();
             hp -= dmg; timesHit++;
             _invulnUntil = Time.unscaledTime + hurtInvuln;
             Flash(new Color(1, 0.2f, 0.2f), 0.25f);
@@ -445,6 +553,11 @@ namespace GameJam
         void Update()
         {
             float dt = TimeManager.PlayerDelta;
+            if (_knockVel.sqrMagnitude > 0.01f && !Dead)
+            {   // 被气爆弹开的滑行（被缠住时不动）
+                if (state != State.Grabbed) MoveBy(_knockVel * dt);
+                _knockVel *= Mathf.Exp(-8f * dt);
+            }
             if (LockTarget && LockTarget.Dead && state != State.Execute && state != State.Backflip && state != State.Roll)
                 ExitCombat();
 
@@ -580,6 +693,7 @@ namespace GameJam
                     {
                         _flag1 = true; kicks++;
                         if (_kickTable) _kickTable.Kick(_dir);
+                        if (_kickFurn && _kickFurn.Alive) _kickFurn.HitByPlayer(kickFurnitureDamage);
                         Sfx.Play("sfx_kick");
                         CameraRig.I?.Shake(0.12f, 0.15f);
                     }
@@ -589,6 +703,19 @@ namespace GameJam
                 case State.Hurt:
                     _t -= dt;
                     if (_t <= 0) state = InCombat ? State.Chase : State.Idle;
+                    break;
+
+                case State.Place:
+                    _t += dt;
+                    if (!_flag1 && _t >= PlaceRelease)
+                    {   // 抛出胶囊：BuildController 生成家具 + 部署动画
+                        _flag1 = true; places++;
+                        var r = _placeRelease;
+                        _placeRelease = _placeCancel = null;
+                        r?.Invoke();
+                        Sfx.Play("sfx_swing", 0.6f);
+                    }
+                    if (_t >= PlaceTime) state = InCombat && LockTarget && !LockTarget.Dead ? State.Chase : State.Idle;
                     break;
 
                 case State.Execute:
@@ -699,7 +826,7 @@ namespace GameJam
             switch (state)
             {
                 case State.Parry: if (target) side = -ScreenSide(LockTarget.Pos - Pos); break;
-                case State.Execute: side = ScreenSide(_dir); break;
+                case State.Execute: case State.Place: side = ScreenSide(_dir); break;
                 case State.Chase: case State.Attack: case State.Charge: case State.Smash:
                 case State.Roll: case State.ShellPunch: case State.Hurt:
                     if (target) side = ScreenSide(LockTarget.Pos - Pos); break;

@@ -18,7 +18,8 @@ namespace GameJam
         Transform _visual;
         BoxCollider _col;
         readonly HashSet<EnemyAI> _hit = new HashSet<EnemyAI>();
-        public bool IsIdle => _s == S.Idle;
+        public bool IsIdle => _s == S.Idle && !Deploying;
+        public bool Deploying { get; set; }      // 正在播部署动画（FurnitureDeploy），还不能踢
         public int landings;
 
         public static KickableTable Build(Vector3 pos, float yaw)
