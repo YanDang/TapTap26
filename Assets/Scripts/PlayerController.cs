@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.EventSystems;
+using GameJam;
 
 /// <summary>
 /// 升级版玩家控制器（包含 A* 寻路、短滑翻滚、自动攻击、模块化武器与家具交互系统）：
@@ -69,6 +70,28 @@ public class PlayerController : MonoBehaviour
     public Transform visualRoot;
     public float walkBobAmount = 0.07f;
     public float walkBobFrequency = 14f;
+
+    [Header("Hero2D (寄居蟹骨骼角色与动作驱动)")]
+    public HeroActions hero;
+    public bool autoAttachHero2D = true;
+    public float hero2DScale = 0.42f;
+    private HeroFacing heroFacing;
+    private HeroGait heroGait;
+    private HeroSpringBones heroSprings;
+
+    [Header("Hero2D Combat (战斗扩展: 连击 / 格挡 / 蓄力 / 处决)")]
+    private int comboStep = 0;
+    private float lastAttackTime = 0f;
+    private bool isGuarding = false;
+    private float guardCooldownTimer = 0f;
+    private float guardWindowTimer = 0f;
+    public bool IsGuarding => isGuarding;
+    public float guardWindowDuration = 0.45f;
+    public float guardCooldown = 0.5f;
+
+    private bool isCharging = false;
+    private float chargeLevel = 0f;
+    public float chargeHoldThreshold = 0.22f;
 
     [Header("Target Marker (点击移动光环)")]
     public Sprite clickMarkerSprite;
@@ -248,8 +271,138 @@ public class PlayerController : MonoBehaviour
         if (equippedWeapon == null)
             equippedWeapon = WeaponData.CreateDefault();
 
+        if (TimeManager.I == null)
+        {
+            var tmGo = new GameObject("TimeManager");
+            tmGo.AddComponent<TimeManager>();
+        }
+
+        if (autoAttachHero2D)
+        {
+            AttachHero2D();
+        }
+
         CreateMarkerObject();
         CacheOriginalColors();
+    }
+
+    public void AttachHero2D()
+    {
+        if (hero != null) return;
+        var prefab = Resources.Load<GameObject>("Hero2D/Hero2D");
+        if (prefab == null) return;
+
+        if (playerRenderer != null) playerRenderer.enabled = false;
+        if (playerAnimator != null) playerAnimator.enabled = false;
+
+        Transform parentTransform = visualRoot != null ? visualRoot : transform;
+        var flipGo = new GameObject("Hero2D_Flip");
+        flipGo.transform.SetParent(parentTransform, false);
+        flipGo.transform.localScale = Vector3.one * hero2DScale;
+
+        var go = Instantiate(prefab, flipGo.transform);
+        go.name = "Hero2D";
+
+        float footY = float.MaxValue, bodyX = 0f;
+        foreach (var t in go.GetComponentsInChildren<Transform>(true))
+        {
+            var lp = go.transform.InverseTransformPoint(t.position);
+            if (t.name.EndsWith("腿_目标")) footY = Mathf.Min(footY, lp.y);
+            if (t.name == "身体根") bodyX = lp.x;
+        }
+        go.transform.localPosition = new Vector3(-bodyX, footY == float.MaxValue ? 0f : -footY, 0f);
+
+        heroFacing = go.GetComponent<HeroFacing>() ?? go.AddComponent<HeroFacing>();
+        heroFacing.target = flipGo.transform;
+        heroFacing.motion = transform;
+
+        heroGait = go.GetComponent<HeroGait>() ?? go.AddComponent<HeroGait>();
+        heroGait.motion = transform;
+        heroGait.strideLength = 1.2f;
+        heroGait.stepHeight = 0.35f;
+
+        heroSprings = go.GetComponent<HeroSpringBones>() ?? go.AddComponent<HeroSpringBones>();
+        heroSprings.motion = transform;
+
+        if (!go.GetComponent<HeroFace>()) go.AddComponent<HeroFace>();
+        hero = go.GetComponent<HeroActions>() ?? go.AddComponent<HeroActions>();
+    }
+
+    public void TriggerShellGuard()
+    {
+        if (guardCooldownTimer > 0f || isRolling || isCharging || heldFurniture != null) return;
+
+        isGuarding = true;
+        guardWindowTimer = guardWindowDuration;
+        guardCooldownTimer = guardCooldown;
+
+        StopMovement();
+
+        if (hero != null)
+        {
+            hero.Play("ShellGuard");
+        }
+        else
+        {
+            if (DamageTextManager.Instance != null)
+            {
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, "GUARD", Color.cyan, 0.09f);
+            }
+        }
+    }
+
+    public void OnParrySuccess(EnemyController attacker)
+    {
+        isGuarding = false;
+        guardWindowTimer = 0f;
+
+        TimeManager.I?.StartSlowMo(2.5f);
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.7f, "⚡ 完美格挡! (PERFECT PARRY)", new Color(1f, 0.9f, 0.2f), 0.15f);
+        }
+
+        Sfx.Play("parry_success");
+
+        if (attacker != null)
+        {
+            SetAttackTarget(attacker);
+        }
+    }
+
+    public void PerformChargedSmash(float level)
+    {
+        float damageMultiplier = Mathf.Lerp(1.5f, 3.2f, level);
+        float radius = Mathf.Lerp(1.4f, 2.5f, level);
+        float dmg = CurrentAttackDamage * damageMultiplier;
+
+        if (hero != null)
+        {
+            hero.ReleaseCharge();
+            hero.Face?.TriggerAngry();
+        }
+
+        Vector3 forward = (visualRoot != null && visualRoot.localScale.x < 0) ? Vector3.left : Vector3.right;
+        transform.position += forward * (0.35f + level * 0.45f);
+
+        var enemies = EnemyController.AllEnemies;
+        foreach (var enemy in enemies.ToArray())
+        {
+            if (enemy == null || !enemy.IsAlive) continue;
+            float d = Vector2.Distance(transform.position, enemy.transform.position);
+            if (d <= radius)
+            {
+                enemy.TakeDamage(dmg, CurrentGuardBreakPower * 2f, transform.position);
+            }
+        }
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, $"💥 震地重砸! (SMASH x{damageMultiplier:0.0})", new Color(1f, 0.45f, 0.1f), 0.14f);
+        }
+
+        Sfx.Play("hero_smash");
     }
 
     void OnDisable()
@@ -278,6 +431,11 @@ public class PlayerController : MonoBehaviour
         else if (playerRenderer != null)
         {
             playerRenderer.flipX = faceLeft;
+        }
+
+        if (heroFacing != null)
+        {
+            heroFacing.Face(faceLeft ? -1 : 1);
         }
     }
 
@@ -317,10 +475,50 @@ public class PlayerController : MonoBehaviour
         UpdateMovement();
         UpdateMarkerAnimation();
 
-        // 空格键 / J 键手动攻击（测试与战斗兼顾）
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.J))
+        // 空格键触发贝壳格挡，J 键手动普通攻击
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            TriggerShellGuard();
+        }
+        else if (Input.GetKeyDown(KeyCode.J))
         {
             TriggerManualAttack();
+        }
+
+        if (isGuarding)
+        {
+            guardWindowTimer -= Time.deltaTime;
+            if (guardWindowTimer <= 0f) isGuarding = false;
+        }
+        if (guardCooldownTimer > 0f)
+        {
+            guardCooldownTimer -= Time.deltaTime;
+        }
+
+        // 鼠标左键长按蓄力机制
+        if (Input.GetMouseButtonDown(0))
+        {
+            leftPointerDownTime = Time.time;
+            isCharging = false;
+        }
+        else if (Input.GetMouseButton(0) && !isRolling && !isMoving && heldFurniture == null && canMove)
+        {
+            float holdTime = Time.time - leftPointerDownTime;
+            if (holdTime >= chargeHoldThreshold)
+            {
+                if (!isCharging)
+                {
+                    isCharging = true;
+                    hero?.BeginCharge();
+                }
+                chargeLevel = Mathf.Clamp01((holdTime - chargeHoldThreshold) / 1.0f);
+                hero?.SetCharge(chargeLevel);
+            }
+        }
+        else if (Input.GetMouseButtonUp(0) && isCharging)
+        {
+            isCharging = false;
+            PerformChargedSmash(chargeLevel);
         }
     }
 
@@ -1036,16 +1234,36 @@ public class PlayerController : MonoBehaviour
             SetVisualFacing(attackDir.x < 0);
         }
 
-        if (playerAnimator != null)
+        bool isExecution = (currentTarget != null && currentTarget.IsStaggered);
+
+        if (hero != null)
+        {
+            if (isExecution)
+            {
+                hero.Play("Execute");
+                hero.Face?.TriggerHappy();
+                TimeManager.I?.EndSlowMo();
+            }
+            else
+            {
+                if (Time.time - lastAttackTime > 1.2f) comboStep = 0;
+                string clip = comboStep == 0 ? "Sweep" : (comboStep == 1 ? "Thrust" : "Stomp");
+                hero.Play(clip);
+                hero.Face?.TriggerAngry();
+                comboStep = (comboStep + 1) % 3;
+                lastAttackTime = Time.time;
+            }
+        }
+        else if (playerAnimator != null)
         {
             playerAnimator.SetTrigger("Attack");
         }
 
-        float dmg = CurrentAttackDamage;
-        float guardBreak = CurrentGuardBreakPower;
+        float dmg = isExecution ? CurrentAttackDamage * 2.5f : CurrentAttackDamage;
+        float guardBreak = isExecution ? CurrentGuardBreakPower * 2.5f : CurrentGuardBreakPower;
 
         // 生成斩击光弧或重砸特效
-        SpawnSlashEffect(attackDir, heldFurniture != null);
+        SpawnSlashEffect(attackDir, heldFurniture != null || isExecution);
 
         // 攻击微突进动作（仅对静态 Sprite 生效，骨骼动画自带攻击动效）
         if (playerRenderer != null && visualRoot == null)
@@ -1148,6 +1366,11 @@ public class PlayerController : MonoBehaviour
         isInvulnerable = true;
         rollCooldownTimer = rollCooldown;
 
+        if (hero != null)
+        {
+            hero.ShellRoll(rollDir.x >= 0 ? 1 : -1, rollDuration);
+        }
+
         float elapsed = 0f;
         float totalSpin = (rollDir.x >= 0 ? -360f : 360f);
 
@@ -1196,6 +1419,16 @@ public class PlayerController : MonoBehaviour
         {
             playerRenderer.transform.localRotation = Quaternion.identity;
             playerRenderer.transform.localPosition = Vector3.zero;
+        }
+
+        if (hero != null && currentTarget != null && currentTarget.IsAlive)
+        {
+            float targetDist = Vector2.Distance(transform.position, currentTarget.transform.position);
+            if (targetDist <= 2.2f)
+            {
+                hero.ShellPunch(currentTarget.transform.position);
+                currentTarget.TakeDamage(CurrentAttackDamage * 1.5f, CurrentGuardBreakPower * 1.5f, transform.position);
+            }
         }
 
         isRolling = false;
@@ -1488,8 +1721,20 @@ public class PlayerController : MonoBehaviour
     {
         if (IsInvulnerable) return;
 
+        if (isGuarding)
+        {
+            OnParrySuccess(null);
+            return;
+        }
+
         currentHp -= damage;
         currentHp = Mathf.Max(0f, currentHp);
+
+        if (hero != null)
+        {
+            hero.Play("Hurt");
+            hero.Face?.TriggerPain();
+        }
 
         if (DamageTextManager.Instance != null)
         {

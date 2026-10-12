@@ -1,0 +1,818 @@
+fileFormatVersion: 2
+guid: 2237c886329dd5644833df8252eead69
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 106.67
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 16384
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Roll_Unarmed_down_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bf88f471bb7513830800000000000000
+      internalID: 4049114001044375803
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_down_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f88dc4882c6e5900800000000000000
+      internalID: 675095915434707186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_down_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a01f9e0682062ea40800000000000000
+      internalID: 5395981030084178186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_down_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: efdb50ffad7a80ca0800000000000000
+      internalID: -6050401540348985858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_down_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44e5d61e701817830800000000000000
+      internalID: 4067173809339063876
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_down_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7611dc15cc45e0d0800000000000000
+      internalID: -3394222334678067585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_down_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 039e3beaf5def7c70800000000000000
+      internalID: 8971149977954019632
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_down_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef455d745adcea9f0800000000000000
+      internalID: -455200402559380226
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_left_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7067765b90b405a90800000000000000
+      internalID: -7327274088661551609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_left_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ebdd9a2be9bf49dd0800000000000000
+      internalID: -2480080835753419330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_left_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e19be5f0e1d59890800000000000000
+      internalID: -7451819244285881885
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_left_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b943b9ddd7c0c4190800000000000000
+      internalID: -7976987105251609445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_left_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b60e73701bde03e10800000000000000
+      internalID: 2175499964606046315
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_left_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 818d75fcc797d2cd0800000000000000
+      internalID: -2581273434451879912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_left_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7738a53c6edce8030800000000000000
+      internalID: 3498960351517115255
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_left_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18180496ea3517710800000000000000
+      internalID: 1689223343795896705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_right_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f40ba52b646da550800000000000000
+      internalID: 6173701075551061240
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_right_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 253f0126506690d50800000000000000
+      internalID: 6704001693623841618
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_right_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bd05996ca0dc7ef0800000000000000
+      internalID: -108982852039406157
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_right_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 128bd92935732d0e0800000000000000
+      internalID: -2246672432022833119
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_right_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d5b57c1af947a2f0800000000000000
+      internalID: -961718656852183598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_right_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a0e529bde6c094a0800000000000000
+      internalID: -6588547530527219552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_right_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05aabc5a4f56ad9a0800000000000000
+      internalID: -6207537034948793776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_right_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7848fad25fd9ad50800000000000000
+      internalID: 6749171063545415805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_up_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae11979ede593c180800000000000000
+      internalID: -9096261973301456406
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_up_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c22fbe7cc3436100800000000000000
+      internalID: 99998162311127747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_up_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bf1dc43d6e19e9430800000000000000
+      internalID: 3791628356866068987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_up_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b232da0d691bdc1f0800000000000000
+      internalID: -1022966279039016149
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_up_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b12572a4c09186770800000000000000
+      internalID: 8604154628665725467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_up_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d14ca9afb9b88ff0800000000000000
+      internalID: -33572764368748074
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_up_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24eca1e9aa8397630800000000000000
+      internalID: 3925230855678250562
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Roll_Unarmed_up_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70afc49f89e6aefa0800000000000000
+      internalID: -5770678369225213433
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      Roll_Unarmed_down_00: 4049114001044375803
+      Roll_Unarmed_down_01: 675095915434707186
+      Roll_Unarmed_down_02: 5395981030084178186
+      Roll_Unarmed_down_03: -6050401540348985858
+      Roll_Unarmed_down_04: 4067173809339063876
+      Roll_Unarmed_down_05: -3394222334678067585
+      Roll_Unarmed_down_06: 8971149977954019632
+      Roll_Unarmed_down_07: -455200402559380226
+      Roll_Unarmed_left_00: -7327274088661551609
+      Roll_Unarmed_left_01: -2480080835753419330
+      Roll_Unarmed_left_02: -7451819244285881885
+      Roll_Unarmed_left_03: -7976987105251609445
+      Roll_Unarmed_left_04: 2175499964606046315
+      Roll_Unarmed_left_05: -2581273434451879912
+      Roll_Unarmed_left_06: 3498960351517115255
+      Roll_Unarmed_left_07: 1689223343795896705
+      Roll_Unarmed_right_00: 6173701075551061240
+      Roll_Unarmed_right_01: 6704001693623841618
+      Roll_Unarmed_right_02: -108982852039406157
+      Roll_Unarmed_right_03: -2246672432022833119
+      Roll_Unarmed_right_04: -961718656852183598
+      Roll_Unarmed_right_05: -6588547530527219552
+      Roll_Unarmed_right_06: -6207537034948793776
+      Roll_Unarmed_right_07: 6749171063545415805
+      Roll_Unarmed_up_00: -9096261973301456406
+      Roll_Unarmed_up_01: 99998162311127747
+      Roll_Unarmed_up_02: 3791628356866068987
+      Roll_Unarmed_up_03: -1022966279039016149
+      Roll_Unarmed_up_04: 8604154628665725467
+      Roll_Unarmed_up_05: -33572764368748074
+      Roll_Unarmed_up_06: 3925230855678250562
+      Roll_Unarmed_up_07: -5770678369225213433
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,818 @@
+fileFormatVersion: 2
+guid: f467dd72dc6af644c9641b571d9eaf22
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 106.67
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 16384
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Idle_Unarmed_down_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cef1fb41e0559ee0800000000000000
+      internalID: -1255007992580800823
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_down_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0668ee4a8fad09b0800000000000000
+      internalID: -5112236993431443958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_down_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a9aad936264f2360800000000000000
+      internalID: 7147008263653599652
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_down_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53b8a9901f239d750800000000000000
+      internalID: 6330146762075573045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_down_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ae9ed4ae5ea1c6c0800000000000000
+      internalID: -4124824062178451807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_down_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b34077e9a586eb010800000000000000
+      internalID: 1206516488596816955
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_down_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef17bb6c303012580800000000000000
+      internalID: -8853792077679726082
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_down_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74c8574d6d0cd7bc0800000000000000
+      internalID: -3783656083001340857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_left_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7159d4ed5aae4bd10800000000000000
+      internalID: 2140593721027958039
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_left_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1244e33dd01701bf0800000000000000
+      internalID: -355660066369682399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_left_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7dd09fd800cd61240800000000000000
+      internalID: 4762235550930898391
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_left_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5ef666596f20dd50800000000000000
+      internalID: 6759955170150776412
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_left_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a2fe62ccbd135e30800000000000000
+      internalID: 4490965949971624615
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_left_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84c7372762fc6ecf0800000000000000
+      internalID: -223263367472382904
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_left_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82344da7c13efee30800000000000000
+      internalID: 4535093061244699432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_left_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f6dd6f2e430f2b70800000000000000
+      internalID: 8876317024908596985
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_right_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 583227539f7feb6d0800000000000000
+      internalID: -2972666054302358651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_right_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2698cffdba0b498a0800000000000000
+      internalID: -6299215726540715678
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_right_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e0a81e8c976d2630800000000000000
+      internalID: 3903890374096625892
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_right_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61047d5665fcd73c0800000000000000
+      internalID: -4360100894242029546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_right_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d1579d9488b8f4d70800000000000000
+      internalID: 9029589195371935005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_right_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3577a4504617a8560800000000000000
+      internalID: 7316785219016226643
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_right_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5386a8a31d263f6b0800000000000000
+      internalID: -5263754888696141771
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_right_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b1e3fe2171ee3df0800000000000000
+      internalID: -198473457322434126
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_up_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f82f58e2ad9419590800000000000000
+      internalID: -7669267489003015537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_up_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb5009da788e85340800000000000000
+      internalID: 4852884267921835452
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_up_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 68eafb1fc2cc69a10800000000000000
+      internalID: 1915943184899223174
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_up_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 002e835c4fa7e3f90800000000000000
+      internalID: -6971999981423500800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_up_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df70d1b1dce9aa910800000000000000
+      internalID: 1849465200749381629
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_up_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 640f2ec771bbe7af0800000000000000
+      internalID: -396674007608135610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_up_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e8ccc161d2586a70800000000000000
+      internalID: 8820390929447569634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Idle_Unarmed_up_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a16e444e66f99aad0800000000000000
+      internalID: -2690444038111959526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      Idle_Unarmed_down_00: -1255007992580800823
+      Idle_Unarmed_down_01: -5112236993431443958
+      Idle_Unarmed_down_02: 7147008263653599652
+      Idle_Unarmed_down_03: 6330146762075573045
+      Idle_Unarmed_down_04: -4124824062178451807
+      Idle_Unarmed_down_05: 1206516488596816955
+      Idle_Unarmed_down_06: -8853792077679726082
+      Idle_Unarmed_down_07: -3783656083001340857
+      Idle_Unarmed_left_00: 2140593721027958039
+      Idle_Unarmed_left_01: -355660066369682399
+      Idle_Unarmed_left_02: 4762235550930898391
+      Idle_Unarmed_left_03: 6759955170150776412
+      Idle_Unarmed_left_04: 4490965949971624615
+      Idle_Unarmed_left_05: -223263367472382904
+      Idle_Unarmed_left_06: 4535093061244699432
+      Idle_Unarmed_left_07: 8876317024908596985
+      Idle_Unarmed_right_00: -2972666054302358651
+      Idle_Unarmed_right_01: -6299215726540715678
+      Idle_Unarmed_right_02: 3903890374096625892
+      Idle_Unarmed_right_03: -4360100894242029546
+      Idle_Unarmed_right_04: 9029589195371935005
+      Idle_Unarmed_right_05: 7316785219016226643
+      Idle_Unarmed_right_06: -5263754888696141771
+      Idle_Unarmed_right_07: -198473457322434126
+      Idle_Unarmed_up_00: -7669267489003015537
+      Idle_Unarmed_up_01: 4852884267921835452
+      Idle_Unarmed_up_02: 1915943184899223174
+      Idle_Unarmed_up_03: -6971999981423500800
+      Idle_Unarmed_up_04: 1849465200749381629
+      Idle_Unarmed_up_05: -396674007608135610
+      Idle_Unarmed_up_06: 8820390929447569634
+      Idle_Unarmed_up_07: -2690444038111959526
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

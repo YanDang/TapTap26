@@ -1,0 +1,818 @@
+fileFormatVersion: 2
+guid: 146b6a5f75417304e8300e4e7539885e
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 106.67
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 16384
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: KickTable_down_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c35bc46488dcfebd0800000000000000
+      internalID: -2598632474790808260
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_down_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3c4f22f3e51de520800000000000000
+      internalID: 2732864617648704571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_down_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbe68c26ca727f920800000000000000
+      internalID: 3023929296147738299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_down_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f890d3d6e7381640800000000000000
+      internalID: 5050848446631680248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_down_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32056f3a1f95248b0800000000000000
+      internalID: -5169470527895089117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_down_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8df391cd7693ca820800000000000000
+      internalID: 2930780575748407256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_down_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f197d59ed464d1020800000000000000
+      internalID: 2314083083979946271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_down_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 1284
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9160f3535be7c9f50800000000000000
+      internalID: 6889520846717519385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_left_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b0c6e39b822f9cf0800000000000000
+      internalID: -243437871977545551
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_left_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1282cd1b481aa180800000000000000
+      internalID: -9103436985875135970
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_left_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e262850dcbc8b8e0800000000000000
+      internalID: -1677366779774344479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_left_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0bf8e2d64b7c5000800000000000000
+      internalID: 26031241973791500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_left_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 418dbcc6377d93280800000000000000
+      internalID: -9062975884359903212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_left_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17f0c18e61569cef0800000000000000
+      internalID: -87427568699175055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_left_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fd5d46021cad1400800000000000000
+      internalID: 296582343891443185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_left_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 856
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2abf2a8c15a8fee0800000000000000
+      internalID: -1227049356462409169
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_right_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a08009de93dda6310800000000000000
+      internalID: 1399173875120474122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_right_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfa57ec588cc0b520800000000000000
+      internalID: 2715895461350693627
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_right_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b086ec83d596a0e50800000000000000
+      internalID: 6776344438438258699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_right_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a8a354d037ba1180800000000000000
+      internalID: -9143794673073805151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_right_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00dd6915f00a12740800000000000000
+      internalID: 5125553838578130176
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_right_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 444fd9d11d4462060800000000000000
+      internalID: 6928300741691831364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_right_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf6407e82cc277d10800000000000000
+      internalID: 2123214963453478652
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_right_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 428
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8370ed2d391676c0800000000000000
+      internalID: -4146098656394579057
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_up_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e99342e3ad735c050800000000000000
+      internalID: 5820119503931193758
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_up_01
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 599632ff6458c8820800000000000000
+      internalID: 2921856798231325077
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_up_02
+      rect:
+        serializedVersion: 2
+        x: 808
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 961426c58cf731be0800000000000000
+      internalID: -1507720951718854295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_up_03
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c2818ca887d7eec50800000000000000
+      internalID: 6696427652624422956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_up_04
+      rect:
+        serializedVersion: 2
+        x: 1616
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 300dd88d84895fec0800000000000000
+      internalID: -3533750893964046333
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_up_05
+      rect:
+        serializedVersion: 2
+        x: 2020
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d13f3f0205f43ae0800000000000000
+      internalID: -1570360980850921001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_up_06
+      rect:
+        serializedVersion: 2
+        x: 2424
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd0c831652c9aaf50800000000000000
+      internalID: 6893493864002797787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KickTable_up_07
+      rect:
+        serializedVersion: 2
+        x: 2828
+        y: 0
+        width: 404
+        height: 428
+      alignment: 9
+      pivot: {x: 0.5, y: 0.236}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 480e076db9929cf30800000000000000
+      internalID: 4596250644002693252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      KickTable_down_00: -2598632474790808260
+      KickTable_down_01: 2732864617648704571
+      KickTable_down_02: 3023929296147738299
+      KickTable_down_03: 5050848446631680248
+      KickTable_down_04: -5169470527895089117
+      KickTable_down_05: 2930780575748407256
+      KickTable_down_06: 2314083083979946271
+      KickTable_down_07: 6889520846717519385
+      KickTable_left_00: -243437871977545551
+      KickTable_left_01: -9103436985875135970
+      KickTable_left_02: -1677366779774344479
+      KickTable_left_03: 26031241973791500
+      KickTable_left_04: -9062975884359903212
+      KickTable_left_05: -87427568699175055
+      KickTable_left_06: 296582343891443185
+      KickTable_left_07: -1227049356462409169
+      KickTable_right_00: 1399173875120474122
+      KickTable_right_01: 2715895461350693627
+      KickTable_right_02: 6776344438438258699
+      KickTable_right_03: -9143794673073805151
+      KickTable_right_04: 5125553838578130176
+      KickTable_right_05: 6928300741691831364
+      KickTable_right_06: 2123214963453478652
+      KickTable_right_07: -4146098656394579057
+      KickTable_up_00: 5820119503931193758
+      KickTable_up_01: 2921856798231325077
+      KickTable_up_02: -1507720951718854295
+      KickTable_up_03: 6696427652624422956
+      KickTable_up_04: -3533750893964046333
+      KickTable_up_05: -1570360980850921001
+      KickTable_up_06: 6893493864002797787
+      KickTable_up_07: 4596250644002693252
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

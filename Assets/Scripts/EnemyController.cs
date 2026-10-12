@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using GameJam;
 
 /// <summary>
 /// 升级版怪物控制器（带智能状态机、危险前摇判定圈、破障攻击与游击脱战机制）：
@@ -49,6 +50,12 @@ public class EnemyController : MonoBehaviour
     public Sprite clawSlashSprite;
     public Sprite targetRingSprite;
     private SpriteRenderer[] visualRenderers;
+
+    [Header("Squid Rig (鱿鱼骨骼动画与面部)")]
+    public SquidAnimator squid;
+    public SquidFace squidFace;
+    public bool autoAttachSquid = true;
+    public float squidScale = 0.45f;
 
     [Header("Pathfinding (智能绕障寻路)")]
     public IsometricPathfinder pathfinder;
@@ -182,6 +189,41 @@ public class EnemyController : MonoBehaviour
         CreateHealthBar();
 
         targetPlayer = FindObjectOfType<PlayerController>();
+
+        if (autoAttachSquid)
+        {
+            AttachSquid();
+        }
+    }
+
+    public void RegisterExtraRenderers(IEnumerable<SpriteRenderer> extra)
+    {
+        if (extra == null) return;
+        var list = new List<SpriteRenderer>();
+        if (visualRenderers != null) list.AddRange(visualRenderers);
+        list.AddRange(extra);
+        visualRenderers = list.ToArray();
+    }
+
+    public void AttachSquid()
+    {
+        if (squid != null) return;
+        var prefab = Resources.Load<GameObject>("Squid/Squid");
+        if (prefab == null) return;
+
+        if (monsterRenderer != null) monsterRenderer.enabled = false;
+
+        Transform parentTransform = visualRoot != null ? visualRoot : transform;
+        var go = Instantiate(prefab, parentTransform);
+        go.name = "SquidRig";
+        go.transform.localPosition = Vector3.zero;
+        go.transform.localScale = Vector3.one * squidScale;
+
+        squid = go.GetComponent<SquidAnimator>() ?? go.AddComponent<SquidAnimator>();
+        squidFace = go.GetComponent<SquidFace>() ?? go.AddComponent<SquidFace>();
+
+        var srs = go.GetComponentsInChildren<SpriteRenderer>(true);
+        RegisterExtraRenderers(srs);
     }
 
     void Start()
@@ -697,6 +739,15 @@ public class EnemyController : MonoBehaviour
         {
             enemyAnimator.SetTrigger("Attack");
         }
+        if (squid != null)
+        {
+            int side = (targetPlayer != null && targetPlayer.transform.position.x > transform.position.x) ? 1 : -1;
+            squid.Attack(side, -1, attackWindup);
+        }
+        if (squidFace != null)
+        {
+            squidFace.SetAngry(true);
+        }
 
         // 2. 激活地面危险判定圈 (Danger Zone Indicator)
         if (dangerZoneObject != null)
@@ -731,16 +782,26 @@ public class EnemyController : MonoBehaviour
         {
             monsterRenderer.transform.localScale = originalScale;
         }
+        if (squidFace != null)
+        {
+            squidFace.SetAngry(false);
+        }
 
         SpawnClawEffect();
 
-        // 5. 命中结算与闪避判定
+        // 5. 命中结算与格挡/闪避判定
         if (targetPlayer != null && !isStaggered)
         {
             float dist = Vector2.Distance(transform.position, targetPlayer.transform.position);
             if (dist <= attackRange * 1.15f)
             {
-                if (targetPlayer.IsInvulnerable)
+                if (targetPlayer.IsGuarding)
+                {
+                    // 玩家格挡成功！触发完美格挡、子弹时间与自身瘫痪
+                    targetPlayer.OnParrySuccess(this);
+                    TriggerStagger();
+                }
+                else if (targetPlayer.IsInvulnerable)
                 {
                     if (DamageTextManager.Instance != null)
                     {
@@ -862,6 +923,11 @@ public class EnemyController : MonoBehaviour
             DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 1.0f, "⚡ STAGGERED!", new Color(1f, 0.85f, 0.15f), 0.13f);
         }
 
+        if (squid != null)
+        {
+            squid.energy = 0.2f;
+        }
+
         SetVisualColor(new Color(0.7f, 0.7f, 1f, 1f));
     }
 
@@ -870,6 +936,11 @@ public class EnemyController : MonoBehaviour
         isStaggered = false;
         currentGuardBreak = maxGuardBreak;
         UpdateGuardBar();
+
+        if (squid != null)
+        {
+            squid.energy = 1.0f;
+        }
 
         SetVisualColor(originalColor);
         SetVisualPosition(Vector3.zero);
@@ -908,6 +979,11 @@ public class EnemyController : MonoBehaviour
 
         if (hpBarRoot != null) hpBarRoot.SetActive(false);
         if (targetRingObject != null) targetRingObject.SetActive(false);
+
+        if (squid != null)
+        {
+            squid.Die(2.0f);
+        }
 
         if (targetPlayer != null && targetPlayer.currentTarget == this)
         {

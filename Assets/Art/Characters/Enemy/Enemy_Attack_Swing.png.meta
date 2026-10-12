@@ -1,0 +1,818 @@
+fileFormatVersion: 2
+guid: ebba198629a5a3942b37a12fef115aeb
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 106.67
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 16384
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Attack_Swing_down_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fad94a39519a41c0800000000000000
+      internalID: -4518639463696835854
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_down_01
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4255630983af08a0800000000000000
+      internalID: -6336666341824179636
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_down_02
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55a2b34c62c7c4c40800000000000000
+      internalID: 5497905751055346261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_down_03
+      rect:
+        serializedVersion: 2
+        x: 1200
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e693270d758fffad0800000000000000
+      internalID: -2666139398337054354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_down_04
+      rect:
+        serializedVersion: 2
+        x: 1600
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0fdc37b71501aac60800000000000000
+      internalID: 7830088844286610928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_down_05
+      rect:
+        serializedVersion: 2
+        x: 2000
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04d2d6f246c2e7ed0800000000000000
+      internalID: -2414443541419971264
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_down_06
+      rect:
+        serializedVersion: 2
+        x: 2400
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e41cce251c47d48e0800000000000000
+      internalID: -1707580310034792114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_down_07
+      rect:
+        serializedVersion: 2
+        x: 2800
+        y: 1164
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ea0f82f5ffc78c60800000000000000
+      internalID: 7820447933195553509
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_left_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0287575bc2f0bfbb0800000000000000
+      internalID: -4901307084765300704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_left_01
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12c89aaa5c6ad3000800000000000000
+      internalID: 17353341481356321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_left_02
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d53fcdf357186dcb0800000000000000
+      internalID: -4839538408980417699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_left_03
+      rect:
+        serializedVersion: 2
+        x: 1200
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6b2990483298b6a0800000000000000
+      internalID: -6433231297399149716
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_left_04
+      rect:
+        serializedVersion: 2
+        x: 1600
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b9483616b5bf6670800000000000000
+      internalID: 8534239612551842226
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_left_05
+      rect:
+        serializedVersion: 2
+        x: 2000
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10b88ba429da1fad0800000000000000
+      internalID: -2670162260223554815
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_left_06
+      rect:
+        serializedVersion: 2
+        x: 2400
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: feb66a6b8dc4a5df0800000000000000
+      internalID: -190755540548817937
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_left_07
+      rect:
+        serializedVersion: 2
+        x: 2800
+        y: 776
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9fb05a2957eb1ee0800000000000000
+      internalID: -1289182498163474534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_right_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a621a0f86685bfc80800000000000000
+      internalID: -8287933491735555478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_right_01
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a2a0232b9be40b20800000000000000
+      internalID: 3099861495079543462
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_right_02
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d202724bdf826f0a0800000000000000
+      internalID: -6848241113255960531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_right_03
+      rect:
+        serializedVersion: 2
+        x: 1200
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2145921f80a43c60800000000000000
+      internalID: 7797033391237710122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_right_04
+      rect:
+        serializedVersion: 2
+        x: 1600
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc7ae62b940f59d30800000000000000
+      internalID: 4437717207160367055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_right_05
+      rect:
+        serializedVersion: 2
+        x: 2000
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f252280f963b1e30800000000000000
+      internalID: 4475230711386886902
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_right_06
+      rect:
+        serializedVersion: 2
+        x: 2400
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59b3125f539ed0b30800000000000000
+      internalID: 4255313640890121109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_right_07
+      rect:
+        serializedVersion: 2
+        x: 2800
+        y: 388
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 629e9d5c31af5c340800000000000000
+      internalID: 4883584333783886118
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_up_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f456b0a06df9ceb0800000000000000
+      internalID: -4698946144729410312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_up_01
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 86d026ccb6ab48a70800000000000000
+      internalID: 8828386141706259816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_up_02
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 341f46cdb45038320800000000000000
+      internalID: 2558894836654862659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_up_03
+      rect:
+        serializedVersion: 2
+        x: 1200
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 516b604f6c8d44540800000000000000
+      internalID: 4991352636042556949
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_up_04
+      rect:
+        serializedVersion: 2
+        x: 1600
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f6ff550db6a26280800000000000000
+      internalID: -9051488970292070663
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_up_05
+      rect:
+        serializedVersion: 2
+        x: 2000
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da166ef1d434041f0800000000000000
+      internalID: -1062775513532702291
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_up_06
+      rect:
+        serializedVersion: 2
+        x: 2400
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4bbfb6524d2a2f5e0800000000000000
+      internalID: -1877259062615475276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Attack_Swing_up_07
+      rect:
+        serializedVersion: 2
+        x: 2800
+        y: 0
+        width: 400
+        height: 388
+      alignment: 9
+      pivot: {x: 0.4975, y: 0.2938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f11b6e57d60df5ab0800000000000000
+      internalID: -5017062291319377633
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      Attack_Swing_down_00: -4518639463696835854
+      Attack_Swing_down_01: -6336666341824179636
+      Attack_Swing_down_02: 5497905751055346261
+      Attack_Swing_down_03: -2666139398337054354
+      Attack_Swing_down_04: 7830088844286610928
+      Attack_Swing_down_05: -2414443541419971264
+      Attack_Swing_down_06: -1707580310034792114
+      Attack_Swing_down_07: 7820447933195553509
+      Attack_Swing_left_00: -4901307084765300704
+      Attack_Swing_left_01: 17353341481356321
+      Attack_Swing_left_02: -4839538408980417699
+      Attack_Swing_left_03: -6433231297399149716
+      Attack_Swing_left_04: 8534239612551842226
+      Attack_Swing_left_05: -2670162260223554815
+      Attack_Swing_left_06: -190755540548817937
+      Attack_Swing_left_07: -1289182498163474534
+      Attack_Swing_right_00: -8287933491735555478
+      Attack_Swing_right_01: 3099861495079543462
+      Attack_Swing_right_02: -6848241113255960531
+      Attack_Swing_right_03: 7797033391237710122
+      Attack_Swing_right_04: 4437717207160367055
+      Attack_Swing_right_05: 4475230711386886902
+      Attack_Swing_right_06: 4255313640890121109
+      Attack_Swing_right_07: 4883584333783886118
+      Attack_Swing_up_00: -4698946144729410312
+      Attack_Swing_up_01: 8828386141706259816
+      Attack_Swing_up_02: 2558894836654862659
+      Attack_Swing_up_03: 4991352636042556949
+      Attack_Swing_up_04: -9051488970292070663
+      Attack_Swing_up_05: -1062775513532702291
+      Attack_Swing_up_06: -1877259062615475276
+      Attack_Swing_up_07: -5017062291319377633
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
