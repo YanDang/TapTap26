@@ -38,7 +38,7 @@ public class EnemyController : MonoBehaviour
     public float maxHp = 100f;
     public float currentHp = 100f;
     public float moveSpeed = 1.35f;       // 移速适度调缓，节奏从容
-    public float detectRange = 5.5f;      // 索敌警戒范围
+    public float detectRange = 8.5f;      // 索敌警戒范围 (从 5.5m 提升至 8.5m，对齐 integration 分支并适应等距地图)
     public float loseTargetRange = 6.8f;  // 游击脱战拉开距离
     public float attackRange = 1.35f;     // 攻击判定半径
     public float attackDamage = 15f;
@@ -227,7 +227,7 @@ public class EnemyController : MonoBehaviour
     private Vector3Int lastPlayerCell = new Vector3Int(int.MinValue, int.MinValue, 0);
 
     // 目标与位置
-    private Vector3 spawnPosition;
+    public Vector3 spawnPosition;
     private PlayerController targetPlayer;
     private Coroutine attackCoroutine;
 
@@ -817,15 +817,19 @@ public class EnemyController : MonoBehaviour
         if (taunt != null && taunt.parentFurniture != null && taunt.parentFurniture.Targetable)
         {
             furnitureTarget = taunt.parentFurniture;
+            return true;
         }
 
-        if (furnitureTarget != null) return true;
-
+        // 玩家在警戒范围内，仇恨优先锁定玩家（除非有尖叫阀门强制嘲讽）
         if (playerInRange)
         {
+            furnitureTarget = null;
             wasChasingPlayer = true;
             return true;
         }
+
+        // 若当前已有锁定家具目标，继续攻击家具
+        if (furnitureTarget != null) return true;
 
         if (wasChasing)
         {
@@ -1528,6 +1532,12 @@ public class EnemyController : MonoBehaviour
         if (aiState != EnemyAIState.Pending && aiState != EnemyAIState.Grabbing)
         {
             aiState = EnemyAIState.Chase;
+            var taunt = ScreamingValveAuraBehavior.GetTauntingValveNear(transform.position);
+            if (taunt == null || taunt.parentFurniture == null || !taunt.parentFurniture.Targetable)
+            {
+                furnitureTarget = null;
+                wasChasingPlayer = true;
+            }
         }
 
         float finalDmg = damage;
@@ -1699,7 +1709,9 @@ public class EnemyController : MonoBehaviour
         isPacified = false;
         pacifiedTargetEnemy = null;
         currentTargetEnemy = null;
-        aiState = EnemyAIState.Patrol;
+        furnitureTarget = null;
+        wasChasingPlayer = true;
+        aiState = EnemyAIState.Chase;
         lastPlayerCell = new Vector3Int(int.MinValue, int.MinValue, 0);
         waypoints.Clear();
 
@@ -1745,6 +1757,10 @@ public class EnemyController : MonoBehaviour
         UpdateGuardBar();
 
         isDead = false;
+        if (targetPlayer == null) targetPlayer = FindObjectOfType<PlayerController>();
+        furnitureTarget = null;
+        wasChasingPlayer = true;
+        aiState = EnemyAIState.Chase;
 
         if (DamageTextManager.Instance != null)
         {

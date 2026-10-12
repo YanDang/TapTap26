@@ -145,16 +145,29 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
             GameObject baseDemon = demons[0].gameObject;
             baseDemon.name = "Enemy_Demon_WaterElec";
             baseDemon.transform.position = new Vector3(3.8f, 2.8f, 0f);
+            var c1 = baseDemon.GetComponent<EnemyController>();
+            if (c1 != null) { c1.spawnPosition = baseDemon.transform.position; c1.autoRespawn = true; }
 
             GameObject demon2 = Instantiate(baseDemon, new Vector3(-4.5f, 2.2f, 0f), Quaternion.identity);
             demon2.name = "Enemy_Demon_Chokepoint";
             var c2 = demon2.GetComponent<EnemyController>();
-            if (c2 != null) { c2.autoRespawn = true; c2.respawnDelay = 5f; }
+            if (c2 != null) { c2.spawnPosition = demon2.transform.position; c2.autoRespawn = true; c2.respawnDelay = 5f; }
 
             GameObject demon3 = Instantiate(baseDemon, new Vector3(1.4f, 4.2f, 0f), Quaternion.identity);
             demon3.name = "Enemy_Demon_Incubator";
             var c3 = demon3.GetComponent<EnemyController>();
-            if (c3 != null) { c3.autoRespawn = true; c3.respawnDelay = 5.5f; }
+            if (c3 != null) { c3.spawnPosition = demon3.transform.position; c3.autoRespawn = true; c3.respawnDelay = 5.5f; }
+        }
+        else if (demons.Length >= 3)
+        {
+            for (int i = 0; i < demons.Length; i++)
+            {
+                if (demons[i] != null)
+                {
+                    demons[i].spawnPosition = demons[i].transform.position;
+                    demons[i].autoRespawn = true;
+                }
+            }
         }
     }
 

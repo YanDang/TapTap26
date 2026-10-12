@@ -174,7 +174,7 @@ namespace GameJam
         HeroFacing facing;
         HeroGait gait;
         LineRenderer rodDarkLine, rodLightLine;
-        readonly List<SpriteRenderer> hidden = new List<SpriteRenderer>();
+        readonly List<SpriteRenderer> bodyRenderers = new List<SpriteRenderer>();
         bool ready;
 
         public float T => clipT;
@@ -182,6 +182,7 @@ namespace GameJam
         public float Hit => clip != null ? clip.hit : -1f;
         public float Length => clip != null ? clip.Length : 0f;
         public bool InShell => shell != Shell.None;
+        public bool IsInShell => shell != Shell.None;
         public float PunchHitTime => punchHitT;
         public float ShellTime => shellT;
         public bool ShellDone => shell == Shell.None;
@@ -237,6 +238,13 @@ namespace GameJam
             layers.TryGetValue("壳", out shellLayer);
             layers.TryGetValue("机械臂", out armLayer);
             layers.TryGetValue("手", out clawLayer);
+
+            bodyRenderers.Clear();
+            foreach (var r in GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (r != shellLayer) bodyRenderers.Add(r);
+            }
+
             if (shellLayer && shellLayer.sprite)
             {
                 // 壳图：壳口在图的右侧（约 71% 宽、离底 40% 高），壳心取整张图的中心偏右一点
@@ -296,6 +304,10 @@ namespace GameJam
         public void Play(string name, bool crossfade = true)
         {
             if (!ready || !Clips.TryGetValue(name, out var c)) return;
+            if (name != "Emerge" && shell != Shell.None)
+            {
+                CancelShell();
+            }
             charging = false; struggling = false;
             fromPose = lastPose; fadeT = crossfade ? 0f : 1f;
             clip = c; clipT = 0f;
@@ -349,14 +361,17 @@ namespace GameJam
         {
             if (hide)
             {
-                hidden.Clear();
-                foreach (var r in GetComponentsInChildren<SpriteRenderer>(true))
-                    if (r != shellLayer && r.enabled) { r.enabled = false; hidden.Add(r); }
+                for (int i = 0; i < bodyRenderers.Count; i++)
+                {
+                    if (bodyRenderers[i] != null) bodyRenderers[i].enabled = false;
+                }
             }
             else
             {
-                foreach (var r in hidden) if (r) r.enabled = true;
-                hidden.Clear();
+                for (int i = 0; i < bodyRenderers.Count; i++)
+                {
+                    if (bodyRenderers[i] != null) bodyRenderers[i].enabled = true;
+                }
                 if (rodDarkLine) rodDarkLine.enabled = rodLightLine.enabled = false;
                 if (armSolver) armSolver.weight = 1f;
                 chest.localPosition = chestRestPos;
@@ -444,6 +459,11 @@ namespace GameJam
         void UpdateShell(float dt)
         {
             shellT += dt;
+            if (shellT > 2.5f)
+            {
+                CancelShell();
+                return;
+            }
             transform.localScale = Vector3.one;
             transform.localPosition = heroBasePos;
             // 壳心的“原位”（角色本地坐标）

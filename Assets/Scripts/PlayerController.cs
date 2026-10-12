@@ -2027,6 +2027,8 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private IEnumerator PerformDodgeRollRoutine(Vector2 swipeDir)
     {
+        if (isRolling) yield break;
+
         // 翻滚打断当前移动和自动攻击，全力闪避
         StopMovement();
 
@@ -2100,10 +2102,11 @@ public class PlayerController : MonoBehaviour
         if (hero != null)
         {
             Vector3 punchTarget = (currentTarget != null && currentTarget.IsAlive) ? currentTarget.transform.position : (transform.position + rollDir * 2.2f);
-            hero.ShellPunch(punchTarget);
+            float punchLen = hero.ShellPunch(punchTarget);
             Sfx.Play("sfx_arrow_charge", 0.7f);
 
-            yield return new WaitForSeconds(0.15f);
+            // 等待出拳命中时刻 (HeroActions.punchHitT = 0.42s)
+            yield return new WaitForSeconds(0.42f);
             CameraRig.I?.Shake(0.5f, 0.4f);
             ScreenFX.I?.Pulse();
             Sfx.Play("sfx_explosion");
@@ -2118,6 +2121,16 @@ public class PlayerController : MonoBehaviour
                 {
                     e.TakeDamage(CurrentAttackDamage * 2.0f, CurrentGuardBreakPower * 2.0f, transform.position);
                 }
+            }
+
+            // 等待机械臂出拳收回并钻出壳 (punchLen - 0.42s)
+            float waitRemain = Mathf.Max(0.1f, punchLen - 0.42f);
+            yield return new WaitForSeconds(waitRemain);
+
+            // 兜底校验：确保退出缩壳
+            if (hero.IsInShell)
+            {
+                hero.CancelShell();
             }
         }
 
