@@ -25,13 +25,17 @@ namespace GameJam
         {
             if (Current) Current.Close();
             Canvas canvas = null;
-            var canvases = FindObjectsOfType<Canvas>();
-            foreach (var cv in canvases)
+            if (HUD.I != null) canvas = HUD.I.GetComponent<Canvas>();
+            if (canvas == null)
             {
-                if (cv.renderMode == RenderMode.ScreenSpaceOverlay && cv.isActiveAndEnabled)
+                var canvases = FindObjectsOfType<Canvas>();
+                foreach (var cv in canvases)
                 {
-                    canvas = cv;
-                    break;
+                    if (cv.renderMode == RenderMode.ScreenSpaceOverlay && cv.isActiveAndEnabled)
+                    {
+                        canvas = cv;
+                        break;
+                    }
                 }
             }
             if (canvas == null)

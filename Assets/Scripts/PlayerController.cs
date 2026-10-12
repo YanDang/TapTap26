@@ -25,6 +25,8 @@ using GameJam;
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
+    public static PlayerController Instance { get; private set; }
+
     [Header("Dependencies (依赖组件)")]
     public Grid grid;
     public Tilemap groundTilemap;
@@ -192,6 +194,8 @@ public class PlayerController : MonoBehaviour
     public bool CanRoll => rollCooldownTimer <= 0f && !isRolling && !Unavailable;
     public float RollCooldownTimer => rollCooldownTimer;
     public float RollCooldown => rollCooldown;
+    public float DodgeRemaining => Mathf.Max(0f, rollCooldownTimer);
+    public float dodgeCooldown => rollCooldown;
     private bool isRolling = false;
     private bool isInvulnerable = false;
     private bool isGrabbed = false;
@@ -283,6 +287,7 @@ public class PlayerController : MonoBehaviour
 
     void Awake()
     {
+        Instance = this;
         enableClickToMove = true;
         cam = Camera.main;
 
@@ -331,6 +336,11 @@ public class PlayerController : MonoBehaviour
         CreateMarkerObject();
         CreatePlayerHealthBar();
         CacheOriginalColors();
+
+        if (HUD.I == null)
+        {
+            HUD.Build();
+        }
     }
 
     public void AttachHero2D()
@@ -2799,6 +2809,7 @@ public class PlayerController : MonoBehaviour
 
     void OnDestroy()
     {
+        if (Instance == this) Instance = null;
         if (markerRenderer != null && markerRenderer.material != null)
         {
             Destroy(markerRenderer.material);
