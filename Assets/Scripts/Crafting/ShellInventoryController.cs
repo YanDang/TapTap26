@@ -1372,11 +1372,7 @@ namespace BiomechanicalCrafting
 
             if (pendingProduct != null)
             {
-                PlayerSessionData.AddCraftedProduct(pendingProduct);
-                if (BuildDockUI.Instance != null)
-                {
-                    BuildDockUI.Instance.PopulateCards();
-                }
+                PlayerSessionData.AddCraftedProduct(pendingProduct);   // [gamejam 移植] 刷新交给 OnCraftedProductsChanged 事件
             }
 
             if (craftResultModal != null) craftResultModal.SetActive(false);

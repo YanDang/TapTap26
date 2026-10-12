@@ -95,6 +95,24 @@ public class BuildDockUI : MonoBehaviour
         ApplyShelfLayout();
     }
 
+    private void OnEnable()
+    {
+        PlayerSessionData.OnCraftedProductsChanged += HandleCraftedProductsChanged;
+    }
+
+    private void OnDisable()
+    {
+        PlayerSessionData.OnCraftedProductsChanged -= HandleCraftedProductsChanged;
+    }
+
+    private void HandleCraftedProductsChanged()
+    {
+        if (isDrawerOpen)
+        {
+            PopulateCards();
+        }
+    }
+
     private void OnValidate()
     {
         // 编辑器面板参数修改时即时刷新预览布局

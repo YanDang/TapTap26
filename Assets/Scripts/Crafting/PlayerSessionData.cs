@@ -19,6 +19,10 @@ public static class PlayerSessionData
     // 战斗场景名称（以便工坊合成完毕后精准返回）
     public static string returnCombatSceneName = "TileTest";
 
+    /// <summary>[gamejam 移植] 仓库里的成品增减时触发（替代原工程直接调 BuildDockUI.PopulateCards）。</summary>
+    public static event Action OnCraftedProductsChanged;
+    public static void NotifyCraftedProductsChanged() => OnCraftedProductsChanged?.Invoke();
+
     // 状态标记：刚从工坊合成归来
     public static bool hasJustReturnedFromCrafting = false;
 
@@ -43,6 +47,7 @@ public static class PlayerSessionData
         craftedProducts.Clear();
         PlayerPrefs.DeleteKey(PrefKey_CraftedProducts);
         PlayerPrefs.Save();
+        NotifyCraftedProductsChanged();
     }
 
     [Serializable]
@@ -112,6 +117,7 @@ public static class PlayerSessionData
         {
             Debug.LogError($"[PlayerSessionData] 保存家具仓库失败: {ex}");
         }
+        NotifyCraftedProductsChanged();   // [gamejam 移植] 仓库有变化：通知战斗场景刷新物品栏
     }
 
     public static void LoadCraftedProductsFromStorage()
