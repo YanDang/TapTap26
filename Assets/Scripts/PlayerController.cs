@@ -487,7 +487,16 @@ public class PlayerController : MonoBehaviour
         if (hero != null)
         {
             hero.BeginStruggle();
-            hero.Face?.TriggerPain();
+            if (hero.Face != null)
+            {
+                hero.Face.wrapped = true;
+                hero.Face.SetBase(HeroFace.Expr.Pain);
+            }
+        }
+
+        if (by != null)
+        {
+            SetVisualFacing(by.transform.position.x < transform.position.x);
         }
 
         // 别的怪先不打玩家
@@ -515,7 +524,15 @@ public class PlayerController : MonoBehaviour
         if (!isGrabbed) return;
 
         currentHp = Mathf.Max(0f, currentHp - dmg);
-        if (hero != null) hero.SqueezeKick();
+        if (hero != null)
+        {
+            hero.SqueezeKick();
+            if (hero.Face != null)
+            {
+                hero.Face.wrapped = true;
+                hero.Face.TriggerPain();
+            }
+        }
 
         if (DamageTextManager.Instance != null)
         {
@@ -530,7 +547,11 @@ public class PlayerController : MonoBehaviour
 
         if (currentHp <= 0f)
         {
-            if (hero != null) hero.EndStruggle();
+            if (hero != null)
+            {
+                hero.EndStruggle();
+                if (hero.Face != null) hero.Face.wrapped = false;
+            }
             isGrabbed = false;
             grabberEnemy = null;
             if (DamageTextManager.Instance != null)
@@ -544,8 +565,14 @@ public class PlayerController : MonoBehaviour
     {
         if (!isGrabbed) return;
         isGrabbed = false;
+        if (hero != null)
+        {
+            hero.EndStruggle();
+            if (hero.Face != null) hero.Face.wrapped = false;
+        }
+        var enemy = grabberEnemy != null ? grabberEnemy : by;
         grabberEnemy = null;
-        StartCoroutine(ThrownRoutine(by));
+        StartCoroutine(ThrownRoutine(enemy));
     }
 
     private IEnumerator ThrownRoutine(EnemyController by)
@@ -558,13 +585,15 @@ public class PlayerController : MonoBehaviour
         throwDir.z = 0;
 
         float throwFlight = 0.45f;
-        float throwDistance = 2.2f;
+        float throwDistance = 2.4f;
 
         if (hero != null)
         {
             hero.EndStruggle();
+            if (hero.Face != null) hero.Face.wrapped = false;
             hero.Play("Thrown");
         }
+        SetVisualFacing(throwDir.x < 0);
 
         Sfx.Play("sfx_swing", 0.9f);
 
@@ -597,8 +626,9 @@ public class PlayerController : MonoBehaviour
             DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.4f, "砸在地面!", new Color(1f, 0.5f, 0.2f), 0.09f);
         }
 
-        // 瘫地缓慢起身
-        yield return new WaitForSeconds(0.45f);
+        // 瘫地缓慢起身：等待 Thrown 动作完全播完（约 1.3s）后再恢复玩家控制
+        float remaining = (HeroActions.Clips.TryGetValue("Thrown", out var c) ? c.Length : 1.3f) - throwFlight;
+        yield return new WaitForSeconds(Mathf.Max(0.5f, remaining));
 
         isThrown = false;
     }
@@ -762,10 +792,16 @@ public class PlayerController : MonoBehaviour
         // 处于被缠绕状态时，吸附在鱿鱼触手前并禁止主动操作
         if (isGrabbed)
         {
+            if (hero != null && hero.Face != null)
+            {
+                hero.Face.wrapped = true;
+                hero.Face.SetBase(HeroFace.Expr.Pain);
+            }
             if (grabberEnemy != null && grabberEnemy.IsAlive)
             {
-                Vector3 holdPos = grabberEnemy.transform.position + (transform.position.x > grabberEnemy.transform.position.x ? Vector3.right : Vector3.left) * 0.45f;
+                Vector3 holdPos = grabberEnemy.transform.position + (transform.position.x > grabberEnemy.transform.position.x ? Vector3.right : Vector3.left) * 0.55f;
                 transform.position = Vector3.Lerp(transform.position, holdPos, Time.deltaTime * 12f);
+                SetVisualFacing(grabberEnemy.transform.position.x < transform.position.x);
             }
             else
             {

@@ -49,10 +49,10 @@ public class EnemyController : MonoBehaviour
     public float windowStart = 0.05f;             // 格挡窗口开启时刻
     public float windowEnd = 0.5f;                // 格挡窗口结束时刻
     public float hitRange = 1.85f;                // 攻击命中有效距离
-    [Range(0f, 1f)] public float grabChance = 0.35f; // 抓取发起概率
+    [Range(0f, 1f)] public float grabChance = 0.45f; // 抓取发起概率
     public float grabWindup = 1.4f;               // 抓取前摇蓄力时长 (红光闪烁)
-    public float grabRange = 2.0f;                // 抓取范围判定
-    public float grabHold = 2.6f;                 // 缠住时长
+    public float grabRange = 2.8f;                // 抓取范围判定 (对齐 TapTap26)
+    public float grabHold = 2.8f;                 // 缠住时长
     public float grabTick = 0.85f;                // 缠住挤压扣血周期
     public float grabDamage = 10f;                // 每次挤压伤害
     public bool forceGrabNext = false;            // 强制下一次攻击为抓取 (测试用)
@@ -352,6 +352,19 @@ public class EnemyController : MonoBehaviour
 
     public void SetVisualFacing(bool faceLeft)
     {
+        if (squid != null)
+        {
+            // 章鱼骨骼是程序化动画，通过 GrabHold(side) 与 Attack(side) 原生控制左右侧出招
+            // 严禁翻转 visualRoot.localScale.x 为负，否则局部坐标系反向会导致触手反向空抓！
+            if (visualRoot != null)
+            {
+                Vector3 s = visualRoot.localScale;
+                s.x = Mathf.Abs(s.x > 0.001f ? s.x : 1f);
+                visualRoot.localScale = s;
+            }
+            return;
+        }
+
         if (visualRoot != null)
         {
             Vector3 s = visualRoot.localScale;
@@ -839,7 +852,8 @@ public class EnemyController : MonoBehaviour
         }
 
         // 进入近战范围且冷却就绪，发起普通挥击（黄光）或狂暴抓取（红光）
-        if (distToPlayer <= attackRange && attackCooldownTimer <= 0f)
+        float initiateRange = (squid != null && Grabber == null && !targetPlayer.Unavailable && (forceGrabNext || Random.value < grabChance)) ? (grabRange * 0.85f) : attackRange;
+        if (distToPlayer <= initiateRange && attackCooldownTimer <= 0f)
         {
             SetMoveAnimation(false);
             if (squid != null && Grabber == null && !targetPlayer.Unavailable && (forceGrabNext || Random.value < grabChance))
