@@ -9,14 +9,35 @@ namespace GameJam
     [RequireComponent(typeof(Camera))]
     public class ScreenFX : MonoBehaviour
     {
-        public static ScreenFX I;
+        private static ScreenFX _i;
+        public static ScreenFX I
+        {
+            get
+            {
+                if (_i == null)
+                {
+                    _i = FindObjectOfType<ScreenFX>();
+                    if (_i == null)
+                    {
+                        var cam = Camera.main ?? FindObjectOfType<Camera>();
+                        if (cam != null)
+                        {
+                            _i = cam.gameObject.AddComponent<ScreenFX>();
+                        }
+                    }
+                }
+                return _i;
+            }
+            set => _i = value;
+        }
+
         public Material mat;
         float _amount, _pulse = 2f;
         AudioLowPassFilter _lp;
 
         void Awake()
         {
-            I = this;
+            if (_i == null) _i = this;
             _lp = GetComponent<AudioLowPassFilter>();
             if (!mat) mat = Resources.Load<Material>("Materials/ScreenFX");
         }

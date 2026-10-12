@@ -26,8 +26,9 @@ public class GasCystMineBehavior : BiomechanicalAuraBase
         }
     }
 
-    void OnDestroy()
+    protected override void OnDestroy()
     {
+        base.OnDestroy();
         if (parentFurniture != null)
         {
             parentFurniture.onHitTaken -= OnMineHit;

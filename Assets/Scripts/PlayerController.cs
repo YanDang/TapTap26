@@ -379,6 +379,17 @@ public class PlayerController : MonoBehaviour
     {
         if (guardCooldownTimer > 0f || isRolling || isCharging || heldFurniture != null || Unavailable) return;
 
+        // 0. 时钟倒计时 QTE 判定（按空格也能触发处决）
+        var clock = GameJam.ClockQTE.Current;
+        if (clock != null && clock.Open)
+        {
+            if (clock.TryHit())
+            {
+                if (clock.owner != null) ExecuteEnemy(clock.owner);
+                return;
+            }
+        }
+
         // 1. 如果身边有正处于可格挡黄光窗口的敌人，直接触发完美弹刀！
         var parryEnemy = FindParryableEnemy();
         if (parryEnemy != null)
@@ -664,7 +675,7 @@ public class PlayerController : MonoBehaviour
             DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, $"💥 震地重砸! (SMASH x{damageMultiplier:0.0})", new Color(1f, 0.45f, 0.1f), 0.14f);
         }
 
-        Sfx.Play("hero_smash");
+        Sfx.Play("sfx_explosion");
     }
 
     void OnDisable()
@@ -780,6 +791,21 @@ public class PlayerController : MonoBehaviour
         // 鼠标左键长按蓄力机制（优先触发处决或迎击弹刀）
         if (Input.GetMouseButtonDown(0))
         {
+            // 0. 时钟倒计时 QTE 判定
+            var clock = GameJam.ClockQTE.Current;
+            if (clock != null && clock.Open)
+            {
+                if (clock.TryHit())
+                {
+                    if (clock.owner != null) ExecuteEnemy(clock.owner);
+                }
+                else
+                {
+                    Sfx.Play("sfx_swing", 0.6f);
+                }
+                return;
+            }
+
             var pend = EnemyController.FindPending();
             var parryable = FindParryableEnemy();
             if (pend != null || parryable != null)
@@ -1468,6 +1494,21 @@ public class PlayerController : MonoBehaviour
     {
         if (Unavailable || attackCooldownTimer > 0f || isAttackingAnim) return;
 
+        // 0. 时钟倒计时 QTE 判定
+        var clock = GameJam.ClockQTE.Current;
+        if (clock != null && clock.Open)
+        {
+            if (clock.TryHit())
+            {
+                if (clock.owner != null) ExecuteEnemy(clock.owner);
+            }
+            else
+            {
+                Sfx.Play("sfx_swing", 0.6f);
+            }
+            return;
+        }
+
         // 1. 优先检查附近是否有处决就绪 (Pending) 的怪物！
         var pendingEnemy = EnemyController.FindPending();
         if (pendingEnemy != null && Vector2.Distance(transform.position, pendingEnemy.transform.position) <= 4.5f)
@@ -1505,7 +1546,8 @@ public class PlayerController : MonoBehaviour
         isMoving = false;
         waypoints.Clear();
 
-        Vector3 nextPos = transform.position + new Vector3(moveDir.x, moveDir.y, 0f) * (EffectiveMoveSpeed * Time.deltaTime);
+        float moveDt = GameJam.TimeManager.SlowMo ? GameJam.TimeManager.PlayerDelta : Time.deltaTime;
+        Vector3 nextPos = transform.position + new Vector3(moveDir.x, moveDir.y, 0f) * (EffectiveMoveSpeed * moveDt);
 
         // 地面安全检测
         Vector3 groundRayPos = new Vector3(nextPos.x, nextPos.y - groundHeightOffset, 0f);
@@ -1776,7 +1818,8 @@ public class PlayerController : MonoBehaviour
         else if (currentTargetWp.x < transform.position.x - 0.02f)
             SetVisualFacing(true);
 
-        transform.position = Vector3.MoveTowards(transform.position, currentTargetWp, EffectiveMoveSpeed * Time.deltaTime);
+        float pathDt = GameJam.TimeManager.SlowMo ? GameJam.TimeManager.PlayerDelta : Time.deltaTime;
+        transform.position = Vector3.MoveTowards(transform.position, currentTargetWp, EffectiveMoveSpeed * pathDt);
 
         if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null)
         {

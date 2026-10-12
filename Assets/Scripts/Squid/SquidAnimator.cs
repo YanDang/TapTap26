@@ -149,6 +149,31 @@ namespace GameJam
             renderers = GetComponentsInChildren<SpriteRenderer>(true);
             baseColors = System.Array.ConvertAll(renderers, r => r.color);
         }
+
+        /// <summary>复活刷新：重置死亡状态、恢复姿态与完整不透明度</summary>
+        public void Revive()
+        {
+            IsDead = false;
+            dieT = 0f;
+            energyNow = 1f;
+            atkIndex = -1;
+            grabIndex = -1;
+            grabW = 0f;
+            if (renderers == null || renderers.Length == 0)
+                renderers = GetComponentsInChildren<SpriteRenderer>(true);
+            if (renderers != null)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i])
+                    {
+                        Color c = (baseColors != null && i < baseColors.Length) ? baseColors[i] : Color.white;
+                        c.a = 1f;
+                        renderers[i].color = c;
+                    }
+                }
+            }
+        }
         float dieDuration = 2f;
 
         static float Smooth(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }

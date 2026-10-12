@@ -56,6 +56,12 @@ public class EnemyController : MonoBehaviour
     public float grabTick = 0.85f;                // 缠住挤压扣血周期
     public float grabDamage = 10f;                // 每次挤压伤害
     public bool forceGrabNext = false;            // 强制下一次攻击为抓取 (测试用)
+    [Header("时钟倒计时转盘 QTE (时停处决)")]
+    public bool enableClockQTE = true;            // 开启时钟倒计时转盘 QTE
+    [Range(0f, 1f)] public float clockChance = 0.65f;
+    public float clockDuration = 1.6f;
+    public bool forceClockNext = false;
+    public GameJam.ClockQTE currentClock;
 
     public static readonly Color AttackGlow = new Color(1f, 0.8f, 0.08f); // 金黄色 = 可格挡
     public static readonly Color GrabGlow = new Color(1f, 0.08f, 0.05f);   // 鲜红色 = 抓取不可格挡
@@ -73,7 +79,15 @@ public class EnemyController : MonoBehaviour
         return null;
     }
 
-    public bool ParryWindowOpen => aiState == EnemyAIState.Attack && stateTimer >= windowStart && stateTimer <= windowEnd;
+    public bool ParryWindowOpen
+    {
+        get
+        {
+            if (aiState != EnemyAIState.Attack) return false;
+            float end = (currentClock != null && currentClock.Open) ? currentClock.duration * 0.9f : windowEnd;
+            return stateTimer >= windowStart && stateTimer <= end;
+        }
+    }
 
     [Header("Guard Break & Stagger (破防瘫痪规范参数)")]
     public float maxGuardBreak = 100f;
@@ -958,15 +972,29 @@ public class EnemyController : MonoBehaviour
         }
 
         int side = (targetPlayer != null && targetPlayer.transform.position.x > transform.position.x) ? 1 : -1;
+        bool useClock = enableClockQTE && (forceClockNext || Random.value < clockChance);
+        forceClockNext = false;
+        float attackImpact = useClock ? clockDuration : normalImpact;
+
         if (squid != null)
         {
-            squid.Attack(side, -1, normalImpact);
+            squid.Attack(side, -1, attackImpact);
         }
         if (enemyAnimator != null && enemyAnimator.enabled && enemyAnimator.runtimeAnimatorController != null)
         {
             enemyAnimator.SetTrigger("Attack");
         }
-        Sfx.Play("sfx_enemy_windup", 0.85f);
+
+        if (useClock)
+        {
+            if (GameJam.ClockQTE.Current != null) GameJam.ClockQTE.Current.Close();
+            currentClock = GameJam.ClockQTE.Show(this, clockDuration);
+            Sfx.Play("sfx_sword_draw", 0.9f, true);
+        }
+        else
+        {
+            Sfx.Play("sfx_enemy_windup", 0.85f);
+        }
 
         if (dangerZoneObject != null)
         {
@@ -984,8 +1012,11 @@ public class EnemyController : MonoBehaviour
         SetMoveAnimation(false);
         stateTimer += Time.deltaTime;
 
-        // 黄光预警（0.05 ~ 0.55s 内闪烁）
-        if (stateTimer <= windowEnd + 0.05f)
+        float impactTime = (currentClock != null && currentClock.Open) ? currentClock.duration : normalImpact;
+        float effectiveWindowEnd = (currentClock != null && currentClock.Open) ? impactTime * 0.9f : windowEnd;
+
+        // 黄光预警（0.05 ~ effectiveWindowEnd 内闪烁）
+        if (stateTimer <= effectiveWindowEnd + 0.05f)
         {
             float glow = 0.55f + 0.25f * Mathf.Sin(Time.time * 30f);
             ApplyFlash(glow, AttackGlow);
@@ -1000,20 +1031,22 @@ public class EnemyController : MonoBehaviour
         }
 
         // 格挡窗口期如果玩家正在防御状态，立刻触发弹刀！
-        if (stateTimer >= windowStart && stateTimer <= windowEnd)
+        if (stateTimer >= windowStart && stateTimer <= effectiveWindowEnd)
         {
             if (targetPlayer != null && targetPlayer.IsGuarding)
             {
                 ApplyFlash(0f, Color.white);
+                if (currentClock != null) currentClock.Close();
                 targetPlayer.DoParry(this);
                 return;
             }
         }
 
         // 命中时点
-        if (!impactDone && stateTimer >= normalImpact)
+        if (!impactDone && stateTimer >= impactTime)
         {
             impactDone = true;
+            if (currentClock != null) currentClock.Close();
             ApplyFlash(0f, Color.white);
             if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
             SpawnClawEffect();
@@ -1046,7 +1079,7 @@ public class EnemyController : MonoBehaviour
         }
 
         // 攻击后摇结束
-        if (stateTimer >= normalImpact + 0.35f)
+        if (stateTimer >= impactTime + 0.35f)
         {
             ApplyFlash(0f, Color.white);
             if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
@@ -1516,6 +1549,14 @@ public class EnemyController : MonoBehaviour
         {
             visualRoot.gameObject.SetActive(true);
         }
+        if (squid != null)
+        {
+            squid.Revive();
+        }
+        else
+        {
+            AttachSquid();
+        }
         foreach (var col in colliders) col.enabled = true;
 
         // 复活淡入
@@ -1528,7 +1569,9 @@ public class EnemyController : MonoBehaviour
             SetVisualAlpha(t);
             yield return null;
         }
+        SetVisualAlpha(1f);
         SetVisualColor(originalColor);
+        ApplyFlash(0f, Color.white);
         SetVisualFacing(false);
         SetMoveAnimation(false);
 

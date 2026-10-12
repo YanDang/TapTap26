@@ -13,7 +13,7 @@ namespace GameJam
         {
             if (!_set) _set = Resources.Load<SpriteSet>("SpriteSets/VFX");
             if (!_add) _add = Resources.Load<Material>("Materials/SpriteAdditive");
-            var go = new GameObject("VFX_" + clip);
+            var go = new GameObject(clip.StartsWith("VFX_") ? clip : "VFX_" + clip);
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sharedMaterial = _add;
             if (tint.HasValue) sr.color = tint.Value;

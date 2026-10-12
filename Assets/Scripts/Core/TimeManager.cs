@@ -8,19 +8,38 @@ namespace GameJam
     /// </summary>
     public class TimeManager : MonoBehaviour
     {
-        public static TimeManager I;
+        private static TimeManager _i;
+        public static TimeManager I
+        {
+            get
+            {
+                if (_i == null)
+                {
+                    _i = FindObjectOfType<TimeManager>();
+                    if (_i == null)
+                    {
+                        var go = new GameObject("TimeManager");
+                        _i = go.AddComponent<TimeManager>();
+                        DontDestroyOnLoad(go);
+                    }
+                }
+                return _i;
+            }
+            set => _i = value;
+        }
+
         public float slowScale = 0.1f;
         float _slowUntil = -1, _slowStart = -1, _hitstopUntil = -1;
 
-        public static bool SlowMo => I && UnityEngine.Time.unscaledTime < I._slowUntil;
-        public static bool Hitstop => I && UnityEngine.Time.unscaledTime < I._hitstopUntil;
-        public static float SlowMoRemaining => I ? Mathf.Max(0, I._slowUntil - UnityEngine.Time.unscaledTime) : 0;
-        public static float SlowMoElapsed => I && SlowMo ? UnityEngine.Time.unscaledTime - I._slowStart : 0;
+        public static bool SlowMo => I != null && UnityEngine.Time.unscaledTime < I._slowUntil;
+        public static bool Hitstop => I != null && UnityEngine.Time.unscaledTime < I._hitstopUntil;
+        public static float SlowMoRemaining => I != null ? Mathf.Max(0, I._slowUntil - UnityEngine.Time.unscaledTime) : 0;
+        public static float SlowMoElapsed => (I != null && SlowMo) ? UnityEngine.Time.unscaledTime - I._slowStart : 0;
 
         /// <summary>Delta time for the player (and other "unscaled" actors): real time, but 0 during hitstop.</summary>
         public static float PlayerDelta => Hitstop ? 0 : Mathf.Min(UnityEngine.Time.unscaledDeltaTime, 0.05f);
 
-        void Awake() { I = this; Apply(); }
+        void Awake() { if (_i == null) _i = this; Apply(); }
 
         public void StartSlowMo(float realSeconds)
         {
