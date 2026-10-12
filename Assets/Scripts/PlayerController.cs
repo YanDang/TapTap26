@@ -40,10 +40,29 @@ public class PlayerController : MonoBehaviour
     public float groundHeightOffset = 0.5f;
     public bool canMove = true;
 
-    [Header("Weapon Stats (当前装备武器)")]
-    public WeaponData equippedWeapon;
+    [Header("Combat Stats (核心战斗属性 - 纯数值，无需武器系统)")]
+    public float attackDamage = 25f;
+    public float guardBreakPower = 35f;
+    public float attackInterval = 0.75f;
 
-    [Header("Held Furniture (当前手持家具)")]
+    [Header("Weapon Compatibility (工坊数据兼容)")]
+    private WeaponData _equippedWeapon;
+    public WeaponData equippedWeapon
+    {
+        get => _equippedWeapon;
+        set
+        {
+            _equippedWeapon = value;
+            if (_equippedWeapon != null)
+            {
+                attackDamage = _equippedWeapon.damage;
+                guardBreakPower = _equippedWeapon.guardBreakPower;
+                attackInterval = _equippedWeapon.attackInterval;
+            }
+        }
+    }
+
+    [Header("Held Furniture (当前手持家具 - 已废弃手持)")]
     public FurnitureObject heldFurniture;
 
     [Header("Combat Visuals (战斗特效)")]
@@ -88,20 +107,48 @@ public class PlayerController : MonoBehaviour
     private float guardCooldownTimer = 0f;
     private float guardWindowTimer = 0f;
     public bool IsGuarding => isGuarding;
-    public float guardWindowDuration = 0.45f;
-    public float guardCooldown = 0.5f;
+    public float guardWindowDuration = 0.48f;
+    public float parryCooldown = 0.5f;
+    public float slowMoSeconds = 2.5f;
+    private float _parryReady = 0f;
+    public float ParryRemaining => Mathf.Max(0, _parryReady - Time.unscaledTime);
+    public int parrySuccess = 0;
+    public int parryWhiff = 0;
+    public int smashes = 0;
+    public float lastSmashLevel = 0f;
 
     private bool isCharging = false;
+    private bool isSmashing = false;
     private float chargeLevel = 0f;
-    public float chargeHoldThreshold = 0.22f;
+    public bool IsCharging => isCharging;
+    public bool IsSmashing => isSmashing;
+    public float ChargeLevel => chargeLevel;
+    public float chargeHoldDelay = 0.18f;
+    public float chargeTime = 1.0f;
+    public float smashLunge = 1.4f;
 
     [Header("Combat Locking & Controls (战斗锁定与双键操作规范 - 对齐 gamejam-integration)")]
     public float reLockRadius = 8f;
-    public bool InCombat { get; private set; } = false;
-    public float chargeHoldDelay = 0.18f;
+    private bool _manualInCombat = false;
+    public bool InCombat
+    {
+        get
+        {
+            if (_manualInCombat) return true;
+            if (currentTarget != null && currentTarget.IsAlive) return true;
+            var enemies = EnemyController.AllEnemies;
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                var e = enemies[i];
+                if (e != null && e.IsAlive && Vector2.Distance(transform.position, e.transform.position) <= reLockRadius)
+                    return true;
+            }
+            return false;
+        }
+        private set => _manualInCombat = value;
+    }
     private bool _leftHeld = false;
     private float _leftDownAt = -1f;
-    private FurnitureObject _tapFurn = null;
 
     [Header("Place Furniture (放置家具动作 - 来自 gamejam-integration)")]
     public float placeActionTime = 1.0f;
@@ -177,12 +224,6 @@ public class PlayerController : MonoBehaviour
     private bool isPointerDown = false;
     private int pointerFingerId = -1;
 
-    // 连续点击敌人判定 (用于手持家具投掷)
-    private EnemyController lastClickedEnemy = null;
-    private float lastEnemyClickTime = 0f;
-    private int consecutiveEnemyClickCount = 0;
-    private const float DOUBLE_CLICK_TIME_WINDOW = 0.6f;
-
     // 电脑鼠标操作状态 (右键移动，左键家具与战术目标交互)
     private float rightClickHoldTimer = 0f;
     private bool isLeftPointerDown = false;
@@ -209,10 +250,7 @@ public class PlayerController : MonoBehaviour
     {
         get
         {
-            float spd = baseMoveSpeed;
-            if (heldFurniture != null)
-                spd *= (1f - heldFurniture.moveSpeedPenalty);
-            return spd * moveSpeedMultiplier;
+            return baseMoveSpeed * moveSpeedMultiplier;
         }
     }
 
@@ -229,40 +267,19 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// 获取当前攻击力
+    /// 获取当前攻击力 (纯属性数值)
     /// </summary>
-    public float CurrentAttackDamage
-    {
-        get
-        {
-            if (heldFurniture != null) return heldFurniture.heldDamage;
-            return equippedWeapon != null ? equippedWeapon.damage : 25f;
-        }
-    }
+    public float CurrentAttackDamage => attackDamage;
 
     /// <summary>
-    /// 获取当前削韧破防力
+    /// 获取当前削韧破防力 (纯属性数值)
     /// </summary>
-    public float CurrentGuardBreakPower
-    {
-        get
-        {
-            if (heldFurniture != null) return heldFurniture.heldGuardBreak;
-            return equippedWeapon != null ? equippedWeapon.guardBreakPower : 30f;
-        }
-    }
+    public float CurrentGuardBreakPower => guardBreakPower;
 
     /// <summary>
     /// 获取当前攻击间隔 (秒)
     /// </summary>
-    public float CurrentAttackInterval
-    {
-        get
-        {
-            if (heldFurniture != null) return heldFurniture.heldAttackInterval;
-            return equippedWeapon != null ? equippedWeapon.attackInterval : 0.75f;
-        }
-    }
+    public float CurrentAttackInterval => attackInterval;
 
     void Awake()
     {
@@ -299,9 +316,6 @@ public class PlayerController : MonoBehaviour
 
         if (visualRoot == null && playerRenderer == null)
             playerRenderer = GetComponentInChildren<SpriteRenderer>();
-
-        if (equippedWeapon == null)
-            equippedWeapon = WeaponData.CreateDefault();
 
         if (TimeManager.I == null)
         {
@@ -388,8 +402,8 @@ public class PlayerController : MonoBehaviour
     {
         EnemyController best = null;
         float bd = float.MaxValue;
-        var enemies = FindObjectsOfType<EnemyController>();
-        for (int i = 0; i < enemies.Length; i++)
+        var enemies = EnemyController.AllEnemies;
+        for (int i = 0; i < enemies.Count; i++)
         {
             var e = enemies[i];
             if (e == null || !e.IsAlive || !e.ParryWindowOpen) continue;
@@ -405,22 +419,49 @@ public class PlayerController : MonoBehaviour
 
     public void DoParry(EnemyController attacker)
     {
-        OnParrySuccess(attacker);
+        _parryReady = Time.unscaledTime + parryCooldown;
+        parrySuccess++;
+        isGuarding = false;
+        guardWindowTimer = 0f;
+
+        if (attacker != null)
+        {
+            // 背对敌人用壳防御（HeroActions 中 ShellGuard 的设计逻辑：背壳迎敌）
+            SetVisualFacing(attacker.transform.position.x > transform.position.x);
+            SetAttackTarget(attacker);
+            attacker.Parried();
+        }
+
+        if (hero != null)
+        {
+            hero.Play("ShellGuard");
+        }
+
+        TimeManager.I?.StartSlowMo(slowMoSeconds);
+        ScreenFX.I?.Pulse();
+        CameraRig.I?.Shake(0.2f, 0.25f);
+        Sfx.Play("sfx_parry", 1f, true);
+        Sfx.Play("sfx_tongtou", 0.9f, true);
+
+        Vector3 sparkPos = (attacker != null) ? Vector3.Lerp(transform.position, attacker.transform.position, 0.5f) : (transform.position + Vector3.up * 0.5f);
+        Vfx.Spawn("VFX_ParrySpark", sparkPos + Vector3.up * 0.6f, 0, 1.2f, true);
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.7f, "⚡ 完美弹刀! (PARRY)", new Color(1f, 0.9f, 0.2f), 0.15f);
+        }
     }
 
     public void TriggerShellGuard()
     {
-        if (guardCooldownTimer > 0f || isRolling || isCharging || heldFurniture != null || Unavailable) return;
+        if (ParryRemaining > 0f || isRolling || isCharging || isSmashing || Unavailable || Dead) return;
 
-        // 0. 时钟倒计时 QTE 判定（按空格也能触发处决）
+        // 0. 时钟倒计时 QTE 判定
         var clock = GameJam.ClockQTE.Current;
-        if (clock != null && clock.Open)
+        if (clock != null && clock.Open && clock.TryHit())
         {
-            if (clock.TryHit())
-            {
-                if (clock.owner != null) ExecuteEnemy(clock.owner);
-                return;
-            }
+            if (clock.owner != null) ExecuteEnemy(clock.owner);
+            return;
         }
 
         // 1. 如果身边有正处于可格挡黄光窗口的敌人，直接触发完美弹刀！
@@ -431,12 +472,20 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 2. 正常缩壳格挡
+        // 2. 正常缩壳格挡 (Whiff)
+        _parryReady = Time.unscaledTime + parryCooldown;
+        parryWhiff++;
         isGuarding = true;
         guardWindowTimer = guardWindowDuration;
-        guardCooldownTimer = guardCooldown;
 
         StopMovement();
+
+        // 背向最近敌人（贝壳位于寄居蟹背部，缩壳时以背部迎向威胁）
+        var nearest = (currentTarget != null && currentTarget.IsAlive) ? currentTarget : NearestEnemy(6f);
+        if (nearest != null)
+        {
+            SetVisualFacing(nearest.transform.position.x > transform.position.x);
+        }
 
         if (hero != null)
         {
@@ -450,38 +499,16 @@ public class PlayerController : MonoBehaviour
             }
         }
         Sfx.Play("sfx_swing", 0.5f);
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, "🛡️ 缩壳防御", Color.cyan, 0.08f);
+        }
     }
 
     public void OnParrySuccess(EnemyController attacker)
     {
-        isGuarding = false;
-        guardWindowTimer = 0f;
-        guardCooldownTimer = 0.3f;
-
-        TimeManager.I?.StartSlowMo(2.5f);
-        ScreenFX.I?.Pulse();
-        CameraRig.I?.Shake(0.2f, 0.25f);
-        Sfx.Play("sfx_parry", 1f, true);
-        Sfx.Play("sfx_tongtou", 0.9f, true);
-
-        Vector3 sparkPos = (attacker != null) ? Vector3.Lerp(transform.position, attacker.transform.position, 0.5f) : (transform.position + (IsFacingLeft ? Vector3.left : Vector3.right) * 0.5f);
-        Vfx.Spawn("VFX_ParrySpark", sparkPos + Vector3.up * 0.6f, 0, 1.2f, true);
-
-        if (DamageTextManager.Instance != null)
-        {
-            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.7f, "⚡ 完美格挡! (PERFECT PARRY)", new Color(1f, 0.9f, 0.2f), 0.15f);
-        }
-
-        if (attacker != null)
-        {
-            SetAttackTarget(attacker);
-            attacker.Parried();
-        }
-
-        if (hero != null)
-        {
-            hero.Play("ShellGuard");
-        }
+        DoParry(attacker);
     }
 
     public bool TryGrab(EnemyController by)
@@ -712,38 +739,204 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void StartCharge()
+    {
+        if (isRolling || Unavailable || isSmashing) return;
+        isCharging = true;
+        chargeLevel = 0f;
+        StopMovement();
+        if (hero != null)
+        {
+            hero.BeginCharge();
+            hero.Face?.SetBase(HeroFace.Expr.Angry);
+        }
+        Sfx.Play("sfx_arrow_charge", 0.6f);
+    }
+
+    public void ReleaseCharge()
+    {
+        if (!isCharging) return;
+        isCharging = false;
+        _leftHeld = false;
+        StartCoroutine(PerformSmashRoutine(chargeLevel));
+    }
+
+    public void CancelCharge()
+    {
+        if (!isCharging) return;
+        isCharging = false;
+        _leftHeld = false;
+        hero?.Stop();
+    }
+
     public void PerformChargedSmash(float level)
     {
-        float damageMultiplier = Mathf.Lerp(1.5f, 3.2f, level);
-        float radius = Mathf.Lerp(1.4f, 2.5f, level);
-        float dmg = CurrentAttackDamage * damageMultiplier;
+        StartCoroutine(PerformSmashRoutine(level));
+    }
+
+    private IEnumerator PerformSmashRoutine(float lv)
+    {
+        isSmashing = true;
+        lastSmashLevel = lv;
+        smashes++;
 
         if (hero != null)
         {
             hero.ReleaseCharge();
             hero.Face?.TriggerAngry();
         }
+        Sfx.Play("sfx_swing", 0.9f);
 
-        Vector3 forward = IsFacingLeft ? Vector3.left : Vector3.right;
-        transform.position += forward * (0.35f + level * 0.45f);
-
-        var enemies = EnemyController.AllEnemies;
-        foreach (var enemy in enemies.ToArray())
+        // 确定冲刺前扑的目标和方向
+        EnemyController target = (currentTarget != null && currentTarget.IsAlive) ? currentTarget : NearestEnemy(8f);
+        Vector3 dir;
+        if (target != null)
         {
-            if (enemy == null || !enemy.IsAlive) continue;
-            float d = Vector2.Distance(transform.position, enemy.transform.position);
-            if (d <= radius)
+            dir = (target.transform.position - transform.position).normalized;
+            dir.z = 0;
+            SetVisualFacing(dir.x < 0);
+        }
+        else
+        {
+            dir = IsFacingLeft ? Vector3.left : Vector3.right;
+        }
+
+        // 0.10 ~ 0.22s 往前扑（扑到离敌人约 0.9m 处为止，最远 smashLunge）
+        float maxGo;
+        if (target != null)
+        {
+            float curDist = Vector2.Distance(transform.position, target.transform.position);
+            maxGo = Mathf.Clamp(curDist - 0.9f, 0f, smashLunge);
+        }
+        else
+        {
+            maxGo = smashLunge * 0.5f;
+        }
+
+        float t = 0f;
+        bool hasHit = false;
+        float smashAnimDuration = 0.78f;
+
+        while (t < smashAnimDuration)
+        {
+            float prevT = t;
+            float dt = GameJam.TimeManager.SlowMo ? GameJam.TimeManager.PlayerDelta : Time.deltaTime;
+            t += dt;
+
+            // 前扑位移区间 0.10s ~ 0.22s
+            float u0 = Mathf.Clamp01((prevT - 0.10f) / 0.12f);
+            float u1 = Mathf.Clamp01((t - 0.10f) / 0.12f);
+            if (u1 > u0 && maxGo > 0.01f)
             {
-                enemy.TakeDamage(dmg, CurrentGuardBreakPower * 2f, transform.position);
+                Vector3 delta = dir * (maxGo * (u1 - u0));
+                MoveSafe(delta);
+            }
+
+            // 0.22s 命中帧 (hero.T >= hero.Hit) 触发重砸 DoSmash
+            if (!hasHit && t >= 0.22f)
+            {
+                hasHit = true;
+                DoSmash(lv, dir, target);
+            }
+
+            yield return null;
+        }
+
+        if (!hasHit)
+        {
+            DoSmash(lv, dir, target);
+        }
+
+        isSmashing = false;
+    }
+
+    private void DoSmash(float lv, Vector3 dir, EnemyController target)
+    {
+        float radius = 1.4f + 0.9f * lv;
+        Vector3 center = transform.position + dir * 0.8f;
+        float damageMult = 1.5f + lv * 1.7f;
+        float dmg = CurrentAttackDamage * damageMult;
+        float gb = CurrentGuardBreakPower * (2.0f + lv * 1.5f);
+
+        // 1. AOE 重砸敌人并击退削韧
+        var enemies = EnemyController.AllEnemies;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            var e = enemies[i];
+            if (e != null && e.IsAlive)
+            {
+                float dist = Vector2.Distance(center, e.transform.position);
+                if (dist <= radius)
+                {
+                    e.TakeDamage(dmg, gb, transform.position);
+                    Vector3 knockDir = (e.transform.position - transform.position).normalized;
+                    e.transform.position += knockDir * (0.35f + 0.45f * lv);
+                }
             }
         }
 
-        if (DamageTextManager.Instance != null)
+        // 2. 重砸范围内家具
+        HitNearbyFurniture(center, dir, radius, dmg);
+
+        // 3. 卡肉顿帧与视听震动
+        TimeManager.I?.DoHitstop(0.05f + 0.1f * lv);
+        CameraRig.I?.Shake(0.25f + 0.45f * lv, 0.25f + 0.2f * lv);
+        if (lv > 0.95f)
         {
-            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, $"💥 震地重砸! (SMASH x{damageMultiplier:0.0})", new Color(1f, 0.45f, 0.1f), 0.14f);
+            ScreenFX.I?.Pulse();
         }
 
-        Sfx.Play("sfx_explosion");
+        Sfx.Play(lv > 0.6f ? "sfx_explosion" : "sfx_kick", 0.7f + 0.3f * lv);
+        Vfx.Spawn("VFX_ArrowHit", center + Vector3.up * 0.3f, 0, 0.8f + 0.8f * lv, true);
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(center + Vector3.up * 0.8f, $"💥 震地重砸! (SMASH x{damageMult:0.0})", new Color(1f, 0.45f, 0.1f), 0.14f);
+        }
+    }
+
+    private void MoveSafe(Vector3 delta)
+    {
+        Vector3 nextPos = transform.position + delta;
+        Vector3 groundRayPos = new Vector3(nextPos.x, nextPos.y - groundHeightOffset, 0f);
+        Vector3Int nextCell = grid != null ? grid.WorldToCell(groundRayPos) : Vector3Int.zero;
+
+        bool canPass = true;
+        if (groundTilemap != null && !groundTilemap.HasTile(nextCell)) canPass = false;
+        if (buildTilemap != null && buildTilemap != groundTilemap && buildTilemap.HasTile(nextCell)) canPass = false;
+        if (IsometricPathfinder.DynamicBlockedCells.Contains(nextCell)) canPass = false;
+
+        if (canPass)
+        {
+            transform.position = nextPos;
+        }
+        else
+        {
+            Vector3 deltaX = new Vector3(delta.x, 0, 0);
+            Vector3 groundRayX = new Vector3(transform.position.x + deltaX.x, transform.position.y - groundHeightOffset, 0f);
+            Vector3Int cellX = grid != null ? grid.WorldToCell(groundRayX) : Vector3Int.zero;
+            if (groundTilemap != null && groundTilemap.HasTile(cellX) && !IsometricPathfinder.DynamicBlockedCells.Contains(cellX))
+            {
+                transform.position += deltaX;
+            }
+        }
+    }
+
+    private void HitNearbyFurniture(Vector3 center, Vector3 dir, float radius, float dmg)
+    {
+        var all = FurnitureObject.AllFurniture;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var f = all[i];
+            if (f != null && f.currentState == FurnitureObject.FurnitureState.Placed)
+            {
+                float d = Vector2.Distance(center, f.transform.position);
+                if (d <= radius + 0.5f)
+                {
+                    f.TakeDamage(dmg);
+                }
+            }
+        }
     }
 
     void OnDisable()
@@ -932,26 +1125,25 @@ public class PlayerController : MonoBehaviour
 
         UpdateHeroFace();
 
-        // 鼠标左键长按蓄力机制（对齐 gamejam-integration）
-        if (_leftHeld && hero != null && !isRolling && !Unavailable)
+        // 鼠标与触控按住蓄力更新（对齐 gamejam-integration）
+        if (_leftHeld && hero != null && !isRolling && !Unavailable && !isSmashing)
         {
             float holdTime = Time.unscaledTime - _leftDownAt;
             if (holdTime >= chargeHoldDelay)
             {
                 if (!isCharging)
                 {
-                    isCharging = true;
-                    hero.BeginCharge();
-                    Sfx.Play("sfx_arrow_charge", 0.6f);
+                    StartCharge();
                 }
-                chargeLevel = Mathf.Clamp01((holdTime - chargeHoldDelay) / 1.0f);
+                chargeLevel = Mathf.Clamp01((holdTime - chargeHoldDelay) / chargeTime);
                 hero.SetCharge(chargeLevel);
+
+                var tgt = (currentTarget != null && currentTarget.IsAlive) ? currentTarget : NearestEnemy(8f);
+                if (tgt != null)
+                {
+                    SetVisualFacing(tgt.transform.position.x < transform.position.x);
+                }
             }
-        }
-        else if (Input.GetMouseButtonUp(0) && isCharging)
-        {
-            isCharging = false;
-            PerformChargedSmash(chargeLevel);
         }
     }
 
@@ -1057,54 +1249,41 @@ public class PlayerController : MonoBehaviour
 
     public void LeftClick()
     {
-        if (Unavailable || isRolling) return;
+        if (Unavailable || isRolling || isSmashing) return;
 
-        if (InCombat)
+        // 1. 时钟倒计时 QTE
+        var clock = GameJam.ClockQTE.Current;
+        if (clock != null && clock.Open)
         {
-            // 1. 时钟 QTE
-            var clock = GameJam.ClockQTE.Current;
-            if (clock != null && clock.Open)
+            if (clock.TryHit())
             {
-                if (clock.TryHit())
-                {
-                    if (clock.owner != null) ExecuteEnemy(clock.owner);
-                    return;
-                }
-            }
-
-            // 2. 处决虚弱态怪物
-            var pend = EnemyController.FindPending();
-            if (pend != null)
-            {
-                ExecuteEnemy(pend);
+                if (clock.owner != null) ExecuteEnemy(clock.owner);
                 return;
-            }
-
-            // 3. 黄光格挡窗口弹刀
-            if (guardCooldownTimer <= 0f)
-            {
-                var parryable = FindParryableEnemy();
-                if (parryable != null)
-                {
-                    DoParry(parryable);
-                    return;
-                }
             }
         }
 
-        // 4. 寄居蟹：战斗中记录按下时刻，按住 = 蓄力，短按 = 空挡防守
-        if (InCombat && hero != null)
+        // 2. 处决虚弱态怪物
+        var pend = EnemyController.FindPending();
+        if (pend != null)
         {
-            _leftHeld = true;
-            _leftDownAt = Time.unscaledTime;
+            ExecuteEnemy(pend);
             return;
         }
 
-        // 5. 空挡 (whiff)
-        if (InCombat && guardCooldownTimer <= 0f)
+        // 3. 黄光格挡窗口弹刀
+        if (ParryRemaining <= 0f)
         {
-            TriggerShellGuard();
+            var parryable = FindParryableEnemy();
+            if (parryable != null)
+            {
+                DoParry(parryable);
+                return;
+            }
         }
+
+        // 4. 寄居蟹主角：记录按下时刻。按住超过 chargeHoldDelay 进入蓄力，短按松开则触发空挡防御
+        _leftHeld = true;
+        _leftDownAt = Time.unscaledTime;
     }
 
     public void LeftRelease()
@@ -1112,26 +1291,49 @@ public class PlayerController : MonoBehaviour
         if (!_leftHeld) return;
         _leftHeld = false;
 
+        // A. 蓄力中松开 -> 触发冲刺重砸
         if (isCharging)
         {
-            isCharging = false;
-            PerformChargedSmash(chargeLevel);
+            ReleaseCharge();
             return;
         }
 
-        if (Unavailable || isRolling) return;
-        if (Time.unscaledTime - _leftDownAt >= chargeHoldDelay) return;
+        if (Unavailable || isRolling || isSmashing) return;
 
-        if (InCombat && guardCooldownTimer <= 0f)
+        // B. 短按松开（按住时长 < chargeHoldDelay），执行防御/弹刀判定
+        if (Time.unscaledTime - _leftDownAt < chargeHoldDelay)
         {
-            TriggerShellGuard();
+            var clock = GameJam.ClockQTE.Current;
+            if (clock != null && clock.Open && clock.TryHit())
+            {
+                if (clock.owner != null) ExecuteEnemy(clock.owner);
+                return;
+            }
+
+            var pend = EnemyController.FindPending();
+            if (pend != null)
+            {
+                ExecuteEnemy(pend);
+                return;
+            }
+
+            var parryable = FindParryableEnemy();
+            if (parryable != null && ParryRemaining <= 0f)
+            {
+                DoParry(parryable);
+                return;
+            }
+
+            if (ParryRemaining <= 0f)
+            {
+                TriggerShellGuard();
+            }
         }
     }
 
     public void CancelLeftHold()
     {
         _leftHeld = false;
-        _tapFurn = null;
         if (isCharging)
         {
             isCharging = false;
@@ -1283,7 +1485,6 @@ public class PlayerController : MonoBehaviour
                 else
                 {
                     LeftRelease();
-                    EvaluateLeftClickRelease(Input.mousePosition);
                 }
             }
             isLeftPointerDown = false;
@@ -1297,7 +1498,7 @@ public class PlayerController : MonoBehaviour
         float distance = delta.magnitude;
         float speed = distance / Mathf.Max(duration, 0.001f);
 
-        // A. 鼠标快速短滑 (Swipe)：第一优先级推动家具，第二优先级闪避翻滚
+        // 鼠标快速短滑 (Swipe)：第一优先级推动家具，第二优先级闪避翻滚
         if (distance >= minSwipeDistance && duration <= maxSwipeDuration && speed >= 120f)
         {
             Vector2 swipeDir = delta.normalized;
@@ -1314,12 +1515,6 @@ public class PlayerController : MonoBehaviour
                 StartCoroutine(PerformDodgeRollRoutine(swipeDir));
                 return;
             }
-        }
-
-        // B. 点击判定 (Click)：目标攻击或原地出招（取消点击直接举起或直接推动家具）
-        if (distance < clickMaxDistance && duration <= clickMaxDuration)
-        {
-            OnLeftClickTap(releasePos);
         }
     }
 
@@ -1443,15 +1638,16 @@ public class PlayerController : MonoBehaviour
         pointerDownPos = screenPos;
         pointerDownTime = Time.time;
         isPointerDown = true;
+        LeftClick();
     }
 
     /// <summary>
     /// 评估手势松开：
     /// 1. 划动家具 -> 踢出家具冲撞敌人；
     /// 2. 划动地面 -> 快速短滑翻滚躲避；
-    /// 3. 轻触敌人 -> 锁定集火攻击（手持家具时重砸）；
-    /// 4. 轻触家具 -> 靠近举起家具；
-    /// 5. 手持家具时轻触身前地面 -> 平稳放下家具；
+    /// 3. 轻触敌人 -> 锁定集火攻击；
+    /// 4. 蓄力松开 -> 触发前扑重砸；
+    /// 5. 短按松开 -> 完美弹刀 / 缩壳防御；
     /// 6. 轻触远处地面 -> A* 寻路避障走位。
     /// 完全无需额外屏幕按钮！
     /// </summary>
@@ -1465,6 +1661,7 @@ public class PlayerController : MonoBehaviour
         // 1. 判断是否为【快速短滑】(Swipe)：第一优先级推家具，第二优先级闪避翻滚
         if (distance >= minSwipeDistance && duration <= maxSwipeDuration && speed >= 120f)
         {
+            CancelLeftHold();
             Vector2 swipeDir = delta.normalized;
 
             // 1. 第一优先级：滑动推动身边的家具（优先级高于主角闪避翻滚）
@@ -1480,11 +1677,21 @@ public class PlayerController : MonoBehaviour
                 return;
             }
         }
-
-        // 2. 判断是否为【轻触点击】(Tap)
-        if (distance < clickMaxDistance && duration <= clickMaxDuration)
+        else
         {
-            OnScreenTap(releasePos);
+            if (isCharging)
+            {
+                ReleaseCharge();
+                return;
+            }
+
+            LeftRelease();
+
+            // 2. 判断是否为【轻触点击】(Tap)
+            if (distance < clickMaxDistance && duration <= clickMaxDuration)
+            {
+                OnScreenTap(releasePos);
+            }
         }
     }
 
@@ -1666,7 +1873,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void UpdateAutoAttack()
     {
-        if (isRolling || !canMove || isAttackingAnim || Unavailable) return;
+        if (isRolling || !canMove || isAttackingAnim || isCharging || isSmashing || isGuarding || Unavailable) return;
 
         // 优先检查附近是否有处决就绪 (Pending) 的怪物
         var pendingEnemy = EnemyController.FindPending();
@@ -1745,7 +1952,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void TriggerManualAttack()
     {
-        if (Unavailable || attackCooldownTimer > 0f || isAttackingAnim) return;
+        if (Unavailable || attackCooldownTimer > 0f || isAttackingAnim || isCharging || isSmashing) return;
 
         // 0. 时钟倒计时 QTE 判定
         var clock = GameJam.ClockQTE.Current;
@@ -1793,7 +2000,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void MoveWithInput(Vector2 moveDir)
     {
-        if (!canMove || isRolling || moveDir.sqrMagnitude < 0.01f) return;
+        if (!canMove || isRolling || isCharging || isSmashing || moveDir.sqrMagnitude < 0.01f) return;
 
         // 摇杆/键盘输入时打断点击寻路路径
         isMoving = false;
@@ -1871,12 +2078,12 @@ public class PlayerController : MonoBehaviour
         float guardBreak = isExecution ? CurrentGuardBreakPower * 2.5f : CurrentGuardBreakPower;
 
         // 生成斩击光弧或重砸特效
-        SpawnSlashEffect(attackDir, heldFurniture != null || isExecution);
+        SpawnSlashEffect(attackDir, isExecution);
 
         // 攻击微突进动作（仅对静态 Sprite 生效，骨骼动画自带攻击动效）
         if (playerRenderer != null && visualRoot == null)
         {
-            playerRenderer.transform.localPosition = attackDir * (heldFurniture != null ? 0.22f : 0.15f);
+            playerRenderer.transform.localPosition = attackDir * 0.15f;
         }
 
         if (currentTarget != null && currentTarget.IsAlive)
@@ -1889,18 +2096,10 @@ public class PlayerController : MonoBehaviour
 
                 // 命中敌人恢复 8 点精力
                 currentStamina = Mathf.Min(maxStamina, currentStamina + 8f);
-
-                // 机制落地（需求5）：若是手持家具攻击，瞬间砸碎销毁，造成破片碎裂范围爆发！
-                if (heldFurniture != null)
-                {
-                    var f = heldFurniture;
-                    DropFurniture();
-                    f.TriggerShatterBurst();
-                }
             }
         }
 
-        yield return new WaitForSeconds(heldFurniture != null ? 0.2f : 0.12f);
+        yield return new WaitForSeconds(0.12f);
 
         if (playerRenderer != null)
         {
@@ -2215,28 +2414,6 @@ public class PlayerController : MonoBehaviour
         return;
     }
 
-    /// <summary>
-    /// 切换武器（在佩剑与炽炎大剑之间快速切换，用于测试规范数值）
-    /// </summary>
-    public void ToggleWeapon()
-    {
-        if (equippedWeapon == null || equippedWeapon.instanceId == "wpn_default_sword")
-        {
-            equippedWeapon = WeaponData.CreateFireGreatsword();
-            if (DamageTextManager.Instance != null)
-            {
-                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "装备: 炽炎双手长剑!", new Color(1f, 0.4f, 0.1f), 0.1f);
-            }
-        }
-        else
-        {
-            equippedWeapon = WeaponData.CreateDefault();
-            if (DamageTextManager.Instance != null)
-            {
-                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "装备: 铁制佩剑", Color.white, 0.09f);
-            }
-        }
-    }
 
     /// <summary>
     /// 供手机 UI 底座一键触发翻滚闪避（带无敌帧与音画特效）
@@ -2366,7 +2543,22 @@ public class PlayerController : MonoBehaviour
 
         if (isGuarding)
         {
-            OnParrySuccess(null);
+            var parryEnemy = FindParryableEnemy() ?? NearestEnemy(attackRange + 0.8f);
+            if (parryEnemy != null)
+            {
+                DoParry(parryEnemy);
+                return;
+            }
+
+            // 普通格挡成功，吸收全部伤害
+            isGuarding = false;
+            CameraRig.I?.Shake(0.15f, 0.2f);
+            Sfx.Play("sfx_parry", 0.8f, true);
+            Vfx.Spawn("VFX_ParrySpark", transform.position + Vector3.up * 0.6f, 0, 1.0f, true);
+            if (DamageTextManager.Instance != null)
+            {
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "🛡️ 格挡抵消! (BLOCKED)", Color.cyan, 0.12f);
+            }
             return;
         }
 
