@@ -318,6 +318,25 @@ public class PlayerController : MonoBehaviour
             playerAnimator = GetComponentInChildren<Animator>();
         if (visualRoot == null && playerAnimator != null)
             visualRoot = playerAnimator.transform;
+        if (visualRoot == null)
+        {
+            var vr = transform.Find("VisualRoot");
+            if (vr != null) visualRoot = vr;
+        }
+
+        // 为角色视觉根节点绑定 SortingGroup，将 Hero2D 的全部肢体骨骼 (图层 1~20) 打包为不可分割的原子渲染单元 (层级 10)！
+        // 彻底解决主角与门扉/家具之间肢体被部分截断、前后遮挡错乱的严重穿模 Bug！
+        Transform sortTarget = visualRoot != null ? visualRoot : transform;
+        var sg = sortTarget.GetComponent<UnityEngine.Rendering.SortingGroup>();
+        if (sg == null) sg = sortTarget.gameObject.AddComponent<UnityEngine.Rendering.SortingGroup>();
+        sg.sortingLayerName = "Default";
+        sg.sortingOrder = 10;
+
+        if (Camera.main != null)
+        {
+            Camera.main.transparencySortMode = TransparencySortMode.CustomAxis;
+            Camera.main.transparencySortAxis = new Vector3(0f, 1f, -0.26f);
+        }
 
         if (visualRoot == null && playerRenderer == null)
             playerRenderer = GetComponentInChildren<SpriteRenderer>();
@@ -353,6 +372,11 @@ public class PlayerController : MonoBehaviour
         if (playerAnimator != null) playerAnimator.enabled = false;
 
         Transform parentTransform = visualRoot != null ? visualRoot : transform;
+        var sg2 = parentTransform.GetComponent<UnityEngine.Rendering.SortingGroup>();
+        if (sg2 == null) sg2 = parentTransform.gameObject.AddComponent<UnityEngine.Rendering.SortingGroup>();
+        sg2.sortingLayerName = "Default";
+        sg2.sortingOrder = 10;
+
         if (visualRoot != null)
         {
             Vector3 s = visualRoot.localScale;
@@ -1551,7 +1575,7 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < all.Count; i++)
         {
             var f = all[i];
-            if (f == null || f.currentState != FurnitureObject.FurnitureState.Placed || f.Deploying) continue;
+            if (f == null || f.currentState != FurnitureObject.FurnitureState.Placed || f.Deploying || f.isImmovable || f.instanceId == "furn_gather_door" || f.GetComponent<GatherDoorAuraBehavior>() != null) continue;
 
             float playerDist = Vector2.Distance(transform.position, f.transform.position);
             if (playerDist > 2.4f) continue; // 必须在角色可触及的推动交互范围内

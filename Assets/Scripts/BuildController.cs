@@ -358,8 +358,13 @@ public class BuildController : MonoBehaviour
     private CellAction EvaluateCellAction(Vector3Int cellPos)
     {
         // 1. 检查网格上是否已有放置状态的家具（可拆除回收）
-        if (FurnitureObject.GetFurnitureAtCell(cellPos) != null)
+        var furn = FurnitureObject.GetFurnitureAtCell(cellPos);
+        if (furn != null)
         {
+            if (furn.isIndestructible || furn.instanceId == "furn_gather_door" || furn.GetComponent<GatherDoorAuraBehavior>() != null)
+            {
+                return CellAction.Invalid; // 空间门扉等永久固定设施无法拆除
+            }
             return CellAction.Delete;
         }
 
@@ -533,6 +538,16 @@ public class BuildController : MonoBehaviour
         var furn = FurnitureObject.GetFurnitureAtCell(cellPos);
         if (furn != null)
         {
+            if (furn.isIndestructible || furn.instanceId == "furn_gather_door" || furn.GetComponent<GatherDoorAuraBehavior>() != null)
+            {
+                if (DamageTextManager.Instance != null)
+                {
+                    DamageTextManager.Instance.ShowText(furn.transform.position + Vector3.up * 0.8f, "🔒 空间门扉永久稳固，无法拆除！", new Color(1f, 0.4f, 0.4f), 0.12f);
+                }
+                ClearSelection();
+                return;
+            }
+
             string fName = furn.furnitureName;
             Vector3 fPos = furn.transform.position;
 

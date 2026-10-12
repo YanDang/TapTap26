@@ -51,9 +51,16 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         base.Awake();
         CreateRangeRing(2.8f, new Color(ColorClosed.r, ColorClosed.g, ColorClosed.b, 0.35f), "GatherDoor_Ring");
 
-        if (parentFurniture != null && parentFurniture.furnitureRenderer != null)
+        if (parentFurniture != null)
         {
-            originalVisualScale = parentFurniture.furnitureRenderer.transform.localScale;
+            parentFurniture.isIndestructible = true;
+            parentFurniture.isImmovable = true;
+            if (parentFurniture.furnitureRenderer != null)
+            {
+                originalVisualScale = parentFurniture.furnitureRenderer.transform.localScale;
+                parentFurniture.furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+                parentFurniture.furnitureRenderer.sortingOrder = 10;
+            }
         }
 
         // 调整物理与点击感应碰撞体覆盖范围，完美包覆整座裂隙门扉

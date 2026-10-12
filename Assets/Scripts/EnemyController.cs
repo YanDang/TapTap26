@@ -309,6 +309,12 @@ public class EnemyController : MonoBehaviour
             if (vr != null) visualRoot = vr;
         }
 
+        Transform sortTarget = visualRoot != null ? visualRoot : transform;
+        var sg = sortTarget.GetComponent<UnityEngine.Rendering.SortingGroup>();
+        if (sg == null) sg = sortTarget.gameObject.AddComponent<UnityEngine.Rendering.SortingGroup>();
+        sg.sortingLayerName = "Default";
+        sg.sortingOrder = 10;
+
         if (visualRoot != null)
         {
             visualRenderers = visualRoot.GetComponentsInChildren<SpriteRenderer>(true);

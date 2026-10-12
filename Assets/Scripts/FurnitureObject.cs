@@ -84,8 +84,14 @@ public class FurnitureObject : MonoBehaviour
     public System.Action<float, EnemyController> onHitTaken;
     public System.Action onFurnitureDestroyed;
 
+    [Header("Permanent / Immovable Facility (永久不可破坏/不可移动设施)")]
+    [Tooltip("是否为不可破坏设施（耐久度无限，免疫所有攻击和伤害）")]
+    public bool isIndestructible = false;
+    [Tooltip("是否为不可移动设施（无法被推动、踢飞、冲撞或举起）")]
+    public bool isImmovable = false;
+
     public bool Deploying => GetComponent<GameJam.FurnitureDeploy>() != null;
-    public bool Targetable => currentState == FurnitureState.Placed && !Deploying && currentDurability > 0;
+    public bool Targetable => currentState == FurnitureState.Placed && !Deploying && currentDurability > 0 && !isIndestructible && instanceId != "furn_gather_door" && GetComponent<GatherDoorAuraBehavior>() == null;
     public bool Blocks => currentState == FurnitureState.Placed && !Deploying;
 
     public float hitRadius = 0.6f;
@@ -134,6 +140,8 @@ public class FurnitureObject : MonoBehaviour
                     furnitureRenderer.material = new Material(unlitShader);
                 }
             }
+
+            furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
 
             if (currentState == FurnitureState.Placed)
             {
@@ -205,14 +213,16 @@ public class FurnitureObject : MonoBehaviour
             // 实体统一层级为 10（与玩家、怪物保持一致，高于地面瓷砖 0/1 与阴影 4，低于血条 30）
             // 由项目 URP 2D 的 TransparencySortMode.CustomAxis (0, 1, -0.26) 自动精准根据 Y 轴坐标计算 2.5D 前后透视遮挡。
             // 彻底修复原公式 (-y * 10) + 12 导致 y > 1.2 时层级降为负数、被补全的地面 Tile 遮盖而只露阴影的严重 Bug！
-            if (furnitureRenderer != null && furnitureRenderer.sortingOrder != 10)
+            if (furnitureRenderer != null)
             {
-                furnitureRenderer.sortingOrder = 10;
+                if (furnitureRenderer.sortingOrder != 10) furnitureRenderer.sortingOrder = 10;
+                if (furnitureRenderer.spriteSortPoint != SpriteSortPoint.Pivot) furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
             }
 
-            // 检查玩家距离，近身 (1.85m 内) 高亮显示脚底交互金圈
+            // 检查玩家距离，近身 (1.85m 内) 高亮显示脚底交互金圈（不可移动/空间门等设施无需显示通用踢动光圈）
+            bool canShowPrompt = !isImmovable && instanceId != "furn_gather_door" && GetComponent<GatherDoorAuraBehavior>() == null;
             var player = FindObjectOfType<PlayerController>();
-            if (player != null && player.heldFurniture == null)
+            if (canShowPrompt && player != null && player.heldFurniture == null)
             {
                 float dist = Vector2.Distance(transform.position, player.transform.position);
                 if (dist <= 1.85f && !promptRing.activeSelf)
@@ -298,6 +308,11 @@ public class FurnitureObject : MonoBehaviour
     /// </summary>
     public void Kick(Vector3 direction)
     {
+        if (isImmovable || isIndestructible || instanceId == "furn_gather_door" || GetComponent<GatherDoorAuraBehavior>() != null)
+        {
+            return;
+        }
+
         if (currentState == FurnitureState.Held)
         {
             // 若原本处于手持状态，先解绑
@@ -458,7 +473,7 @@ public class FurnitureObject : MonoBehaviour
     /// </summary>
     public void PickUp(PlayerController player)
     {
-        if (player == null) return;
+        if (player == null || isImmovable || isIndestructible || instanceId == "furn_gather_door" || GetComponent<GatherDoorAuraBehavior>() != null) return;
 
         UnregisterFromGrid();
         currentState = FurnitureState.Held;
@@ -544,6 +559,11 @@ public class FurnitureObject : MonoBehaviour
     /// </summary>
     public void TakeHit(float damage, EnemyController attacker = null)
     {
+        if (isIndestructible || instanceId == "furn_gather_door" || GetComponent<GatherDoorAuraBehavior>() != null)
+        {
+            return;
+        }
+
         currentDurability -= damage;
         onHitTaken?.Invoke(damage, attacker);
         if (DamageTextManager.Instance != null)

@@ -176,11 +176,22 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
             {
                 circleCol1.radius = 0.85f;
                 circleCol1.offset = new Vector2(0f, 0.6f);
+                furn.isIndestructible = true;
+                furn.isImmovable = true;
+                if (furn.furnitureRenderer != null)
+                {
+                    furn.furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+                    furn.furnitureRenderer.sortingOrder = 10;
+                }
             }
             else
             {
                 circleCol1.radius = 0.52f;
                 circleCol1.offset = new Vector2(0f, 0.12f);
+                if (furn.furnitureRenderer != null)
+                {
+                    furn.furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+                }
             }
         }
 
@@ -229,11 +240,22 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
             {
                 circleCol2.radius = 0.85f;
                 circleCol2.offset = new Vector2(0f, 0.6f);
+                furn.isIndestructible = true;
+                furn.isImmovable = true;
+                if (furn.furnitureRenderer != null)
+                {
+                    furn.furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+                    furn.furnitureRenderer.sortingOrder = 10;
+                }
             }
             else
             {
                 circleCol2.radius = 0.52f;
                 circleCol2.offset = new Vector2(0f, 0.12f);
+                if (furn.furnitureRenderer != null)
+                {
+                    furn.furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+                }
             }
         }
 
