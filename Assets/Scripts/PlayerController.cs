@@ -1092,25 +1092,15 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // 4. 踢桌子 / 家具
-        var nearestFurn = FurnitureObject.GetNearestPlaced(transform.position, 1.8f);
-        if (nearestFurn != null && !InCombat && heldFurniture == null)
-        {
-            Vector3 kickDir = IsFacingLeft ? Vector3.left : Vector3.right;
-            nearestFurn.Kick(kickDir);
-            return;
-        }
-
-        // 5. 寄居蟹：战斗中记录按下时刻，按住 = 蓄力，短按 = 踢 / 空挡
+        // 4. 寄居蟹：战斗中记录按下时刻，按住 = 蓄力，短按 = 空挡防守
         if (InCombat && hero != null)
         {
             _leftHeld = true;
             _leftDownAt = Time.unscaledTime;
-            _tapFurn = nearestFurn;
             return;
         }
 
-        // 6. 空挡 (whiff)
+        // 5. 空挡 (whiff)
         if (InCombat && guardCooldownTimer <= 0f)
         {
             TriggerShellGuard();
@@ -1131,14 +1121,6 @@ public class PlayerController : MonoBehaviour
 
         if (Unavailable || isRolling) return;
         if (Time.unscaledTime - _leftDownAt >= chargeHoldDelay) return;
-
-        if (_tapFurn != null && heldFurniture == null)
-        {
-            Vector3 kickDir = (_tapFurn.transform.position - transform.position).normalized;
-            _tapFurn.Kick(kickDir);
-            _tapFurn = null;
-            return;
-        }
 
         if (InCombat && guardCooldownTimer <= 0f)
         {
@@ -1315,45 +1297,18 @@ public class PlayerController : MonoBehaviour
         float distance = delta.magnitude;
         float speed = distance / Mathf.Max(duration, 0.001f);
 
-        // A. 鼠标快速短滑 (Swipe)：划动踢飞家具或闪避翻滚
+        // A. 鼠标快速短滑 (Swipe)：第一优先级推动家具，第二优先级闪避翻滚
         if (distance >= minSwipeDistance && duration <= maxSwipeDuration && speed >= 120f)
         {
             Vector2 swipeDir = delta.normalized;
 
-            // 踢家具判定：触控/光标滑动起点落在家具上，且角色处于近身交互范围内 (playerDist <= 1.95f)
-            if (cam != null && heldFurniture == null)
+            // 1. 第一优先级：滑动推动身边的家具（优先级高于主角闪避翻滚）
+            if (TrySwipePushFurniture(leftPointerDownPos, releasePos, swipeDir))
             {
-                Vector3 startWorldPos = cam.ScreenToWorldPoint(leftPointerDownPos);
-                startWorldPos.z = 0f;
-                FurnitureObject touchedFurn = FurnitureObject.GetNearestPlaced(startWorldPos, 1.1f);
-
-                if (touchedFurn != null)
-                {
-                    float playerDist = Vector2.Distance(transform.position, touchedFurn.transform.position);
-                    if (playerDist <= 1.95f)
-                    {
-                        Vector3 kickDir = new Vector3(swipeDir.x, swipeDir.y, 0f).normalized;
-                        SetVisualFacing(kickDir.x < 0);
-
-                        touchedFurn.Kick(kickDir);
-
-                        if (DamageTextManager.Instance != null)
-                        {
-                            DamageTextManager.Instance.ShowText(touchedFurn.transform.position + Vector3.up * 0.5f, "KICK!", new Color(1f, 0.45f, 0.1f), 0.11f);
-                        }
-                        return;
-                    }
-                }
+                return;
             }
 
-            // 若手持沉重家具时遇袭执行滑动：战术放下家具在脚边并翻滚闪避！
-            if (heldFurniture != null)
-            {
-                var dropFurn = heldFurniture;
-                DropFurniture();
-                dropFurn.PutDown(transform.position);
-            }
-
+            // 2. 第二优先级：未命中任何可推家具时，主角执行闪避翻滚
             if (rollCooldownTimer <= 0f)
             {
                 StartCoroutine(PerformDodgeRollRoutine(swipeDir));
@@ -1361,11 +1316,95 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // B. 点击判定 (Click)：家具交互、目标攻击、放下或投掷
+        // B. 点击判定 (Click)：目标攻击或原地出招（取消点击直接举起或直接推动家具）
         if (distance < clickMaxDistance && duration <= clickMaxDuration)
         {
             OnLeftClickTap(releasePos);
         }
+    }
+
+    /// <summary>
+    /// 【滑动推动家具】（第一优先级，高于玩家闪避翻滚）
+    /// 规则：
+    /// 1. 玩家近身 (2.4m 内) 存在放置态家具；
+    /// 2. 滑动起点/释放点靠近家具，或滑动轨迹划过家具，或玩家在家具旁朝家具/顺势外侧划动；
+    /// 3. 顺应滑动方向将家具高速推撞出去！
+    /// </summary>
+    public bool TrySwipePushFurniture(Vector2 startScreenPos, Vector2 releaseScreenPos, Vector2 swipeDir)
+    {
+        if (cam == null) return false;
+
+        Vector3 startWorldPos = cam.ScreenToWorldPoint(startScreenPos);
+        startWorldPos.z = 0f;
+        Vector3 releaseWorldPos = cam.ScreenToWorldPoint(releaseScreenPos);
+        releaseWorldPos.z = 0f;
+
+        FurnitureObject bestFurn = null;
+        float bestScore = float.MaxValue;
+
+        var all = FurnitureObject.AllFurniture;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var f = all[i];
+            if (f == null || f.currentState != FurnitureObject.FurnitureState.Placed || f.Deploying) continue;
+
+            float playerDist = Vector2.Distance(transform.position, f.transform.position);
+            if (playerDist > 2.4f) continue; // 必须在角色可触及的推动交互范围内
+
+            float touchDist = Vector2.Distance(startWorldPos, f.transform.position);
+            float releaseDist = Vector2.Distance(releaseWorldPos, f.transform.position);
+
+            // 计算滑动轨迹线段到家具中心的距离
+            Vector2 segA = startWorldPos;
+            Vector2 segB = releaseWorldPos;
+            Vector2 fPos = f.transform.position;
+            Vector2 ab = segB - segA;
+            float t = ab.sqrMagnitude > 1e-4f ? Mathf.Clamp01(Vector2.Dot(fPos - segA, ab) / ab.sqrMagnitude) : 0f;
+            float lineDist = Vector2.Distance(fPos, segA + ab * t);
+
+            bool isPushIntent = false;
+
+            // 意图 A: 手指/光标划过了家具，或滑动起点/终点落在家具附近
+            if (touchDist <= 1.6f || releaseDist <= 1.4f || lineDist <= 1.0f)
+            {
+                isPushIntent = true;
+            }
+            // 意图 B: 玩家紧挨着家具 (<= 1.85m)，朝向家具或从家具顺势往外侧滑动
+            else if (playerDist <= 1.85f)
+            {
+                Vector2 toFurn = ((Vector2)f.transform.position - (Vector2)transform.position).normalized;
+                if (Vector2.Dot(swipeDir, toFurn) > -0.35f)
+                {
+                    isPushIntent = true;
+                }
+            }
+
+            if (isPushIntent)
+            {
+                float score = Mathf.Min(touchDist, lineDist);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestFurn = f;
+                }
+            }
+        }
+
+        if (bestFurn != null)
+        {
+            Vector3 kickDir = new Vector3(swipeDir.x, swipeDir.y, 0f).normalized;
+            SetVisualFacing(kickDir.x < 0);
+
+            bestFurn.Kick(kickDir);
+
+            if (DamageTextManager.Instance != null)
+            {
+                DamageTextManager.Instance.ShowText(bestFurn.transform.position + Vector3.up * 0.5f, "PUSH!", new Color(1f, 0.45f, 0.1f), 0.11f);
+            }
+            return true;
+        }
+
+        return false;
     }
 
     private void OnLeftClickTap(Vector2 screenPosition)
@@ -1375,45 +1414,7 @@ public class PlayerController : MonoBehaviour
         Vector3 worldPos = cam.ScreenToWorldPoint(screenPosition);
         worldPos.z = 0f;
 
-        // 1. 如果当前手中正举着家具：
-        if (heldFurniture != null)
-        {
-            // A. 如果点击到了敌人 -> 将手持家具全力掷向目标砸向敌人！
-            EnemyController enemy = FindEnemyNear(worldPos, 1.0f);
-            if (enemy != null && enemy.IsAlive)
-            {
-                ThrowHeldFurnitureAtTarget(enemy);
-                return;
-            }
-
-            // B. 如果点击的是地面 -> 平稳放下家具至点击处！
-            PutDownHeldFurniture(worldPos);
-            return;
-        }
-
-        // 2. 如果未手持家具，检查是否点击了地面的家具（核心交互需求！）
-        FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.1f);
-        if (clickedFurn != null)
-        {
-            float distToFurn = Vector2.Distance(transform.position, clickedFurn.transform.position);
-            if (distToFurn <= 1.95f)
-            {
-                // 靠近时点击直接举起家具
-                HoldFurniture(clickedFurn);
-                return;
-            }
-            else
-            {
-                // 较远时，先寻路前往家具身旁以便交互
-                Vector3Int furnCell = pathfinder != null ? pathfinder.WorldToCell(clickedFurn.transform.position) : grid.WorldToCell(clickedFurn.transform.position);
-                Vector3Int pCell = pathfinder != null ? pathfinder.WorldToCell(transform.position) : grid.WorldToCell(transform.position);
-                Vector3Int neighborCell = pathfinder != null ? pathfinder.FindNearestWalkableNeighbor(furnCell, pCell) : furnCell;
-                MoveToCell(neighborCell);
-                return;
-            }
-        }
-
-        // 3. 检查是否点击到了敌人（左键锁定/普通攻击）
+        // 1. 检查是否点击到了敌人（左键锁定/普通攻击）
         EnemyController clickedEnemy = FindEnemyNear(worldPos, 0.95f);
         if (clickedEnemy != null && clickedEnemy.IsAlive)
         {
@@ -1426,17 +1427,14 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 4. 左键点击空地：
-        // 关键：左键绝对不触发地面寻路移动（移动已全权赋予鼠标右键！）
-        // 若身边 1.95m 内有现存家具，点击附近地面可智能吸附举起身边最近的家具；
-        var nearbyFurn = FurnitureObject.GetNearestPlaced(transform.position, 1.95f);
-        if (nearbyFurn != null)
+        // 2. 检查是否点击到了家具：彻底取消点击直接举起与点击推动（推动必须靠滑动！）
+        FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.1f);
+        if (clickedFurn != null)
         {
-            HoldFurniture(nearbyFurn);
             return;
         }
 
-        // 否则如果在近战姿态下，原地挥空出招，绝不产生误走位
+        // 3. 左键点击空地：原地挥空出招，绝不产生误走位或误举起身边家具
         PerformManualAttack();
     }
 
@@ -1464,51 +1462,18 @@ public class PlayerController : MonoBehaviour
         float distance = delta.magnitude;
         float speed = distance / Mathf.Max(duration, 0.001f);
 
-        // 1. 判断是否为【快速短滑】(Swipe)
+        // 1. 判断是否为【快速短滑】(Swipe)：第一优先级推家具，第二优先级闪避翻滚
         if (distance >= minSwipeDistance && duration <= maxSwipeDuration && speed >= 120f)
         {
             Vector2 swipeDir = delta.normalized;
 
-            // 踢家具判定：
-            // 规则：
-            // A. 玩家手中未手持家具 (heldFurniture == null)
-            // B. 触控滑动起点必须正落在家具上 (touchDist <= 1.1f)
-            // C. 玩家必须处于家具近战交互范围内 (playerDist <= 1.95f)
-            if (cam != null && heldFurniture == null)
+            // 1. 第一优先级：滑动推动身边的家具（优先级高于主角闪避翻滚）
+            if (TrySwipePushFurniture(pointerDownPos, releasePos, swipeDir))
             {
-                Vector3 startWorldPos = cam.ScreenToWorldPoint(pointerDownPos);
-                startWorldPos.z = 0f;
-                FurnitureObject touchedFurn = FurnitureObject.GetNearestPlaced(startWorldPos, 1.1f);
-
-                if (touchedFurn != null)
-                {
-                    float playerDist = Vector2.Distance(transform.position, touchedFurn.transform.position);
-                    if (playerDist <= 1.95f)
-                    {
-                        // 满足近身且手指划过家具：角色顺应手指滑动方向将家具飞速踢出冲撞！
-                        Vector3 kickDir = new Vector3(swipeDir.x, swipeDir.y, 0f).normalized;
-                        SetVisualFacing(kickDir.x < 0);
-
-                        touchedFurn.Kick(kickDir);
-
-                        if (DamageTextManager.Instance != null)
-                        {
-                            DamageTextManager.Instance.ShowText(touchedFurn.transform.position + Vector3.up * 0.5f, "KICK!", new Color(1f, 0.45f, 0.1f), 0.11f);
-                        }
-                        return;
-                    }
-                }
+                return;
             }
 
-            // 若手持沉重家具时遇袭执行滑动：战术放下家具在脚边并翻滚闪避！
-            if (heldFurniture != null)
-            {
-                var dropFurn = heldFurniture;
-                DropFurniture();
-                dropFurn.PutDown(transform.position);
-            }
-
-            // 只要不是近身在家具上划动，一律触发玩家短滑翻滚闪避（无缝躲避怪物攻击）！
+            // 2. 第二优先级：未命中任何可推家具时，主角执行闪避翻滚
             if (rollCooldownTimer <= 0f)
             {
                 StartCoroutine(PerformDodgeRollRoutine(swipeDir));
@@ -1550,49 +1515,6 @@ public class PlayerController : MonoBehaviour
         if (clickedEnemy != null && clickedEnemy.IsAlive)
         {
             SetAttackTarget(clickedEnemy);
-
-            // 若当前正手持家具 / 临时重武器：连续点击敌人，直接把手中的武器/家具全力掷出！
-            if (heldFurniture != null)
-            {
-                float timeSinceLastClick = Time.time - lastEnemyClickTime;
-                if (clickedEnemy == lastClickedEnemy && timeSinceLastClick <= DOUBLE_CLICK_TIME_WINDOW)
-                {
-                    consecutiveEnemyClickCount++;
-                }
-                else
-                {
-                    consecutiveEnemyClickCount = 1;
-                    lastClickedEnemy = clickedEnemy;
-                }
-                lastEnemyClickTime = Time.time;
-
-                if (consecutiveEnemyClickCount >= 2)
-                {
-                    consecutiveEnemyClickCount = 0;
-                    ThrowHeldFurnitureAtTarget(clickedEnemy);
-                    return;
-                }
-                else
-                {
-                    if (DamageTextManager.Instance != null)
-                    {
-                        DamageTextManager.Instance.ShowText(
-                            clickedEnemy.transform.position + Vector3.up * 0.8f,
-                            "再点一次扔出! (TAP TO THROW)",
-                            new Color(1f, 0.85f, 0.2f),
-                            0.09f
-                        );
-                    }
-                    float d = Vector2.Distance(transform.position, clickedEnemy.transform.position);
-                    if (d <= attackRange)
-                    {
-                        PerformManualAttack();
-                    }
-                    return;
-                }
-            }
-
-            // 未手持家具时：若在近战攻击距离内，立即挥砍；若在范围外，仅保持目标锁定，绝对不自动跑过去贴脸！
             float dist = Vector2.Distance(transform.position, clickedEnemy.transform.position);
             if (dist <= attackRange)
             {
@@ -1601,44 +1523,14 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 2. 若当前正手持家具，点击角色极近身旁 (0.65m 内) 的地面 -> 平稳放下家具！
-        if (heldFurniture != null)
+        // 2. 检查是否点击到了家具：彻底取消点击举起与点击推动（推动必须靠滑动！）
+        FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.1f);
+        if (clickedFurn != null)
         {
-            float distToSelf = Vector2.Distance(transform.position, worldPos);
-            if (distToSelf <= 0.65f)
-            {
-                PutDownHeldFurniture(worldPos);
-                return;
-            }
+            return;
         }
 
-        // 3. 若未手持家具，检查是否点击了地面的家具！
-        if (heldFurniture == null)
-        {
-            FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.1f);
-            if (clickedFurn != null)
-            {
-                float distToFurn = Vector2.Distance(transform.position, clickedFurn.transform.position);
-                if (distToFurn <= 1.95f)
-                {
-                    // 靠近时点击直接举起家具
-                    HoldFurniture(clickedFurn);
-                    return;
-                }
-                else
-                {
-                    // 较远时，先寻路前往家具身旁
-                    Vector3Int furnCell = pathfinder != null ? pathfinder.WorldToCell(clickedFurn.transform.position) : grid.WorldToCell(clickedFurn.transform.position);
-                    Vector3Int pCell = pathfinder != null ? pathfinder.WorldToCell(transform.position) : grid.WorldToCell(transform.position);
-                    Vector3Int neighborCell = pathfinder != null ? pathfinder.FindNearestWalkableNeighbor(furnCell, pCell) : furnCell;
-                    MoveToCell(neighborCell);
-                    return;
-                }
-            }
-        }
-
-        // 4. 点击普通地面：在开启 enableClickToMove 时智能寻路前往指定地点！
-        // 保留锁定目标不清除，方便玩家拉扯走位游击，并在怪物贴近时自动挥砍！
+        // 3. 点击普通地面：在开启 enableClickToMove 时智能寻路前往指定地点！
         MoveToWorldPoint(worldPos);
     }
 
@@ -2258,18 +2150,12 @@ public class PlayerController : MonoBehaviour
     #region Furniture Interaction API (家具交互接口)
 
     /// <summary>
-    /// 【举起家具】：将指定家具挂载在头顶
+    /// 【举起家具】：（已彻底取消拾起家具当武器功能）
     /// </summary>
     public void HoldFurniture(FurnitureObject furn)
     {
-        if (furn == null) return;
-        heldFurniture = furn;
-        furn.PickUp(this);
-
-        if (DamageTextManager.Instance != null)
-        {
-            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "HELD FURNITURE!", new Color(1f, 0.75f, 0.2f), 0.1f);
-        }
+        // 彻底取消拾起家具当武器的功能
+        return;
     }
 
     /// <summary>
@@ -2321,15 +2207,12 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// 【举起附近家具】
+    /// 【举起附近家具】：（已彻底取消拾起家具当武器功能）
     /// </summary>
     public void PickUpNearbyFurniture()
     {
-        var furn = FurnitureObject.GetNearestPlaced(transform.position, 1.95f);
-        if (furn != null)
-        {
-            HoldFurniture(furn);
-        }
+        // 彻底取消拾起家具当武器的功能
+        return;
     }
 
     /// <summary>
