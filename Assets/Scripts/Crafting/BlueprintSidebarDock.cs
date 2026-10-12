@@ -129,6 +129,14 @@ namespace BiomechanicalCrafting
                 return true;
             }
 
+            // 异界采集之门：拥有珊瑚门框与任意空间开启材料，也算可合成
+            if (bp.id == "furn_gather_door" &&
+                (heldIds.Contains("mat_wood_coral_plate") || heldIds.Contains("mat_wood_hollow_coral")) &&
+                (heldIds.Contains("mat_gas_valve_pipe") || heldIds.Contains("mat_gas_vortex_cartilage") || heldIds.Contains("mat_water_logic_chip")))
+            {
+                return true;
+            }
+
             // 检查核心材料是否都在背壳中
             if (bp.requiredCoreIds != null)
             {

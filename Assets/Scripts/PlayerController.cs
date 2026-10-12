@@ -1632,10 +1632,16 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 2. 检查是否点击到了家具：彻底取消点击直接举起与点击推动（推动必须靠滑动！）
+        // 2. 检查是否点击到了家具：若点击到了异界门扉，触发门扉互动
         FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.1f);
         if (clickedFurn != null)
         {
+            var door = clickedFurn.GetComponent<GatherDoorAuraBehavior>();
+            if (door != null)
+            {
+                door.OnPlayerInteract(this);
+                return;
+            }
             return;
         }
 
@@ -1740,10 +1746,16 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 2. 检查是否点击到了家具：彻底取消点击举起与点击推动（推动必须靠滑动！）
+        // 2. 检查是否点击到了家具：若点击到了异界门扉，触发门扉互动
         FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.1f);
         if (clickedFurn != null)
         {
+            var door = clickedFurn.GetComponent<GatherDoorAuraBehavior>();
+            if (door != null)
+            {
+                door.OnPlayerInteract(this);
+                return;
+            }
             return;
         }
 

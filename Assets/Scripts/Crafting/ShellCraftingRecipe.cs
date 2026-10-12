@@ -291,6 +291,31 @@ namespace BiomechanicalCrafting
                 };
             }
 
+            // 7. 异界采集之门 (空间设施：增生珊瑚骨板/珊瑚排管 + 承压排气阀管/气旋软骨/逻辑芯片)
+            bool hasDoorFrame = idSet.Contains("mat_wood_coral_plate") || idSet.Contains("mat_wood_hollow_coral");
+            bool hasDoorKey = idSet.Contains("mat_gas_valve_pipe") || idSet.Contains("mat_gas_vortex_cartilage") || idSet.Contains("mat_water_logic_chip");
+
+            if (hasDoorFrame && hasDoorKey)
+            {
+                int dura = Mathf.Clamp(Mathf.RoundToInt((200 + sumG * 1.8f) * qualityMultiplier), 200, 500);
+
+                return new CraftedProduct
+                {
+                    id = "furn_gather_door",
+                    productName = $"{qualityTier}·异界采集之门",
+                    category = "空间设施",
+                    isAberrantScrap = false,
+                    qualityTier = qualityTier,
+                    nodeCount = count,
+                    primaryElement = "Wood",
+                    totalP = sumP, totalE = sumE, totalG = sumG, totalW = sumW,
+                    hasMajorResonance = hasMajorResonance,
+                    flavorDescription = "由生体珊瑚与流体阀门咬合构筑的神秘门扉。开启后将惊动虚空怪物，在消灭它们后可稳定通道，踏入采集温室。" + resonanceTag,
+                    tacticalEffect = $"【空间裂隙】耐久 {dura} 点；开启后涌现 1~3 只怪物；全歼后可交互穿越前往采集温室！",
+                    themeColor = new Color(0.25f, 0.9f, 0.75f)
+                };
+            }
+
             // =========================================================================
             // B. 无废品涌现规则：混乱连接衍生趣味生体废料 (数值收敛平衡，防止数值通胀)
             // =========================================================================

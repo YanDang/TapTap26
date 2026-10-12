@@ -116,10 +116,17 @@ public class CollectSceneController : MonoBehaviour
 
     void Update()
     {
-        // 支持 ESC 快捷键平滑返回合成背壳工坊
+        // 支持 ESC 快捷键平滑返回
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            GoToCraftingScene();
+            if (SceneManager.sceneCount > 1)
+            {
+                ReturnToCombatScene();
+            }
+            else
+            {
+                GoToCraftingScene();
+            }
         }
     }
 
@@ -209,6 +216,60 @@ public class CollectSceneController : MonoBehaviour
         {
             btnGoToCrafting.onClick.RemoveAllListeners();
             btnGoToCrafting.onClick.AddListener(GoToCraftingScene);
+
+            // 当存在后台战斗场景时，生成直达返回战场的便捷按钮
+            if (SceneManager.sceneCount > 1 && btnGoToCrafting.transform.parent != null)
+            {
+                var existingReturn = btnGoToCrafting.transform.parent.Find("BtnReturnCombat");
+                if (existingReturn == null)
+                {
+                    var returnGo = Instantiate(btnGoToCrafting.gameObject, btnGoToCrafting.transform.parent);
+                    returnGo.name = "BtnReturnCombat";
+                    var rt = returnGo.GetComponent<RectTransform>();
+                    if (rt != null) rt.anchoredPosition = new Vector2(365, 0);
+                    var txt = returnGo.GetComponentInChildren<Text>();
+                    if (txt != null) txt.text = "⚔️ 返回战场";
+                    var btn = returnGo.GetComponent<Button>();
+                    if (btn != null)
+                    {
+                        btn.onClick.RemoveAllListeners();
+                        btn.onClick.AddListener(ReturnToCombatScene);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 返回战场：保存已采集的材料，卸载温室场景，恢复战斗场景时间与镜头！
+    /// </summary>
+    public void ReturnToCombatScene()
+    {
+        if (isTransitioning) return;
+        isTransitioning = true;
+
+        Debug.Log("<color=#70D2FF>[CollectScene]</color> 正在离开温室，返回战场...");
+        PlayerSessionData.SaveBackpackSlots(PlayerSessionData.shellSlotItems);
+        PlayerSessionData.hasJustReturnedFromCrafting = true;
+        PlayerSessionData.isCraftingOpen = false;
+        Time.timeScale = 1.0f;
+
+        if (SceneManager.sceneCount > 1)
+        {
+            var myScene = gameObject.scene;
+            var loadOp = SceneManager.UnloadSceneAsync(myScene);
+            loadOp.completed += (_) =>
+            {
+                var camCtrl = FindObjectOfType<CameraController>();
+                if (camCtrl != null) camCtrl.enabled = true;
+                var myAl = FindObjectOfType<AudioListener>();
+                if (myAl != null) myAl.enabled = true;
+            };
+        }
+        else
+        {
+            string target = string.IsNullOrEmpty(PlayerSessionData.returnCombatSceneName) ? "BiomechanicalCombatScene" : PlayerSessionData.returnCombatSceneName;
+            SceneManager.LoadScene(target);
         }
     }
 

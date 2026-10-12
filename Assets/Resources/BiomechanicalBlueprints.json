@@ -131,6 +131,29 @@
       }
     },
     {
+      "id": "furn_gather_door",
+      "name": "异界采集之门",
+      "category": "空间设施",
+      "isAberrant": false,
+      "primaryElement": "Wood",
+      "requiredCoreIds": [
+        "mat_wood_coral_plate"
+      ],
+      "requiredAnyIds": [
+        "mat_gas_valve_pipe",
+        "mat_gas_vortex_cartilage",
+        "mat_water_logic_chip"
+      ],
+      "minNodes": 2,
+      "flavor": "由生体珊瑚与流体阀门咬合构筑的神秘门扉。开启后将惊动虚空怪物，在消灭它们后可稳定通道，踏入采集温室。",
+      "formulaDescription": "激活门扉将从异界涌现 1~3 只怪兽；彻底击溃所有来犯怪物后，轻触门扉即可穿越传送至采集温室！",
+      "baseStats": {
+        "spawnCount": 3,
+        "teleport": 1,
+        "durability": 300
+      }
+    },
+    {
       "id": "scrap_spasm_metal",
       "name": "抽搐的痉挛金属团",
       "category": "活性杂交废料",

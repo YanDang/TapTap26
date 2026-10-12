@@ -303,6 +303,12 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
                 cannon.SetRingRadius(cannon.shotRange);
                 break;
 
+            case "furn_gather_door":
+                var door = go.GetComponent<GatherDoorAuraBehavior>() ?? go.AddComponent<GatherDoorAuraBehavior>();
+                door.productData = prod;
+                door.SetRingRadius(2.8f);
+                break;
+
             case "scrap_spasm_metal":
                 var spring = go.GetComponent<SpasmMetalTrapBehavior>() ?? go.AddComponent<SpasmMetalTrapBehavior>();
                 spring.knockbackForce = Mathf.Clamp(4.5f + prod.totalP / 30.0f, 4.5f, 7.5f);

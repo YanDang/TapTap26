@@ -476,7 +476,15 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
             var furn = FurnitureObject.GetNearestPlaced(player.transform.position, 1.95f);
             if (furn != null)
             {
-                player.PickUpNearbyFurniture();
+                var door = furn.GetComponent<GatherDoorAuraBehavior>();
+                if (door != null)
+                {
+                    door.OnPlayerInteract(player);
+                }
+                else
+                {
+                    player.PickUpNearbyFurniture();
+                }
             }
             else
             {
