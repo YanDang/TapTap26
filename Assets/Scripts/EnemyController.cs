@@ -88,6 +88,9 @@ public class EnemyController : MonoBehaviour
     public Sprite clawSlashSprite;
     public Sprite targetRingSprite;
     private SpriteRenderer[] visualRenderers;
+    public Renderer[] flashRenderers;
+    private MaterialPropertyBlock _mpb;
+    private Material billboardMat;
 
     [Header("Squid Rig (鱿鱼骨骼动画与面部)")]
     public SquidAnimator squid;
@@ -223,6 +226,14 @@ public class EnemyController : MonoBehaviour
             originalColor.a = 1f;
         }
 
+        _mpb = new MaterialPropertyBlock();
+        billboardMat = Resources.Load<Material>("Materials/SpriteBillboard");
+        if (GameJam.TimeManager.I == null)
+        {
+            var tm = new GameObject("TimeManager");
+            tm.AddComponent<GameJam.TimeManager>();
+        }
+
         if (enemyAnimator == null)
         {
             enemyAnimator = GetComponentInChildren<Animator>();
@@ -289,7 +300,18 @@ public class EnemyController : MonoBehaviour
         squid.motion = transform;
         squidFace = go.GetComponent<SquidFace>() ?? go.AddComponent<SquidFace>();
 
+        if (billboardMat == null)
+            billboardMat = Resources.Load<Material>("Materials/SpriteBillboard");
+
         var srs = go.GetComponentsInChildren<SpriteRenderer>(true);
+        if (billboardMat != null)
+        {
+            for (int i = 0; i < srs.Length; i++)
+            {
+                srs[i].sharedMaterial = billboardMat;
+            }
+        }
+        flashRenderers = srs;
         RegisterExtraRenderers(srs);
     }
 
@@ -330,7 +352,7 @@ public class EnemyController : MonoBehaviour
 
     public void SetMoveAnimation(bool moving)
     {
-        if (enemyAnimator != null)
+        if (enemyAnimator != null && enemyAnimator.enabled && enemyAnimator.runtimeAnimatorController != null)
         {
             enemyAnimator.SetFloat("Speed", moving ? 1f : 0f);
         }
@@ -395,20 +417,42 @@ public class EnemyController : MonoBehaviour
         Color c = hit > persistent ? flashColor : persistentColor;
         float amount = Mathf.Max(hit * 0.85f, persistent);
 
-        if (visualRenderers != null && visualRenderers.Length > 0)
+        if (_mpb == null) _mpb = new MaterialPropertyBlock();
+
+        if (flashRenderers != null && flashRenderers.Length > 0)
+        {
+            for (int i = 0; i < flashRenderers.Length; i++)
+            {
+                var r = flashRenderers[i];
+                if (r != null)
+                {
+                    r.GetPropertyBlock(_mpb);
+                    _mpb.SetColor("_FlashColor", c);
+                    _mpb.SetFloat("_Flash", amount);
+                    r.SetPropertyBlock(_mpb);
+                }
+            }
+        }
+        else if (visualRenderers != null && visualRenderers.Length > 0)
         {
             for (int i = 0; i < visualRenderers.Length; i++)
             {
                 var r = visualRenderers[i];
                 if (r != null)
                 {
-                    r.color = amount > 0.01f ? Color.Lerp(Color.white, c, amount) : Color.white;
+                    r.GetPropertyBlock(_mpb);
+                    _mpb.SetColor("_FlashColor", c);
+                    _mpb.SetFloat("_Flash", amount);
+                    r.SetPropertyBlock(_mpb);
                 }
             }
         }
-        else if (monsterRenderer != null)
+        if (monsterRenderer != null)
         {
-            monsterRenderer.color = amount > 0.01f ? Color.Lerp(Color.white, c, amount) : Color.white;
+            monsterRenderer.GetPropertyBlock(_mpb);
+            _mpb.SetColor("_FlashColor", c);
+            _mpb.SetFloat("_Flash", amount);
+            monsterRenderer.SetPropertyBlock(_mpb);
         }
     }
 
@@ -918,7 +962,7 @@ public class EnemyController : MonoBehaviour
         {
             squid.Attack(side, -1, normalImpact);
         }
-        if (enemyAnimator != null)
+        if (enemyAnimator != null && enemyAnimator.enabled && enemyAnimator.runtimeAnimatorController != null)
         {
             enemyAnimator.SetTrigger("Attack");
         }
@@ -955,10 +999,22 @@ public class EnemyController : MonoBehaviour
             if (mr != null) mr.material.color = new Color(1f, 0.8f, 0.1f, pulse);
         }
 
+        // 格挡窗口期如果玩家正在防御状态，立刻触发弹刀！
+        if (stateTimer >= windowStart && stateTimer <= windowEnd)
+        {
+            if (targetPlayer != null && targetPlayer.IsGuarding)
+            {
+                ApplyFlash(0f, Color.white);
+                targetPlayer.DoParry(this);
+                return;
+            }
+        }
+
         // 命中时点
         if (!impactDone && stateTimer >= normalImpact)
         {
             impactDone = true;
+            ApplyFlash(0f, Color.white);
             if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
             SpawnClawEffect();
 
@@ -969,7 +1025,7 @@ public class EnemyController : MonoBehaviour
                 {
                     if (targetPlayer.IsGuarding)
                     {
-                        targetPlayer.OnParrySuccess(this);
+                        targetPlayer.DoParry(this);
                         return;
                     }
                     else if (targetPlayer.IsInvulnerable)
@@ -1133,17 +1189,19 @@ public class EnemyController : MonoBehaviour
     private void UpdatePendingState(float distToPlayer)
     {
         SetMoveAnimation(false);
+        stateTimer += Time.unscaledDeltaTime;
+
         // 冰蓝脉冲
-        float glow = 0.25f + 0.15f * Mathf.Sin(Time.unscaledTime * 10f);
+        float glow = 0.35f + 0.2f * Mathf.Sin(Time.unscaledTime * 12f);
         ApplyFlash(glow, PendingGlow);
 
         if (squid != null) squid.energy = 0.25f;
 
         // 若 slow-mo 结束无人处决，缓慢复原
-        if (TimeManager.I != null && !TimeManager.SlowMo)
+        if (stateTimer >= 3.0f || (TimeManager.I != null && !TimeManager.SlowMo))
         {
             aiState = EnemyAIState.Recover;
-            stateTimer = 0.5f;
+            stateTimer = 0.8f;
             if (squid != null) squid.energy = 1.0f;
             ApplyFlash(0f, Color.white);
             if (DamageTextManager.Instance != null)
@@ -1170,6 +1228,7 @@ public class EnemyController : MonoBehaviour
             squid.Interrupt();
             squid.energy = 0.25f;
         }
+        if (squidFace != null) squidFace.SetAngry(false);
         Flash(Color.white, 0.2f);
     }
 

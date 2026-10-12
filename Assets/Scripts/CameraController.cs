@@ -76,6 +76,16 @@ public class CameraController : MonoBehaviour
         targetZoom = cam.orthographicSize;
         targetPosition = transform.position;
 
+        if (GetComponent<GameJam.ScreenFX>() == null)
+        {
+            gameObject.AddComponent<GameJam.ScreenFX>();
+        }
+        if (GameJam.TimeManager.I == null)
+        {
+            var tm = new GameObject("TimeManager");
+            tm.AddComponent<GameJam.TimeManager>();
+        }
+
         if (targetToFollow == null)
         {
             var p = GameObject.Find("Player");

@@ -338,14 +338,56 @@ public class PlayerController : MonoBehaviour
         heroSprings = go.GetComponent<HeroSpringBones>() ?? go.AddComponent<HeroSpringBones>();
         heroSprings.motion = transform;
 
+        var billboardMat = Resources.Load<Material>("Materials/SpriteBillboard");
+        if (billboardMat != null)
+        {
+            foreach (var r in go.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                r.sharedMaterial = billboardMat;
+            }
+        }
+
         if (!go.GetComponent<HeroFace>()) go.AddComponent<HeroFace>();
         hero = go.GetComponent<HeroActions>() ?? go.AddComponent<HeroActions>();
+    }
+
+    public EnemyController FindParryableEnemy()
+    {
+        EnemyController best = null;
+        float bd = float.MaxValue;
+        var enemies = FindObjectsOfType<EnemyController>();
+        for (int i = 0; i < enemies.Length; i++)
+        {
+            var e = enemies[i];
+            if (e == null || !e.IsAlive || !e.ParryWindowOpen) continue;
+            float d = Vector2.Distance(transform.position, e.transform.position);
+            if (d <= e.hitRange + 0.8f && d < bd)
+            {
+                best = e;
+                bd = d;
+            }
+        }
+        return best;
+    }
+
+    public void DoParry(EnemyController attacker)
+    {
+        OnParrySuccess(attacker);
     }
 
     public void TriggerShellGuard()
     {
         if (guardCooldownTimer > 0f || isRolling || isCharging || heldFurniture != null || Unavailable) return;
 
+        // 1. 如果身边有正处于可格挡黄光窗口的敌人，直接触发完美弹刀！
+        var parryEnemy = FindParryableEnemy();
+        if (parryEnemy != null)
+        {
+            DoParry(parryEnemy);
+            return;
+        }
+
+        // 2. 正常缩壳格挡
         isGuarding = true;
         guardWindowTimer = guardWindowDuration;
         guardCooldownTimer = guardCooldown;
@@ -363,12 +405,14 @@ public class PlayerController : MonoBehaviour
                 DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, "GUARD", Color.cyan, 0.09f);
             }
         }
+        Sfx.Play("sfx_swing", 0.5f);
     }
 
     public void OnParrySuccess(EnemyController attacker)
     {
         isGuarding = false;
         guardWindowTimer = 0f;
+        guardCooldownTimer = 0.3f;
 
         TimeManager.I?.StartSlowMo(2.5f);
         ScreenFX.I?.Pulse();
@@ -388,6 +432,11 @@ public class PlayerController : MonoBehaviour
         {
             SetAttackTarget(attacker);
             attacker.Parried();
+        }
+
+        if (hero != null)
+        {
+            hero.Play("ShellGuard");
         }
     }
 
@@ -728,9 +777,16 @@ public class PlayerController : MonoBehaviour
             guardCooldownTimer -= Time.deltaTime;
         }
 
-        // 鼠标左键长按蓄力机制
+        // 鼠标左键长按蓄力机制（优先触发处决或迎击弹刀）
         if (Input.GetMouseButtonDown(0))
         {
+            var pend = EnemyController.FindPending();
+            var parryable = FindParryableEnemy();
+            if (pend != null || parryable != null)
+            {
+                TriggerManualAttack();
+                return;
+            }
             leftPointerDownTime = Time.time;
             isCharging = false;
         }
@@ -1412,15 +1468,23 @@ public class PlayerController : MonoBehaviour
     {
         if (Unavailable || attackCooldownTimer > 0f || isAttackingAnim) return;
 
-        // 优先检查附近是否有处决就绪 (Pending) 的怪物！
+        // 1. 优先检查附近是否有处决就绪 (Pending) 的怪物！
         var pendingEnemy = EnemyController.FindPending();
-        if (pendingEnemy != null && Vector2.Distance(transform.position, pendingEnemy.transform.position) <= 3.6f)
+        if (pendingEnemy != null && Vector2.Distance(transform.position, pendingEnemy.transform.position) <= 4.5f)
         {
             ExecuteEnemy(pendingEnemy);
             return;
         }
 
-        // 若当前未锁定敌人，但在前方附近有怪物，自动辅助锁定
+        // 2. 迎击弹刀：若附近怪物正处于黄光攻击窗口，出刀同样可以弹刀！
+        var parryEnemy = FindParryableEnemy();
+        if (parryEnemy != null)
+        {
+            DoParry(parryEnemy);
+            return;
+        }
+
+        // 3. 若当前未锁定敌人，但在前方附近有怪物，自动辅助锁定
         if (currentTarget == null || !currentTarget.IsAlive)
         {
             currentTarget = FindEnemyNear(transform.position, 3.5f);
@@ -1459,7 +1523,7 @@ public class PlayerController : MonoBehaviour
             if (moveDir.x > 0.05f) SetVisualFacing(false);
             else if (moveDir.x < -0.05f) SetVisualFacing(true);
 
-            if (playerAnimator != null)
+            if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null)
             {
                 playerAnimator.SetFloat("Speed", 1f);
             }
@@ -1503,7 +1567,7 @@ public class PlayerController : MonoBehaviour
                 lastAttackTime = Time.time;
             }
         }
-        else if (playerAnimator != null)
+        else if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null)
         {
             playerAnimator.SetTrigger("Attack");
         }
@@ -1694,7 +1758,7 @@ public class PlayerController : MonoBehaviour
     {
         if (isRolling || !isMoving || waypoints.Count == 0 || currentWaypointIndex >= waypoints.Count)
         {
-            if (playerAnimator != null && !isMovingByKeyboard)
+            if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null && !isMovingByKeyboard)
             {
                 playerAnimator.SetFloat("Speed", 0f);
             }
@@ -1714,7 +1778,7 @@ public class PlayerController : MonoBehaviour
 
         transform.position = Vector3.MoveTowards(transform.position, currentTargetWp, EffectiveMoveSpeed * Time.deltaTime);
 
-        if (playerAnimator != null)
+        if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null)
         {
             playerAnimator.SetFloat("Speed", 1f);
         }
@@ -1733,7 +1797,7 @@ public class PlayerController : MonoBehaviour
             {
                 isMoving = false;
                 waypoints.Clear();
-                if (playerAnimator != null && !isMovingByKeyboard)
+                if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null && !isMovingByKeyboard)
                 {
                     playerAnimator.SetFloat("Speed", 0f);
                 }
@@ -1750,7 +1814,7 @@ public class PlayerController : MonoBehaviour
         isMoving = false;
         isMovingByKeyboard = false;
         waypoints.Clear();
-        if (playerAnimator != null)
+        if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null)
         {
             playerAnimator.SetFloat("Speed", 0f);
         }
