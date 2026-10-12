@@ -100,16 +100,6 @@ public class EnemyController : MonoBehaviour
         var vrGo = new GameObject("VisualRoot");
         vrGo.transform.SetParent(go.transform, false);
 
-        // 创建阴影 Shadow
-        var shadowGo = new GameObject("Shadow");
-        shadowGo.transform.SetParent(go.transform, false);
-        shadowGo.transform.localPosition = new Vector3(0f, -0.05f, 0f);
-        var shadowSr = shadowGo.AddComponent<SpriteRenderer>();
-        shadowSr.sprite = Resources.Load<Sprite>("UI/ui_circle");
-        shadowSr.color = new Color(0f, 0f, 0f, 0.35f);
-        shadowGo.transform.localScale = new Vector3(0.7f, 0.35f, 1f);
-        shadowSr.sortingOrder = 2;
-
         var ec = go.AddComponent<EnemyController>();
         ec.visualRoot = vrGo.transform;
         ec.autoAttachSquid = true;
@@ -121,7 +111,18 @@ public class EnemyController : MonoBehaviour
         ec.spawnPosition = position;
         ec.maxHp = 100f;
         ec.currentHp = 100f;
+        ec.originalColor = Color.white;
         ec.aiState = EnemyAIState.Chase;
+
+        // 创建阴影 Shadow (在 EnemyController 初始化之后创建，避免被误判为主渲染器)
+        var shadowGo = new GameObject("Shadow");
+        shadowGo.transform.SetParent(go.transform, false);
+        shadowGo.transform.localPosition = new Vector3(0f, -0.05f, 0f);
+        var shadowSr = shadowGo.AddComponent<SpriteRenderer>();
+        shadowSr.sprite = Resources.Load<Sprite>("UI/ui_circle");
+        shadowSr.color = new Color(0f, 0f, 0f, 0.35f);
+        shadowGo.transform.localScale = new Vector3(0.7f, 0.35f, 1f);
+        shadowSr.sortingOrder = 2;
 
         return ec;
     }
@@ -321,9 +322,9 @@ public class EnemyController : MonoBehaviour
         {
             var v = transform.Find("Visual");
             if (v != null) monsterRenderer = v.GetComponent<SpriteRenderer>();
-            else monsterRenderer = GetComponentInChildren<SpriteRenderer>();
         }
 
+        originalColor = Color.white;
         if (monsterRenderer != null)
         {
             originalColor = monsterRenderer.color;
@@ -334,12 +335,6 @@ public class EnemyController : MonoBehaviour
             originalScale = monsterRenderer.transform.localScale;
             if (originalScale.magnitude < 0.1f) originalScale = Vector3.one;
             monsterRenderer.transform.localScale = originalScale;
-        }
-        else if (visualRenderers != null && visualRenderers.Length > 0)
-        {
-            originalColor = visualRenderers[0].color;
-            if (originalColor.a < 0.1f) originalColor = Color.white;
-            originalColor.a = 1f;
         }
 
         _mpb = new MaterialPropertyBlock();
@@ -420,12 +415,10 @@ public class EnemyController : MonoBehaviour
             billboardMat = Resources.Load<Material>("Materials/SpriteBillboard");
 
         var srs = go.GetComponentsInChildren<SpriteRenderer>(true);
-        if (billboardMat != null)
+        for (int i = 0; i < srs.Length; i++)
         {
-            for (int i = 0; i < srs.Length; i++)
-            {
-                srs[i].sharedMaterial = billboardMat;
-            }
+            if (billboardMat != null) srs[i].sharedMaterial = billboardMat;
+            srs[i].color = Color.white;
         }
         flashRenderers = srs;
         RegisterExtraRenderers(srs);
@@ -445,6 +438,10 @@ public class EnemyController : MonoBehaviour
             monsterRenderer.color = Color.white;
             monsterRenderer.transform.localScale = originalScale;
             monsterRenderer.transform.localPosition = Vector3.zero;
+        }
+        if (squid != null)
+        {
+            originalColor = Color.white;
         }
         SetVisualColor(originalColor);
         SetVisualFacing(false);

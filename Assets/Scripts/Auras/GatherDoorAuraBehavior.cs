@@ -35,6 +35,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
 
     [Header("Spawned Enemies")]
     public readonly List<EnemyController> spawnedEnemies = new List<EnemyController>();
+    public int totalTrialSpawned = 0;
 
     // 头顶 3D Billboard 状态与操作提示文本
     private GameObject promptGo;
@@ -166,19 +167,17 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         // 状态更新：交战状态下检测所有涌现的怪物是否已全部被消灭
         if (state == DoorState.Fighting)
         {
-            if (spawnedEnemies.Count == 0)
+            if (totalTrialSpawned > 0)
             {
-                return;
-            }
-
-            int aliveCount = GetAliveMonsterCount();
-            if (aliveCount == 0)
-            {
-                OnAllMonstersDefeated();
-            }
-            else
-            {
-                UpdatePromptText();
+                int aliveCount = GetAliveMonsterCount();
+                if (aliveCount == 0)
+                {
+                    OnAllMonstersDefeated();
+                }
+                else
+                {
+                    UpdatePromptText();
+                }
             }
         }
 
@@ -208,11 +207,13 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
 
     public int GetAliveMonsterCount()
     {
-        spawnedEnemies.RemoveAll(e => e == null);
         int alive = 0;
         for (int i = 0; i < spawnedEnemies.Count; i++)
         {
-            if (spawnedEnemies[i].IsAlive) alive++;
+            if (spawnedEnemies[i] != null && spawnedEnemies[i].IsAlive)
+            {
+                alive++;
+            }
         }
         return alive;
     }
@@ -232,6 +233,12 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
 
             case DoorState.Fighting:
                 int remaining = GetAliveMonsterCount();
+                if (remaining == 0)
+                {
+                    OnAllMonstersDefeated();
+                    EnterGatheringScene(player);
+                    return;
+                }
                 if (DamageTextManager.Instance != null)
                 {
                     DamageTextManager.Instance.ShowText(
@@ -258,6 +265,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
 
         int spawnCount = Random.Range(1, 4); // 随机 1~3 只
         spawnedEnemies.Clear();
+        totalTrialSpawned = 0;
 
         Vector3 basePos = transform.position;
 
@@ -278,6 +286,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
                 ec.currentHp = ec.maxHp;
                 ec.aiState = EnemyController.EnemyAIState.Chase; // 立即扑向玩家发起围攻
                 spawnedEnemies.Add(ec);
+                totalTrialSpawned++;
             }
         }
 
