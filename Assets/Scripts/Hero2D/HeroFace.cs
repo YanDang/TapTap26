@@ -34,6 +34,8 @@ namespace GameJam
 
 
         public void SetBase(Expr e) => baseExpr = e;
+        public void TriggerAngry() => SetBase(Expr.Angry);
+        public void TriggerPain() => SetBase(Expr.Pain);
         public void TriggerHappy(float seconds = 1.3f) => happyUntil = Time.unscaledTime + seconds;
         public void Squeeze() => squeeze = 1f;
 

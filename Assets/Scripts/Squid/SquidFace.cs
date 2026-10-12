@@ -8,6 +8,7 @@ namespace GameJam
     public class SquidFace : MonoBehaviour
     {
         public bool angry;
+        public void SetAngry(bool isAngry) => angry = isAngry;
         public bool forceAngry;                 // 表情调整窗口用
         float w;
         readonly List<SpriteRenderer> items = new List<SpriteRenderer>();
