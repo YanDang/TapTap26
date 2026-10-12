@@ -304,6 +304,13 @@ public class PlayerController : MonoBehaviour
         if (playerAnimator != null) playerAnimator.enabled = false;
 
         Transform parentTransform = visualRoot != null ? visualRoot : transform;
+        if (visualRoot != null)
+        {
+            Vector3 s = visualRoot.localScale;
+            s.x = Mathf.Abs(s.x);
+            visualRoot.localScale = s;
+        }
+
         foreach (Transform child in parentTransform)
         {
             if (child.name != "Hero2D_Flip")
@@ -329,6 +336,7 @@ public class PlayerController : MonoBehaviour
         heroFacing = go.GetComponent<HeroFacing>() ?? go.AddComponent<HeroFacing>();
         heroFacing.target = flipGo.transform;
         heroFacing.motion = transform;
+        heroFacing.Init();
 
         heroGait = go.GetComponent<HeroGait>() ?? go.AddComponent<HeroGait>();
         heroGait.motion = transform;
@@ -656,7 +664,7 @@ public class PlayerController : MonoBehaviour
             hero.Face?.TriggerAngry();
         }
 
-        Vector3 forward = (visualRoot != null && visualRoot.localScale.x < 0) ? Vector3.left : Vector3.right;
+        Vector3 forward = IsFacingLeft ? Vector3.left : Vector3.right;
         transform.position += forward * (0.35f + level * 0.45f);
 
         var enemies = EnemyController.AllEnemies;
@@ -688,13 +696,35 @@ public class PlayerController : MonoBehaviour
         ResetVisualColors();
     }
 
-    public bool IsFacingLeft => visualRoot != null ? visualRoot.localScale.x < 0 : (playerRenderer != null && playerRenderer.flipX);
+    public bool IsFacingLeft
+    {
+        get
+        {
+            if (heroFacing != null) return heroFacing.Facing < 0;
+            if (visualRoot != null) return visualRoot.localScale.x < 0;
+            return playerRenderer != null && playerRenderer.flipX;
+        }
+    }
 
     /// <summary>
     /// 统一设置角色左右朝向（兼容单个 SpriteRenderer 与复合骨骼动画节点整体镜像翻转）
     /// </summary>
     public void SetVisualFacing(bool faceLeft)
     {
+        if (heroFacing != null)
+        {
+            // 当启用 Hero2D 骨骼动画时，翻转由 heroFacing 的纸片翻转缩放统一处理
+            // visualRoot 的 scale.x 必须保持绝对正值，防止双重负号翻转抵消导致永远朝右！
+            if (visualRoot != null)
+            {
+                Vector3 s = visualRoot.localScale;
+                s.x = Mathf.Abs(s.x);
+                visualRoot.localScale = s;
+            }
+            heroFacing.Face(faceLeft ? -1 : 1);
+            return;
+        }
+
         if (visualRoot != null)
         {
             Vector3 s = visualRoot.localScale;
@@ -704,11 +734,6 @@ public class PlayerController : MonoBehaviour
         else if (playerRenderer != null)
         {
             playerRenderer.flipX = faceLeft;
-        }
-
-        if (heroFacing != null)
-        {
-            heroFacing.Face(faceLeft ? -1 : 1);
         }
     }
 
@@ -1400,7 +1425,7 @@ public class PlayerController : MonoBehaviour
     {
         if (currentTarget == null || !currentTarget.IsAlive) return;
 
-        if (!isMoving && !isRolling && !isAttackingAnim)
+        if (!isMoving && !isMovingByKeyboard && !isRolling && !isAttackingAnim)
         {
             SetVisualFacing(currentTarget.transform.position.x < transform.position.x);
         }
@@ -1580,7 +1605,7 @@ public class PlayerController : MonoBehaviour
     private IEnumerator PerformAttackRoutine()
     {
         isAttackingAnim = true;
-        Vector3 attackDir = (visualRoot != null && visualRoot.localScale.x < 0) ? Vector3.left : Vector3.right;
+        Vector3 attackDir = IsFacingLeft ? Vector3.left : Vector3.right;
 
         if (currentTarget != null && currentTarget.IsAlive)
         {

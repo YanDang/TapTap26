@@ -24,6 +24,11 @@ namespace GameJam
 
         void Start()
         {
+            Init();
+        }
+
+        public void Init()
+        {
             if (!target) target = transform;
             if (!motion) motion = transform;
             baseScale = target.localScale;
@@ -36,7 +41,7 @@ namespace GameJam
         public void Face(int dir)
         {
             dir = dir < 0 ? -1 : 1;
-            if (dir == Facing || IsTurning) return;
+            if (dir == Facing) return;
             from = Facing; Facing = dir; t = 0f;
         }
 
