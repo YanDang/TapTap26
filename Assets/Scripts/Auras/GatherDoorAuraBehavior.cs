@@ -55,6 +55,12 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
             originalVisualScale = parentFurniture.furnitureRenderer.transform.localScale;
         }
 
+        // 附加点击感应触发器，确保点击门扉任何部位均能灵敏响应
+        var clickCol = gameObject.GetComponent<BoxCollider2D>() ?? gameObject.AddComponent<BoxCollider2D>();
+        clickCol.isTrigger = true;
+        clickCol.size = new Vector2(1.6f, 2.2f);
+        clickCol.offset = new Vector2(0f, 1.0f);
+
         CreateOverheadPrompt();
         UpdatePromptText();
     }
@@ -160,6 +166,11 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         // 状态更新：交战状态下检测所有涌现的怪物是否已全部被消灭
         if (state == DoorState.Fighting)
         {
+            if (spawnedEnemies.Count == 0)
+            {
+                return;
+            }
+
             int aliveCount = GetAliveMonsterCount();
             if (aliveCount == 0)
             {
@@ -248,43 +259,25 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         int spawnCount = Random.Range(1, 4); // 随机 1~3 只
         spawnedEnemies.Clear();
 
-        // 优先从 Resources 加载 Enemy_Squid，若无则拷贝场景中的敌人模板
-        GameObject enemyPrefab = Resources.Load<GameObject>("Enemy_Squid");
-        if (enemyPrefab == null)
-        {
-            var demons = FindObjectsOfType<EnemyController>();
-            if (demons.Length > 0) enemyPrefab = demons[0].gameObject;
-        }
-
         Vector3 basePos = transform.position;
 
         for (int i = 0; i < spawnCount; i++)
         {
             Vector3 offset = new Vector3(
                 Random.Range(-1.3f, 1.3f),
-                Random.Range(-0.9f, 0.9f),
+                Random.Range(-1.2f, -0.3f), // 稍向下偏移，确保完全在地图内
                 0f
             );
             Vector3 spawnPos = basePos + offset;
 
-            GameObject enemyGO = null;
-            if (enemyPrefab != null)
+            EnemyController ec = EnemyController.CreateEnemyInstance(spawnPos, $"Portal_Enemy_{i + 1}");
+            if (ec != null)
             {
-                enemyGO = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
-            }
-
-            if (enemyGO != null)
-            {
-                enemyGO.name = $"Portal_Enemy_{i + 1}";
-                var ec = enemyGO.GetComponent<EnemyController>();
-                if (ec != null)
-                {
-                    ec.spawnPosition = spawnPos;
-                    ec.autoRespawn = false; // 严禁打败后自动复活，确保通关可判定
-                    ec.currentHp = ec.maxHp;
-                    ec.aiState = EnemyController.EnemyAIState.Chase; // 立即扑向玩家发起围攻
-                    spawnedEnemies.Add(ec);
-                }
+                ec.spawnPosition = spawnPos;
+                ec.autoRespawn = false; // 严禁打败后自动复活，确保通关可判定
+                ec.currentHp = ec.maxHp;
+                ec.aiState = EnemyController.EnemyAIState.Chase; // 立即扑向玩家发起围攻
+                spawnedEnemies.Add(ec);
             }
         }
 
@@ -344,6 +337,12 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
             PlayerSessionData.currentEquippedWeapon = player.equippedWeapon;
         }
 
+        // 隐藏左上角战斗 HUD
+        if (GameJam.HUD.I != null)
+        {
+            GameJam.HUD.I.SetVisible(false);
+        }
+
         var camCtrl = FindObjectOfType<CameraController>();
         if (camCtrl != null) camCtrl.enabled = false;
         var myAl = FindObjectOfType<AudioListener>();
@@ -368,6 +367,18 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     void OnMouseDown()
     {
         // 允许直接鼠标点击门扉触发交互
-        OnPlayerInteract(PlayerController.Instance);
+        var p = PlayerController.Instance ?? FindObjectOfType<PlayerController>();
+        if (p != null)
+        {
+            float dist = Vector2.Distance(transform.position, p.transform.position);
+            if (dist <= interactionRadius + 0.8f)
+            {
+                OnPlayerInteract(p);
+            }
+            else
+            {
+                p.MoveToWorldPoint(transform.position - new Vector3(0f, 1.2f, 0f));
+            }
+        }
     }
 }

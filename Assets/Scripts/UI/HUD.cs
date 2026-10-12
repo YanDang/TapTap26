@@ -154,9 +154,21 @@ namespace GameJam
         // ---------------------------------------------------------------- update
         void Update()
         {
+            // 在采集场景或合成工坊界面打开时，彻底隐藏左上角战斗 HUD
+            bool hideHud = PlayerSessionData.isCraftingOpen || 
+                           UnityEngine.SceneManagement.SceneManager.GetSceneByName("Collect").isLoaded || 
+                           UnityEngine.SceneManagement.SceneManager.GetSceneByName("Mix").isLoaded;
+
+            SetVisible(!hideHud);
+            if (hideHud) return;
+
             var p = PlayerController.Instance;
             if (p == null) p = FindObjectOfType<PlayerController>();
-            if (!p) return;
+            if (!p)
+            {
+                SetVisible(false);
+                return;
+            }
 
             bool inCombat = p.InCombat;
             var grey = new Color(0.5f, 0.5f, 0.5f, 0.75f);

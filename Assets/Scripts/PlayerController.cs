@@ -1633,13 +1633,21 @@ public class PlayerController : MonoBehaviour
         }
 
         // 2. 检查是否点击到了家具：若点击到了异界门扉，触发门扉互动
-        FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.1f);
+        FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.8f);
         if (clickedFurn != null)
         {
             var door = clickedFurn.GetComponent<GatherDoorAuraBehavior>();
             if (door != null)
             {
-                door.OnPlayerInteract(this);
+                float dist = Vector2.Distance(transform.position, door.transform.position);
+                if (dist <= door.interactionRadius + 0.8f)
+                {
+                    door.OnPlayerInteract(this);
+                }
+                else
+                {
+                    MoveToWorldPoint(door.transform.position - new Vector3(0f, 1.2f, 0f));
+                }
                 return;
             }
             return;
@@ -1747,13 +1755,21 @@ public class PlayerController : MonoBehaviour
         }
 
         // 2. 检查是否点击到了家具：若点击到了异界门扉，触发门扉互动
-        FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.1f);
+        FurnitureObject clickedFurn = FurnitureObject.GetNearestPlaced(worldPos, 1.8f);
         if (clickedFurn != null)
         {
             var door = clickedFurn.GetComponent<GatherDoorAuraBehavior>();
             if (door != null)
             {
-                door.OnPlayerInteract(this);
+                float dist = Vector2.Distance(transform.position, door.transform.position);
+                if (dist <= door.interactionRadius + 0.8f)
+                {
+                    door.OnPlayerInteract(this);
+                }
+                else
+                {
+                    MoveToWorldPoint(door.transform.position - new Vector3(0f, 1.2f, 0f));
+                }
                 return;
             }
             return;

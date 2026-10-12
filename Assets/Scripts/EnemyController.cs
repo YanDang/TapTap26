@@ -80,6 +80,52 @@ public class EnemyController : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// 动态构建并生成一只带完整生体动画、碰撞与 AI 的敌人实例（用于门扉试炼涌现）
+    /// </summary>
+    public static EnemyController CreateEnemyInstance(Vector3 position, string enemyName = "Enemy_Squid")
+    {
+        var go = new GameObject(enemyName);
+        go.transform.position = position;
+
+        var rb = go.AddComponent<Rigidbody2D>();
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.simulated = true;
+
+        var col = go.AddComponent<CircleCollider2D>();
+        col.radius = 0.45f;
+        col.offset = new Vector2(0f, 0.2f);
+
+        // 创建 VisualRoot
+        var vrGo = new GameObject("VisualRoot");
+        vrGo.transform.SetParent(go.transform, false);
+
+        // 创建阴影 Shadow
+        var shadowGo = new GameObject("Shadow");
+        shadowGo.transform.SetParent(go.transform, false);
+        shadowGo.transform.localPosition = new Vector3(0f, -0.05f, 0f);
+        var shadowSr = shadowGo.AddComponent<SpriteRenderer>();
+        shadowSr.sprite = Resources.Load<Sprite>("UI/ui_circle");
+        shadowSr.color = new Color(0f, 0f, 0f, 0.35f);
+        shadowGo.transform.localScale = new Vector3(0.7f, 0.35f, 1f);
+        shadowSr.sortingOrder = 2;
+
+        var ec = go.AddComponent<EnemyController>();
+        ec.visualRoot = vrGo.transform;
+        ec.autoAttachSquid = true;
+        ec.squidScale = 0.85f;
+        ec.squidTargetHeight = 1.75f;
+        ec.detectRange = 16f;
+        ec.chaseGiveUpRange = 25f;
+        ec.autoRespawn = false;
+        ec.spawnPosition = position;
+        ec.maxHp = 100f;
+        ec.currentHp = 100f;
+        ec.aiState = EnemyAIState.Chase;
+
+        return ec;
+    }
+
     public bool ParryWindowOpen
     {
         get
@@ -389,7 +435,10 @@ public class EnemyController : MonoBehaviour
     {
         isDead = false;
         isStaggered = false;
-        aiState = EnemyAIState.Patrol;
+        if (aiState != EnemyAIState.Chase)
+        {
+            aiState = EnemyAIState.Patrol;
+        }
 
         if (monsterRenderer != null)
         {

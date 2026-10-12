@@ -132,6 +132,11 @@ public class CollectSceneController : MonoBehaviour
 
     void Start()
     {
+        PlayerSessionData.isCraftingOpen = true;
+        if (GameJam.HUD.I != null)
+        {
+            GameJam.HUD.I.SetVisible(false);
+        }
         PlayerSessionData.EnsureInitialized();
         InitButtons();
         InitHoverTooltip();
@@ -253,6 +258,11 @@ public class CollectSceneController : MonoBehaviour
         PlayerSessionData.hasJustReturnedFromCrafting = true;
         PlayerSessionData.isCraftingOpen = false;
         Time.timeScale = 1.0f;
+
+        if (GameJam.HUD.I != null)
+        {
+            GameJam.HUD.I.SetVisible(true);
+        }
 
         if (SceneManager.sceneCount > 1)
         {
