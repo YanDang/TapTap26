@@ -152,6 +152,15 @@ public class PlayerController : MonoBehaviour
     private EnemyController grabberEnemy = null;
     private float rollCooldownTimer = 0f;
 
+    // 玩家头顶血条、精力条与状态监视
+    private GameObject playerHpBarRoot;
+    private Transform playerHpBarFill;
+    private Transform playerStaminaBarFill;
+    private MeshRenderer playerHpFillMr;
+    private bool isDefeatedRoutineRunning = false;
+    private float rollSafetyTimer = 0f;
+    private float thrownSafetyTimer = 0f;
+
     // 攻击冷却内置计时器（严格保证攻击间隔，彻底防止连续点击快速攻击作弊）
     private float attackCooldownTimer = 0f;
     private bool isAttackingAnim = false;
@@ -306,6 +315,7 @@ public class PlayerController : MonoBehaviour
         }
 
         CreateMarkerObject();
+        CreatePlayerHealthBar();
         CacheOriginalColors();
     }
 
@@ -563,17 +573,8 @@ public class PlayerController : MonoBehaviour
 
         if (currentHp <= 0f)
         {
-            if (hero != null)
-            {
-                hero.EndStruggle();
-                if (hero.Face != null) hero.Face.wrapped = false;
-            }
-            isGrabbed = false;
-            grabberEnemy = null;
-            if (DamageTextManager.Instance != null)
-            {
-                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "DEFEATED", Color.red, 0.15f);
-            }
+            if (grabberEnemy != null) grabberEnemy.CancelGrab();
+            TriggerDefeat();
         }
     }
 
@@ -818,29 +819,67 @@ public class PlayerController : MonoBehaviour
         // 工坊或温室叠加开启时，战斗角色输入与逻辑全面静默冻结
         if (PlayerSessionData.isCraftingOpen) return;
 
+        // 阵亡状态下等待复苏协程，不处理常规操作
+        if (isDefeatedRoutineRunning || currentHp <= 0f)
+        {
+            if (!isDefeatedRoutineRunning)
+            {
+                TriggerDefeat();
+            }
+            return;
+        }
+
+        // 缩壳翻滚超时安全守卫（防止因协程断裂或时停造成永久缩壳）
+        if (isRolling)
+        {
+            rollSafetyTimer += Time.unscaledDeltaTime;
+            if (rollSafetyTimer > 1.8f)
+            {
+                isRolling = false;
+                isInvulnerable = false;
+                rollSafetyTimer = 0f;
+                if (hero != null && hero.IsInShell) hero.CancelShell();
+            }
+        }
+        else
+        {
+            rollSafetyTimer = 0f;
+        }
+
+        // 击飞倒地超时安全守卫
+        if (isThrown)
+        {
+            thrownSafetyTimer += Time.unscaledDeltaTime;
+            if (thrownSafetyTimer > 2.2f)
+            {
+                isThrown = false;
+                thrownSafetyTimer = 0f;
+            }
+            return;
+        }
+        else
+        {
+            thrownSafetyTimer = 0f;
+        }
+
         // 处于被缠绕状态时，吸附在鱿鱼触手前并禁止主动操作
         if (isGrabbed)
         {
+            if (grabberEnemy == null || !grabberEnemy.IsAlive)
+            {
+                isGrabbed = false;
+                grabberEnemy = null;
+                if (hero != null) { hero.EndStruggle(); if (hero.Face != null) hero.Face.wrapped = false; }
+                return;
+            }
             if (hero != null && hero.Face != null)
             {
                 hero.Face.wrapped = true;
                 hero.Face.SetBase(HeroFace.Expr.Pain);
             }
-            if (grabberEnemy != null && grabberEnemy.IsAlive)
-            {
-                Vector3 holdPos = grabberEnemy.transform.position + (transform.position.x > grabberEnemy.transform.position.x ? Vector3.right : Vector3.left) * 0.55f;
-                transform.position = Vector3.Lerp(transform.position, holdPos, Time.deltaTime * 12f);
-                SetVisualFacing(grabberEnemy.transform.position.x < transform.position.x);
-            }
-            else
-            {
-                ThrowFrom(grabberEnemy);
-            }
-            return;
-        }
-
-        if (isThrown)
-        {
+            Vector3 holdPos = grabberEnemy.transform.position + (transform.position.x > grabberEnemy.transform.position.x ? Vector3.right : Vector3.left) * 0.55f;
+            transform.position = Vector3.Lerp(transform.position, holdPos, Time.deltaTime * 12f);
+            SetVisualFacing(grabberEnemy.transform.position.x < transform.position.x);
             return;
         }
 
@@ -2444,15 +2483,21 @@ public class PlayerController : MonoBehaviour
         currentHp -= damage;
         currentHp = Mathf.Max(0f, currentHp);
 
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.4f, $"-{damage:0}", new Color(1f, 0.25f, 0.25f));
+        }
+
+        if (currentHp <= 0f)
+        {
+            TriggerDefeat();
+            return;
+        }
+
         if (hero != null)
         {
             hero.Play("Hurt");
             hero.Face?.TriggerPain();
-        }
-
-        if (DamageTextManager.Instance != null)
-        {
-            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.4f, $"-{damage:0}", new Color(1f, 0.25f, 0.25f));
         }
 
         if (hurtCoroutine != null)
@@ -2519,6 +2564,155 @@ public class PlayerController : MonoBehaviour
                 markerObject.SetActive(false);
             }
         }
+    }
+
+    public void TriggerDefeat()
+    {
+        if (isDefeatedRoutineRunning) return;
+        StartCoroutine(DefeatAndReviveRoutine());
+    }
+
+    private IEnumerator DefeatAndReviveRoutine()
+    {
+        isDefeatedRoutineRunning = true;
+        StopMovement();
+        CancelPlace();
+        if (isGrabbed) { isGrabbed = false; grabberEnemy = null; }
+        if (heldFurniture != null) { DropFurniture(); }
+
+        if (hero != null)
+        {
+            hero.EndStruggle();
+            hero.CancelShell();
+            hero.Play("Thrown");
+            if (hero.Face != null)
+            {
+                hero.Face.wrapped = false;
+                hero.Face.SetBase(HeroFace.Expr.Pain);
+            }
+        }
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "💀 倒地力竭...", Color.red, 0.16f);
+        }
+
+        yield return new WaitForSeconds(2.0f);
+
+        currentHp = maxHp;
+        currentStamina = maxStamina;
+        isThrown = false;
+        isRolling = false;
+        isDefeatedRoutineRunning = false;
+
+        if (hero != null)
+        {
+            hero.Play("Emerge");
+            if (hero.Face != null) hero.Face.TriggerHappy();
+        }
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.9f, "✨ 绝境复苏! (REVIVED)", new Color(0.2f, 1f, 0.4f), 0.15f);
+        }
+
+        StartCoroutine(TemporaryInvulnerableRoutine(1.8f));
+    }
+
+    private IEnumerator TemporaryInvulnerableRoutine(float duration)
+    {
+        isInvulnerable = true;
+        yield return new WaitForSeconds(duration);
+        isInvulnerable = false;
+    }
+
+    private void CreatePlayerHealthBar()
+    {
+        if (playerHpBarRoot != null) return;
+        playerHpBarRoot = new GameObject("Player_HPBar");
+        playerHpBarRoot.transform.SetParent(transform, false);
+        playerHpBarRoot.transform.localPosition = new Vector3(0f, 1.4f, 0f);
+
+        var unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+
+        var hpBg = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        hpBg.name = "HP_BG";
+        hpBg.transform.SetParent(playerHpBarRoot.transform, false);
+        hpBg.transform.localScale = new Vector3(0.75f, 0.085f, 1f);
+        Destroy(hpBg.GetComponent<Collider>());
+        var hpBgMr = hpBg.GetComponent<MeshRenderer>();
+        if (unlitShader != null) hpBgMr.material = new Material(unlitShader);
+        hpBgMr.material.color = new Color(0.1f, 0.12f, 0.16f, 0.95f);
+        hpBgMr.sortingOrder = 30;
+
+        var hpFill = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        hpFill.name = "HP_Fill";
+        hpFill.transform.SetParent(playerHpBarRoot.transform, false);
+        hpFill.transform.localPosition = new Vector3(0f, 0f, -0.01f);
+        hpFill.transform.localScale = new Vector3(0.71f, 0.065f, 1f);
+        Destroy(hpFill.GetComponent<Collider>());
+        playerHpFillMr = hpFill.GetComponent<MeshRenderer>();
+        if (unlitShader != null) playerHpFillMr.material = new Material(unlitShader);
+        playerHpFillMr.material.color = new Color(0.25f, 0.9f, 0.35f, 1f);
+        playerHpFillMr.sortingOrder = 31;
+        playerHpBarFill = hpFill.transform;
+
+        var staBg = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        staBg.name = "Stamina_BG";
+        staBg.transform.SetParent(playerHpBarRoot.transform, false);
+        staBg.transform.localPosition = new Vector3(0f, -0.07f, 0f);
+        staBg.transform.localScale = new Vector3(0.75f, 0.05f, 1f);
+        Destroy(staBg.GetComponent<Collider>());
+        var staBgMr = staBg.GetComponent<MeshRenderer>();
+        if (unlitShader != null) staBgMr.material = new Material(unlitShader);
+        staBgMr.material.color = new Color(0.08f, 0.12f, 0.18f, 0.95f);
+        staBgMr.sortingOrder = 30;
+
+        var staFill = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        staFill.name = "Stamina_Fill";
+        staFill.transform.SetParent(playerHpBarRoot.transform, false);
+        staFill.transform.localPosition = new Vector3(0f, -0.07f, -0.01f);
+        staFill.transform.localScale = new Vector3(0.71f, 0.038f, 1f);
+        Destroy(staFill.GetComponent<Collider>());
+        var staFillMr = staFill.GetComponent<MeshRenderer>();
+        if (unlitShader != null) staFillMr.material = new Material(unlitShader);
+        staFillMr.material.color = new Color(0.18f, 0.8f, 0.98f, 1f);
+        staFillMr.sortingOrder = 31;
+        playerStaminaBarFill = staFill.transform;
+    }
+
+    private void UpdatePlayerHealthBar()
+    {
+        if (playerHpBarRoot == null) return;
+        var camToFace = cam ?? Camera.main;
+        if (camToFace != null)
+        {
+            playerHpBarRoot.transform.rotation = camToFace.transform.rotation;
+        }
+
+        float hpRatio = Mathf.Clamp01(currentHp / Mathf.Max(maxHp, 1f));
+        float staRatio = Mathf.Clamp01(currentStamina / Mathf.Max(maxStamina, 1f));
+
+        if (playerHpBarFill != null)
+        {
+            playerHpBarFill.localScale = new Vector3(0.71f * hpRatio, 0.065f, 1f);
+            playerHpBarFill.localPosition = new Vector3(-0.71f * 0.5f * (1f - hpRatio), 0f, -0.01f);
+            if (playerHpFillMr != null)
+            {
+                playerHpFillMr.material.color = Color.Lerp(new Color(0.95f, 0.2f, 0.2f), new Color(0.25f, 0.9f, 0.35f), hpRatio);
+            }
+        }
+
+        if (playerStaminaBarFill != null)
+        {
+            playerStaminaBarFill.localScale = new Vector3(0.71f * staRatio, 0.038f, 1f);
+            playerStaminaBarFill.localPosition = new Vector3(-0.71f * 0.5f * (1f - staRatio), -0.07f, -0.01f);
+        }
+    }
+
+    void LateUpdate()
+    {
+        UpdatePlayerHealthBar();
     }
 
     void OnDestroy()

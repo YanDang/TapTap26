@@ -250,6 +250,9 @@ public class EnemyController : MonoBehaviour
         currentHp = maxHp;
         currentGuardBreak = maxGuardBreak;
 
+        detectRange = Mathf.Max(detectRange, 14f);
+        chaseGiveUpRange = Mathf.Max(chaseGiveUpRange, 18f);
+
         spawnPosition = transform.position;
 
         if (visualRoot == null)
@@ -846,7 +849,8 @@ public class EnemyController : MonoBehaviour
         if (wasChasing)
         {
             gaveUpChases++;
-            if (giveUpTextCooldown <= 0f && DamageTextManager.Instance != null)
+            // 只有在玩家存活时才提示放弃追击，避免玩家倒地重整时刷屏混淆
+            if (giveUpTextCooldown <= 0f && DamageTextManager.Instance != null && targetPlayer != null && targetPlayer.IsAlive)
             {
                 giveUpTextCooldown = 3.0f; // 至少 3 秒冷却，杜绝连环跳字
                 DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "? 放弃追击", Color.yellow, 0.11f);
@@ -948,8 +952,8 @@ public class EnemyController : MonoBehaviour
         }
 
         // 追玩家
-        // 玩家被缠 / 被丢 / 起身中：其他怪先等着，不发起攻击
-        if (targetPlayer != null && targetPlayer.Unavailable)
+        // 玩家正被某只怪缠住（IsGrabbed）时：其他怪暂停进攻，防止无解围殴
+        if (targetPlayer != null && targetPlayer.IsGrabbed)
         {
             SetMoveAnimation(false);
             return;
@@ -1208,7 +1212,7 @@ public class EnemyController : MonoBehaviour
         if (!impactDone && stateTimer >= impactTime)
         {
             impactDone = true;
-            if (currentClock != null) currentClock.Close();
+            if (currentClock != null) { currentClock.Close(); currentClock = null; }
             ApplyFlash(0f, Color.white);
             if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
             SpawnClawEffect();
@@ -1254,6 +1258,7 @@ public class EnemyController : MonoBehaviour
         // 攻击后摇结束
         if (stateTimer >= impactTime + 0.35f)
         {
+            if (currentClock != null) { currentClock.Close(); currentClock = null; }
             ApplyFlash(0f, Color.white);
             if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
             if (furnitureTarget != null && !furnitureTarget.Targetable)
@@ -1463,6 +1468,7 @@ public class EnemyController : MonoBehaviour
 
     public void Parried()
     {
+        if (currentClock != null) { currentClock.Close(); currentClock = null; }
         aiState = EnemyAIState.Pending;
         stateTimer = 0f;
         CancelGrab();
@@ -1478,6 +1484,7 @@ public class EnemyController : MonoBehaviour
 
     public void BeginExecuted()
     {
+        if (currentClock != null) { currentClock.Close(); currentClock = null; }
         aiState = EnemyAIState.Executing;
         CancelGrab();
         if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
@@ -1575,6 +1582,11 @@ public class EnemyController : MonoBehaviour
         // 如果在处决就绪状态下，保持 Pending 不变，方便处决
         if (aiState != EnemyAIState.Pending && aiState != EnemyAIState.Grabbing)
         {
+            if (aiState == EnemyAIState.Attack && currentClock != null)
+            {
+                currentClock.Close();
+                currentClock = null;
+            }
             aiState = EnemyAIState.Chase;
 
             // 检查伤害来源：如果当前在攻击家具，只有受到来自玩家的主动攻击时才转火玩家
@@ -1627,6 +1639,7 @@ public class EnemyController : MonoBehaviour
 
     public void TriggerStagger()
     {
+        if (currentClock != null) { currentClock.Close(); currentClock = null; }
         isStaggered = true;
         staggerTimer = staggerDuration;
         SetMoveAnimation(false);
@@ -1675,6 +1688,7 @@ public class EnemyController : MonoBehaviour
     private void Die()
     {
         if (isDead) return;
+        if (currentClock != null) { currentClock.Close(); currentClock = null; }
         isDead = true;
         SetMoveAnimation(false);
         if (dangerZoneObject != null) dangerZoneObject.SetActive(false);

@@ -95,13 +95,28 @@ namespace GameJam
             if (!Open) return false;
             _resolved = true;
             bool ok = InSector;
-            _sectorImg.color = ok ? Color.white : new Color(1f, 0.15f, 0.1f, 0.9f);
-            _rt.localScale = Vector3.one * (ok ? 1.35f : 1f);
+            if (_sectorImg != null)
+                _sectorImg.color = ok ? Color.white : new Color(1f, 0.15f, 0.1f, 0.9f);
+            if (_rt != null)
+                _rt.localScale = Vector3.one * (ok ? 1.35f : 1f);
+
+            if (Current == this) Current = null;
+
             if (ok)
             {
                 Close();
             }
+            else
+            {
+                StartCoroutine(FailCloseRoutine());
+            }
             return ok;
+        }
+
+        private System.Collections.IEnumerator FailCloseRoutine()
+        {
+            yield return new WaitForSecondsRealtime(0.35f);
+            Close();
         }
 
         public void Close()
@@ -110,10 +125,37 @@ namespace GameJam
             if (!_closing) { _closing = true; _closeT = 0.25f; }
         }
 
+        void OnDisable()
+        {
+            if (Current == this) Current = null;
+        }
+
+        void OnDestroy()
+        {
+            if (Current == this) Current = null;
+        }
+
         void Update()
         {
-            if (!_closing && (owner == null || !owner.IsAlive)) Close();
-            if (!_resolved && !_closing) elapsed += Time.deltaTime;
+            if (!_closing && (owner == null || !owner.IsAlive))
+            {
+                Close();
+                return;
+            }
+
+            if (!_resolved && !_closing)
+            {
+                elapsed += Time.deltaTime;
+                // 超时自动判定失败，平滑淡出并销毁
+                if (elapsed >= duration)
+                {
+                    _resolved = true;
+                    if (_sectorImg != null) _sectorImg.color = new Color(1f, 0.15f, 0.1f, 0.9f);
+                    if (Current == this) Current = null;
+                    StartCoroutine(FailCloseRoutine());
+                }
+            }
+
             if (_hand) _hand.localRotation = Quaternion.Euler(0, 0, -HandAngle);
             float target = _closing ? 0f : (_resolved ? _rt.localScale.x : 1f);
             if (!_resolved || _closing) _rt.localScale = Vector3.one * Mathf.MoveTowards(_rt.localScale.x, target, Time.unscaledDeltaTime * 8f);
