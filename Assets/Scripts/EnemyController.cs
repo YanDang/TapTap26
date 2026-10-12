@@ -233,6 +233,7 @@ public class EnemyController : MonoBehaviour
     private Coroutine attackCoroutine;
 
     // 指示器与血条
+    public bool showAttackRange = false;
     private GameObject targetRingObject;
     private SpriteRenderer targetRingRenderer;
     private GameObject dangerZoneObject;
@@ -1162,7 +1163,7 @@ public class EnemyController : MonoBehaviour
             Sfx.Play("sfx_enemy_windup", 0.85f);
         }
 
-        if (dangerZoneObject != null && !targetIsFurniture)
+        if (showAttackRange && dangerZoneObject != null && !targetIsFurniture)
         {
             dangerZoneObject.SetActive(true);
         }
@@ -1188,8 +1189,8 @@ public class EnemyController : MonoBehaviour
             ApplyFlash(glow, AttackGlow);
         }
 
-        // 危险判定圈脉冲
-        if (dangerZoneObject != null && furnitureTarget == null)
+        // 危险判定圈脉冲 (受 showAttackRange 控制，默认关闭)
+        if (showAttackRange && dangerZoneObject != null && furnitureTarget == null)
         {
             float pulse = 0.35f + Mathf.Sin(stateTimer * 18f) * 0.15f;
             var mr = dangerZoneObject.GetComponent<MeshRenderer>();

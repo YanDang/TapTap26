@@ -1028,13 +1028,6 @@ public class PlayerController : MonoBehaviour
         if (Unavailable || isRolling) return;
         if (InCombat)
         {
-            if (CanRoll)
-            {
-                Vector3 rollDir = (p - transform.position).normalized;
-                TriggerDodgeRoll(new Vector2(rollDir.x, rollDir.y));
-                ExitCombat();
-                return;
-            }
             ExitCombat();
         }
         MoveToWorldPoint(p);
@@ -1294,8 +1287,22 @@ public class PlayerController : MonoBehaviour
         {
             if (isLeftPointerDown)
             {
-                LeftRelease();
-                EvaluateLeftClickRelease(Input.mousePosition);
+                float duration = Time.time - leftPointerDownTime;
+                Vector2 delta = (Vector2)Input.mousePosition - leftPointerDownPos;
+                float distance = delta.magnitude;
+                float speed = distance / Mathf.Max(duration, 0.001f);
+                bool isSwipe = (distance >= minSwipeDistance && duration <= maxSwipeDuration && speed >= 120f);
+
+                if (isSwipe)
+                {
+                    CancelLeftHold();
+                    EvaluateLeftClickRelease(Input.mousePosition);
+                }
+                else
+                {
+                    LeftRelease();
+                    EvaluateLeftClickRelease(Input.mousePosition);
+                }
             }
             isLeftPointerDown = false;
         }
