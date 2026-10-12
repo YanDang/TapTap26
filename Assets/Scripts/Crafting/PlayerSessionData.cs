@@ -17,7 +17,7 @@ public static class PlayerSessionData
     public static List<MaterialItem> playerMaterials = null;
 
     // 战斗场景名称（以便工坊合成完毕后精准返回）
-    public static string returnCombatSceneName = "TileTest";
+    public static string returnCombatSceneName = "BiomechanicalCombatScene";
 
     /// <summary>[gamejam 移植] 仓库里的成品增减时触发（替代原工程直接调 BuildDockUI.PopulateCards）。</summary>
     public static event Action OnCraftedProductsChanged;

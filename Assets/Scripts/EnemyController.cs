@@ -30,7 +30,8 @@ public class EnemyController : MonoBehaviour
         Pending,      // 完美格挡后虚弱处决就绪态 (通透世界慢动作，冰蓝脉冲)
         Executing,    // 处于被处决斩杀中
         Stagger,      // 破防瘫痪硬直
-        BreakBarrier  // 攻击挡路防御设施
+        BreakBarrier, // 攻击挡路防御设施
+        Pacified      // 被培养箱安抚 (不攻击，走到培养箱旁发呆，挨打立刻苏醒)
     }
 
     [Header("Attributes (怪物基础属性)")]
@@ -139,6 +140,56 @@ public class EnemyController : MonoBehaviour
     [HideInInspector] public EnemyController pacifiedTargetEnemy = null;
     [HideInInspector] public EnemyController currentTargetEnemy = null;
     private float pacifiedHeartbeatTimer = 0f;
+
+    [Header("Wet & Electric Status (水塔淋湿与感电 - 对齐 gamejam-integration)")]
+    private float wetUntil = -1f;
+    public void Wet(float duration) { wetUntil = Mathf.Max(wetUntil, Time.time + duration); }
+    public bool IsWet => Time.time < wetUntil;
+
+    [Header("Pacify (培养箱安抚机制 - 对齐 gamejam-integration)")]
+    public float pacifyImmuneUntil = 0f;
+    public FurnitureObject pacifierFurniture = null;
+    public bool Pacified => aiState == EnemyAIState.Pacified;
+    public bool CanBePacified => IsAlive && (aiState == EnemyAIState.Patrol || aiState == EnemyAIState.Alert || aiState == EnemyAIState.Chase || aiState == EnemyAIState.Recover) && Grabber != this && Time.time >= pacifyImmuneUntil;
+
+    [Header("Furniture Targeting (家具目标与游击脱战 - 对齐 gamejam-integration)")]
+    public float furnitureSearchRange = 9f;
+    public float chaseGiveUpRange = 10f;
+    public float giveUpFurnitureRange = 20f;
+    public FurnitureObject furnitureTarget = null;
+    public int gaveUpChases = 0;
+    private float blockedTimer = 0f;
+    private bool wasChasingPlayer = false;
+
+    public void ForceTauntTarget(FurnitureObject target)
+    {
+        if (isDead || aiState == EnemyAIState.Executing || aiState == EnemyAIState.Grabbing || aiState == EnemyAIState.Pacified) return;
+        furnitureTarget = target;
+        wasChasingPlayer = false;
+        if (aiState != EnemyAIState.Attack && aiState != EnemyAIState.GrabWindup)
+        {
+            aiState = EnemyAIState.Chase;
+        }
+    }
+
+    public void Pacify(float seconds, FurnitureObject by)
+    {
+        if (!CanBePacified) return;
+        if (currentClock != null) { currentClock.Close(); currentClock = null; }
+        if (squid != null) squid.Interrupt();
+        aiState = EnemyAIState.Pacified;
+        pacifiedTimer = seconds;
+        pacifierFurniture = by;
+        furnitureTarget = null;
+        wasChasingPlayer = false;
+        pacifyImmuneUntil = Time.time + seconds + 4.0f;
+    }
+
+    public void WakeFromPacify()
+    {
+        pacifierFurniture = null;
+        aiState = EnemyAIState.Chase;
+    }
 
     void OnEnable()
     {
@@ -736,13 +787,64 @@ public class EnemyController : MonoBehaviour
             case EnemyAIState.BreakBarrier:
                 UpdateBreakBarrierState(dist);
                 break;
+
+            case EnemyAIState.Pacified:
+                UpdatePacifiedState();
+                break;
         }
+    }
+
+    private bool PlayerInRange
+    {
+        get
+        {
+            if (targetPlayer == null || !targetPlayer.IsAlive) return false;
+            float d = Vector2.Distance(transform.position, targetPlayer.transform.position);
+            return d < detectRange || ((wasChasingPlayer || (targetPlayer.currentTarget == this)) && d < chaseGiveUpRange);
+        }
+    }
+
+    private bool ThinkTarget()
+    {
+        bool wasChasing = wasChasingPlayer;
+        bool playerInRange = PlayerInRange;
+        wasChasingPlayer = false;
+
+        if (furnitureTarget != null && !furnitureTarget.Targetable)
+            furnitureTarget = null;
+
+        var taunt = ScreamingValveAuraBehavior.GetTauntingValveNear(transform.position);
+        if (taunt != null && taunt.parentFurniture != null && taunt.parentFurniture.Targetable)
+        {
+            furnitureTarget = taunt.parentFurniture;
+        }
+
+        if (furnitureTarget != null) return true;
+
+        if (playerInRange)
+        {
+            wasChasingPlayer = true;
+            return true;
+        }
+
+        if (wasChasing)
+        {
+            gaveUpChases++;
+            if (DamageTextManager.Instance != null)
+            {
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "? 放弃追击", Color.yellow, 0.11f);
+            }
+            furnitureTarget = FurnitureObject.NearestTargetable(transform.position, giveUpFurnitureRange);
+            return furnitureTarget != null;
+        }
+
+        furnitureTarget = FurnitureObject.NearestTargetable(transform.position, furnitureSearchRange);
+        return furnitureTarget != null;
     }
 
     private void UpdatePatrolState(float distToPlayer)
     {
-        // 玩家靠近警戒半径，发现目标切入追击！
-        if (distToPlayer <= detectRange)
+        if (ThinkTarget())
         {
             aiState = EnemyAIState.Chase;
             if (DamageTextManager.Instance != null)
@@ -773,8 +875,7 @@ public class EnemyController : MonoBehaviour
         SetMoveAnimation(false);
         alertTimer -= Time.deltaTime;
 
-        // 玩家重新接近，再次发现！
-        if (distToPlayer <= detectRange * 0.85f)
+        if (ThinkTarget())
         {
             aiState = EnemyAIState.Chase;
             if (DamageTextManager.Instance != null)
@@ -784,7 +885,6 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
-        // 警觉期结束，玩家彻底利用掩体或距离甩开仇恨，怪返回巡逻态（游击成功！）
         if (alertTimer <= 0f)
         {
             aiState = EnemyAIState.Patrol;
@@ -797,53 +897,40 @@ public class EnemyController : MonoBehaviour
 
     private void UpdateChaseState(float distToPlayer)
     {
-        // 优先检查是否有反戈怪兽正在攻击我（触发恶魔间决斗）
-        if (currentTargetEnemy != null && currentTargetEnemy.IsAlive)
+        if (!ThinkTarget())
         {
-            float distToEnemy = Vector2.Distance(transform.position, currentTargetEnemy.transform.position);
-            if (distToEnemy <= attackRange * 1.15f && attackCooldownTimer <= 0f)
+            aiState = EnemyAIState.Patrol;
+            SetMoveAnimation(false);
+            return;
+        }
+
+        // 锁定家具：只打家具，玩家靠近也不理
+        if (furnitureTarget != null)
+        {
+            float distToFurn = Vector2.Distance(transform.position, furnitureTarget.transform.position);
+            float reach = attackRange + (furnitureTarget.hitRadius > 0 ? furnitureTarget.hitRadius : 0.6f);
+            if (distToFurn > reach)
+            {
+                Vector3 moveDir = (furnitureTarget.transform.position - transform.position).normalized;
+                transform.position = Vector3.MoveTowards(transform.position, furnitureTarget.transform.position, moveSpeed * slowMultiplier * Time.deltaTime);
+                SetVisualFacing(moveDir.x < -0.05f);
+                SetMoveAnimation(true);
+
+                // 检查是否被挡路的家具卡住
+                CheckBlockedByFurniture(moveDir, Time.deltaTime);
+            }
+            else
             {
                 SetMoveAnimation(false);
-                attackCooldownTimer = attackCooldown;
-                currentTargetEnemy.TakeDamage(attackDamage, 30f, transform.position);
-                if (enemyAnimator != null) enemyAnimator.SetTrigger("Attack");
-                SpawnClawEffect();
-                if (DamageTextManager.Instance != null)
+                if (attackCooldownTimer <= 0f)
                 {
-                    DamageTextManager.Instance.ShowText(currentTargetEnemy.transform.position + Vector3.up * 0.7f, $"💥 恶魔互殴 -{attackDamage:0}!", Color.red, 0.10f);
+                    StartNormalAttack(true);
                 }
-                return;
-            }
-
-            Vector3 enemyDir = (currentTargetEnemy.transform.position - transform.position).normalized;
-            transform.position = Vector3.MoveTowards(transform.position, currentTargetEnemy.transform.position, moveSpeed * slowMultiplier * Time.deltaTime);
-            SetVisualFacing(enemyDir.x < -0.05f);
-            SetMoveAnimation(true);
-            if (monsterRenderer != null && enemyAnimator == null)
-            {
-                float bob = Mathf.Abs(Mathf.Sin(Time.time * 8f)) * 0.03f;
-                monsterRenderer.transform.localPosition = new Vector3(0f, bob, 0f);
-            }
-            return;
-        }
-        else
-        {
-            currentTargetEnemy = null;
-        }
-
-        // 游击战术支持：玩家拉开距离超过 loseTargetRange，丢失目标进入警觉搜寻态
-        if (distToPlayer > loseTargetRange)
-        {
-            SetMoveAnimation(false);
-            aiState = EnemyAIState.Alert;
-            alertTimer = 2.5f;
-            if (DamageTextManager.Instance != null)
-            {
-                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "?", Color.yellow, 0.11f);
             }
             return;
         }
 
+        // 追玩家
         // 玩家被缠 / 被丢 / 起身中：其他怪先等着，不发起攻击
         if (targetPlayer != null && targetPlayer.Unavailable)
         {
@@ -862,13 +949,39 @@ public class EnemyController : MonoBehaviour
             }
             else
             {
-                StartNormalAttack();
+                StartNormalAttack(false);
             }
             return;
         }
 
         // 智能绕障追击
         ChasePlayerOrBarrier();
+    }
+
+    private void CheckBlockedByFurniture(Vector3 dir, float dt)
+    {
+        blockedTimer += dt;
+        if (blockedTimer < 0.6f) return;
+        blockedTimer = 0f;
+
+        FurnitureObject best = null;
+        float bd = float.MaxValue;
+        for (int i = 0; i < FurnitureObject.AllFurniture.Count; i++)
+        {
+            var f = FurnitureObject.AllFurniture[i];
+            if (f == null || !f.Blocks || !f.Targetable || f == furnitureTarget) continue;
+            float d = Vector2.Distance(transform.position, f.transform.position);
+            if (d <= attackRange + 0.8f && d < bd)
+            {
+                bd = d;
+                best = f;
+            }
+        }
+        if (best != null)
+        {
+            furnitureTarget = best;
+            wasChasingPlayer = false;
+        }
     }
 
     private void UpdateBreakBarrierState(float distToPlayer)
@@ -972,21 +1085,19 @@ public class EnemyController : MonoBehaviour
 
     #region Combat & Grab State Machine Handlers (来自 gamejam-integration 核心战斗逻辑)
 
-    private void StartNormalAttack()
+    private void StartNormalAttack(bool targetIsFurniture = false)
     {
         aiState = EnemyAIState.Attack;
         stateTimer = 0f;
         impactDone = false;
         SetMoveAnimation(false);
 
-        if (targetPlayer != null)
-        {
-            Vector3 dir = targetPlayer.transform.position - transform.position;
-            SetVisualFacing(dir.x < -0.05f);
-        }
+        Vector3 targetPos = (targetIsFurniture && furnitureTarget != null) ? furnitureTarget.transform.position : (targetPlayer != null ? targetPlayer.transform.position : transform.position);
+        Vector3 dir = targetPos - transform.position;
+        SetVisualFacing(dir.x < -0.05f);
 
-        int side = (targetPlayer != null && targetPlayer.transform.position.x > transform.position.x) ? 1 : -1;
-        bool useClock = enableClockQTE && (forceClockNext || Random.value < clockChance);
+        int side = targetPos.x > transform.position.x ? 1 : -1;
+        bool useClock = !targetIsFurniture && enableClockQTE && (forceClockNext || Random.value < clockChance);
         forceClockNext = false;
         float attackImpact = useClock ? clockDuration : normalImpact;
 
@@ -1010,7 +1121,7 @@ public class EnemyController : MonoBehaviour
             Sfx.Play("sfx_enemy_windup", 0.85f);
         }
 
-        if (dangerZoneObject != null)
+        if (dangerZoneObject != null && !targetIsFurniture)
         {
             dangerZoneObject.SetActive(true);
         }
@@ -1037,7 +1148,7 @@ public class EnemyController : MonoBehaviour
         }
 
         // 危险判定圈脉冲
-        if (dangerZoneObject != null)
+        if (dangerZoneObject != null && furnitureTarget == null)
         {
             float pulse = 0.35f + Mathf.Sin(stateTimer * 18f) * 0.15f;
             var mr = dangerZoneObject.GetComponent<MeshRenderer>();
@@ -1045,7 +1156,7 @@ public class EnemyController : MonoBehaviour
         }
 
         // 格挡窗口期如果玩家正在防御状态，立刻触发弹刀！
-        if (stateTimer >= windowStart && stateTimer <= effectiveWindowEnd)
+        if (furnitureTarget == null && stateTimer >= windowStart && stateTimer <= effectiveWindowEnd)
         {
             if (targetPlayer != null && targetPlayer.IsGuarding)
             {
@@ -1065,7 +1176,18 @@ public class EnemyController : MonoBehaviour
             if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
             SpawnClawEffect();
 
-            if (targetPlayer != null && !isStaggered && targetPlayer.IsAlive)
+            if (furnitureTarget != null)
+            {
+                float dist = Vector2.Distance(transform.position, furnitureTarget.transform.position);
+                float reach = hitRange + (furnitureTarget.hitRadius > 0 ? furnitureTarget.hitRadius : 0.6f);
+                if (dist <= reach)
+                {
+                    furnitureTarget.TakeDamage(attackDamage, this);
+                    Sfx.Play("sfx_hit");
+                    CameraRig.I?.Shake(0.08f, 0.12f);
+                }
+            }
+            else if (targetPlayer != null && !isStaggered && targetPlayer.IsAlive)
             {
                 float dist = Vector2.Distance(transform.position, targetPlayer.transform.position);
                 if (dist <= hitRange)
@@ -1097,8 +1219,35 @@ public class EnemyController : MonoBehaviour
         {
             ApplyFlash(0f, Color.white);
             if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
+            if (furnitureTarget != null && !furnitureTarget.Targetable) furnitureTarget = null;
             aiState = EnemyAIState.Recover;
             stateTimer = 0.5f;
+        }
+    }
+
+    private void UpdatePacifiedState()
+    {
+        pacifiedTimer -= Time.deltaTime;
+        float glow = 0.3f + 0.1f * Mathf.Sin(Time.time * 3f);
+        ApplyFlash(glow, new Color(0.2f, 0.65f, 0.92f));
+
+        if (pacifiedTimer <= 0f || pacifierFurniture == null || pacifierFurniture.currentState != FurnitureObject.FurnitureState.Placed)
+        {
+            WakeFromPacify();
+            return;
+        }
+
+        float pvDist = Vector2.Distance(transform.position, pacifierFurniture.transform.position);
+        if (pvDist > 1.4f)
+        {
+            Vector3 moveDir = (pacifierFurniture.transform.position - transform.position).normalized;
+            SetVisualFacing(moveDir.x < -0.05f);
+            transform.position = Vector3.MoveTowards(transform.position, pacifierFurniture.transform.position, (moveSpeed * 0.5f * slowMultiplier) * Time.deltaTime);
+            SetMoveAnimation(true);
+        }
+        else
+        {
+            SetMoveAnimation(false);
         }
     }
 
@@ -1300,6 +1449,7 @@ public class EnemyController : MonoBehaviour
     {
         if (aiState == EnemyAIState.Attack || aiState == EnemyAIState.GrabWindup)
         {
+            if (currentClock != null) { currentClock.Close(); currentClock = null; }
             if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
             if (squid != null) squid.Interrupt();
             CancelGrab();
@@ -1367,10 +1517,11 @@ public class EnemyController : MonoBehaviour
         Knockback((transform.position - attackerPos).normalized, 0.18f);
 
         // 如果在被安抚中挨打，醒过来
-        if (isPacified)
+        if (aiState == EnemyAIState.Pacified || isPacified)
         {
             isPacified = false;
             pacifiedTargetEnemy = null;
+            WakeFromPacify();
         }
 
         // 如果在处决就绪状态下，保持 Pending 不变，方便处决

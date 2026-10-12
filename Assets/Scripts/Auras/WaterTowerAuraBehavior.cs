@@ -92,8 +92,9 @@ public class WaterTowerAuraBehavior : BiomechanicalAuraBase
                 float d = Vector2.Distance(transform.position, e.transform.position);
                 if (d <= sprayRadius)
                 {
-                    // 1. 基础水渍减速
+                    // 1. 基础水渍减速与淋湿状态
                     e.ApplySlow(slowPercent, 1.2f);
+                    e.Wet(3.0f);
 
                     // 2. 水电协同【感电暴击】：电伤 +200%（3倍）且破防翻倍
                     if (isElectrifiedPuddle)
@@ -111,5 +112,22 @@ public class WaterTowerAuraBehavior : BiomechanicalAuraBase
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 检测某世界坐标是否处于造水塔喷淋潮湿范围内
+    /// </summary>
+    public static bool IsPositionMoist(Vector3 pos)
+    {
+        var towers = FindObjectsOfType<WaterTowerAuraBehavior>();
+        for (int i = 0; i < towers.Length; i++)
+        {
+            var t = towers[i];
+            if (t != null && t.parentFurniture != null && t.parentFurniture.currentState == FurnitureObject.FurnitureState.Placed)
+            {
+                if (Vector2.Distance(pos, t.transform.position) <= t.sprayRadius) return true;
+            }
+        }
+        return false;
     }
 }

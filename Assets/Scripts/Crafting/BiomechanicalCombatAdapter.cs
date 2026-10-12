@@ -277,7 +277,7 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
             case "furn_bio_incubator":
                 var incubator = go.GetComponent<BioIncubatorAuraBehavior>() ?? go.AddComponent<BioIncubatorAuraBehavior>();
                 incubator.lureRange = Mathf.Clamp(3.0f + (prod.totalW + prod.totalE) / 50.0f, 3.0f, 7.5f);
-                incubator.pacifyChance = Mathf.Clamp(Mathf.RoundToInt(25 + prod.totalG / 7.0f), 25, 65);
+                incubator.calmSeconds = Mathf.Clamp(4.0f + prod.totalG / 25.0f, 4.0f, 8.0f);
                 incubator.productData = prod;
                 incubator.SetRingRadius(incubator.lureRange);
                 break;
@@ -319,6 +319,13 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
                 var sludge = go.GetComponent<HybridResidueTrapBehavior>() ?? go.AddComponent<HybridResidueTrapBehavior>();
                 sludge.productData = prod;
                 sludge.SetRingRadius(2.2f);
+                break;
+
+            case "scrap_screaming_valve":
+                var valve = go.GetComponent<ScreamingValveAuraBehavior>() ?? go.AddComponent<ScreamingValveAuraBehavior>();
+                valve.productData = prod;
+                valve.tauntRange = Mathf.Clamp(5.5f + prod.totalE / 35.0f, 5.5f, 9.0f);
+                valve.SetRingRadius(valve.tauntRange);
                 break;
         }
     }

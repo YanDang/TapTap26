@@ -14,7 +14,6 @@ public class CoralWallAuraBehavior : BiomechanicalAuraBase
     public float thornsDamage = 16f;
     public float regenRate = 3f;
 
-    private float outOfCombatTimer = 0f;
     private float regenTimer = 0f;
 
     protected override void Awake()
@@ -39,8 +38,6 @@ public class CoralWallAuraBehavior : BiomechanicalAuraBase
 
     private void OnFurnitureHit(float damage, EnemyController attacker)
     {
-        outOfCombatTimer = 3.0f; // 重置脱战计时器
-
         // 荆棘反噬
         if (attacker != null && attacker.IsAlive && !attacker.isPacified)
         {
@@ -68,22 +65,21 @@ public class CoralWallAuraBehavior : BiomechanicalAuraBase
             return;
         }
 
-        if (outOfCombatTimer > 0f)
+        // 对齐 gamejam-integration：珊瑚管排墙一直慢慢自愈，在水汽里自愈速度翻倍
+        if (parentFurniture != null && parentFurniture.currentDurability < parentFurniture.maxDurability)
         {
-            outOfCombatTimer -= Time.deltaTime;
-        }
-        else if (parentFurniture != null && parentFurniture.currentDurability < parentFurniture.maxDurability)
-        {
-            // 活体自愈
+            bool isMoist = WaterTowerAuraBehavior.IsPositionMoist(transform.position);
+            float interval = isMoist ? 2.0f : 4.0f;
             regenTimer += Time.deltaTime;
-            if (regenTimer >= 1.0f)
+            if (regenTimer >= interval)
             {
                 regenTimer = 0f;
-                parentFurniture.currentDurability = Mathf.Min(parentFurniture.maxDurability, parentFurniture.currentDurability + regenRate);
+                parentFurniture.currentDurability = Mathf.Min(parentFurniture.maxDurability, parentFurniture.currentDurability + 1f);
 
                 if (DamageTextManager.Instance != null)
                 {
-                    DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, $"+{regenRate:0} 珊瑚自愈", new Color(0.35f, 1f, 0.5f), 0.09f);
+                    string label = isMoist ? "💧 潮湿增生 +1" : "🌿 珊瑚自愈 +1";
+                    DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, label, new Color(0.35f, 1f, 0.5f), 0.09f);
                 }
             }
         }

@@ -83,8 +83,36 @@ public class FurnitureObject : MonoBehaviour
     public System.Action<float, EnemyController> onHitTaken;
     public System.Action onFurnitureDestroyed;
 
+    public bool Deploying => GetComponent<GameJam.FurnitureDeploy>() != null;
+    public bool Targetable => currentState == FurnitureState.Placed && !Deploying && currentDurability > 0;
+    public bool Blocks => currentState == FurnitureState.Placed && !Deploying;
+
+    public float hitRadius = 0.6f;
+
+    public void TakeDamage(float damage, EnemyController attacker = null) => TakeHit(damage, attacker);
+
     // 全局活跃家具列表
     public static readonly List<FurnitureObject> AllFurniture = new List<FurnitureObject>();
+
+    public static FurnitureObject NearestTargetable(Vector3 pos, float range)
+    {
+        FurnitureObject best = null;
+        float minD = range;
+        for (int i = 0; i < AllFurniture.Count; i++)
+        {
+            var f = AllFurniture[i];
+            if (f != null && f.Targetable)
+            {
+                float d = Vector2.Distance(pos, f.transform.position);
+                if (d < minD)
+                {
+                    minD = d;
+                    best = f;
+                }
+            }
+        }
+        return best;
+    }
 
     void Awake()
     {

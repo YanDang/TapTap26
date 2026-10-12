@@ -74,12 +74,18 @@ public class EelGeneratorAuraBehavior : BiomechanicalAuraBase
                 float d = Vector2.Distance(transform.position, e.transform.position);
                 if (d <= paralyzeRadius)
                 {
-                    e.TakeDamage(shockDmg, 25f, transform.position);
+                    int finalDmg = shockDmg;
+                    if (e.IsWet)
+                    {
+                        finalDmg += Mathf.Max(1, Mathf.RoundToInt(shockDmg * 0.5f)); // 湿身多受伤害
+                    }
+                    e.TakeDamage(finalDmg, 25f, transform.position);
                     e.ApplyParalysis(1.0f);
 
                     if (DamageTextManager.Instance != null)
                     {
-                        DamageTextManager.Instance.ShowText(e.transform.position + Vector3.up * 0.7f, $"⚡ 电弧跳跃 -{shockDmg}!", new Color(1f, 0.88f, 0.2f), 0.11f);
+                        string label = e.IsWet ? $"⚡ 湿身感电 -{finalDmg}!" : $"⚡ 电弧跳跃 -{finalDmg}!";
+                        DamageTextManager.Instance.ShowText(e.transform.position + Vector3.up * 0.7f, label, new Color(1f, 0.88f, 0.2f), 0.11f);
                     }
                 }
             }

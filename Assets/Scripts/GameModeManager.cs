@@ -43,8 +43,8 @@ public class GameModeManager : MonoBehaviour
     public bool IsBuildMode { get; private set; } = false;
 
     [Header("Combat Pause in Build Mode (建造模式战斗时停设置)")]
-    [Tooltip("建造模式下是否启用战术时停（冻结敌人行动与战场构装攻击，给予安全布防环境；若为 false 则敌人与家具均保持实时交火）")]
-    public bool pauseCombatInBuildMode = true;
+    [Tooltip("建造模式下是否启用战术时停（对齐 gamejam-integration：默认为 false，战斗不暂停，实时交火）")]
+    public bool pauseCombatInBuildMode = false;
 
     void Start()
     {

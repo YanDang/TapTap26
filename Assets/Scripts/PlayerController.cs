@@ -95,6 +95,21 @@ public class PlayerController : MonoBehaviour
     private float chargeLevel = 0f;
     public float chargeHoldThreshold = 0.22f;
 
+    [Header("Combat Locking & Controls (战斗锁定与双键操作规范 - 对齐 gamejam-integration)")]
+    public float reLockRadius = 8f;
+    public bool InCombat { get; private set; } = false;
+    public float chargeHoldDelay = 0.18f;
+    private bool _leftHeld = false;
+    private float _leftDownAt = -1f;
+    private FurnitureObject _tapFurn = null;
+
+    [Header("Place Furniture (放置家具动作 - 来自 gamejam-integration)")]
+    public float placeActionTime = 1.0f;
+    public const float PlaceTime = 1.0f, PlaceRelease = 0.56f;
+    private System.Action _placeRelease, _placeCancel;
+    public bool Placing { get; private set; } = false;
+    public Vector3 PlaceHandPos => transform.position + Vector3.up * 1.0f + (IsFacingLeft ? Vector3.left : Vector3.right) * 0.4f;
+
     [Header("Target Marker (点击移动光环)")]
     public Sprite clickMarkerSprite;
     public Color markerColor = new Color(0.2f, 1f, 0.7f, 0.85f);
@@ -464,6 +479,7 @@ public class PlayerController : MonoBehaviour
         if (currentHp <= 0 || IsInvulnerable || Unavailable) return false;
 
         // 打断现有动作与寻路
+        CancelPlace();
         StopMovement();
         isCharging = false;
         isGuarding = false;
@@ -652,7 +668,7 @@ public class PlayerController : MonoBehaviour
         if (hero != null)
         {
             hero.Play("Execute");
-            hero.Face?.TriggerHappy();
+            hero.Face?.TriggerAngry();
         }
 
         if (TimeManager.I != null) TimeManager.I.EndSlowMo();
@@ -677,9 +693,22 @@ public class PlayerController : MonoBehaviour
 
         // 斩杀敌人
         enemy.KillByExecution(dashDir);
+        if (hero != null && hero.Face != null && Random.value < 0.6f) hero.Face.TriggerHappy();
 
         yield return new WaitForSeconds(0.35f);
         isAttackingAnim = false;
+
+        // 附近还有敌人：自动锁定最近的一个继续战斗（格挡立刻可用）；没有才脱战
+        var next = NearestEnemy(reLockRadius);
+        if (next != null)
+        {
+            currentTarget = next;
+            InCombat = true;
+        }
+        else
+        {
+            ExitCombat();
+        }
     }
 
     public void PerformChargedSmash(float level)
@@ -849,46 +878,35 @@ public class PlayerController : MonoBehaviour
             guardCooldownTimer -= Time.deltaTime;
         }
 
-        // 鼠标左键长按蓄力机制（优先触发处决或迎击弹刀）
-        if (Input.GetMouseButtonDown(0))
+        if (InCombat && (currentTarget == null || !currentTarget.IsAlive))
         {
-            // 0. 时钟倒计时 QTE 判定
-            var clock = GameJam.ClockQTE.Current;
-            if (clock != null && clock.Open)
+            var next = NearestEnemy(reLockRadius);
+            if (next != null)
             {
-                if (clock.TryHit())
-                {
-                    if (clock.owner != null) ExecuteEnemy(clock.owner);
-                }
-                else
-                {
-                    Sfx.Play("sfx_swing", 0.6f);
-                }
-                return;
+                currentTarget = next;
             }
-
-            var pend = EnemyController.FindPending();
-            var parryable = FindParryableEnemy();
-            if (pend != null || parryable != null)
+            else
             {
-                TriggerManualAttack();
-                return;
+                ExitCombat();
             }
-            leftPointerDownTime = Time.time;
-            isCharging = false;
         }
-        else if (Input.GetMouseButton(0) && !isRolling && !isMoving && heldFurniture == null && canMove)
+
+        UpdateHeroFace();
+
+        // 鼠标左键长按蓄力机制（对齐 gamejam-integration）
+        if (_leftHeld && hero != null && !isRolling && !Unavailable)
         {
-            float holdTime = Time.time - leftPointerDownTime;
-            if (holdTime >= chargeHoldThreshold)
+            float holdTime = Time.unscaledTime - _leftDownAt;
+            if (holdTime >= chargeHoldDelay)
             {
                 if (!isCharging)
                 {
                     isCharging = true;
-                    hero?.BeginCharge();
+                    hero.BeginCharge();
+                    Sfx.Play("sfx_arrow_charge", 0.6f);
                 }
-                chargeLevel = Mathf.Clamp01((holdTime - chargeHoldThreshold) / 1.0f);
-                hero?.SetCharge(chargeLevel);
+                chargeLevel = Mathf.Clamp01((holdTime - chargeHoldDelay) / 1.0f);
+                hero.SetCharge(chargeLevel);
             }
         }
         else if (Input.GetMouseButtonUp(0) && isCharging)
@@ -952,9 +970,235 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private EnemyController GetEnemyAtScreenPos(Vector2 screenPos, Vector3 worldPos)
+    {
+        for (int i = 0; i < EnemyController.AllEnemies.Count; i++)
+        {
+            var e = EnemyController.AllEnemies[i];
+            if (e != null && e.IsAlive)
+            {
+                if (Vector2.Distance(worldPos, e.transform.position) <= 1.2f)
+                    return e;
+            }
+        }
+        return null;
+    }
+
+    public void RightClickGround(Vector3 p)
+    {
+        if (Unavailable || isRolling) return;
+        if (InCombat)
+        {
+            if (CanRoll)
+            {
+                Vector3 rollDir = (p - transform.position).normalized;
+                TriggerDodgeRoll(new Vector2(rollDir.x, rollDir.y));
+                ExitCombat();
+                return;
+            }
+            ExitCombat();
+        }
+        MoveToWorldPoint(p);
+    }
+
+    public void RightClickEnemy(EnemyController e)
+    {
+        if (e == null || !e.IsAlive || Unavailable || isRolling) return;
+        currentTarget = e;
+        InCombat = true;
+        StopMovement();
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(e.transform.position + Vector3.up * 0.8f, "🎯 锁定", Color.red, 0.10f);
+        }
+    }
+
+    public void ExitCombat()
+    {
+        InCombat = false;
+        currentTarget = null;
+        if (TimeManager.I != null && TimeManager.SlowMo)
+        {
+            TimeManager.I.EndSlowMo();
+        }
+    }
+
+    public void LeftClick()
+    {
+        if (Unavailable || isRolling) return;
+
+        if (InCombat)
+        {
+            // 1. 时钟 QTE
+            var clock = GameJam.ClockQTE.Current;
+            if (clock != null && clock.Open)
+            {
+                if (clock.TryHit())
+                {
+                    if (clock.owner != null) ExecuteEnemy(clock.owner);
+                    return;
+                }
+            }
+
+            // 2. 处决虚弱态怪物
+            var pend = EnemyController.FindPending();
+            if (pend != null)
+            {
+                ExecuteEnemy(pend);
+                return;
+            }
+
+            // 3. 黄光格挡窗口弹刀
+            if (guardCooldownTimer <= 0f)
+            {
+                var parryable = FindParryableEnemy();
+                if (parryable != null)
+                {
+                    DoParry(parryable);
+                    return;
+                }
+            }
+        }
+
+        // 4. 踢桌子 / 家具
+        var nearestFurn = FurnitureObject.GetNearestPlaced(transform.position, 1.8f);
+        if (nearestFurn != null && !InCombat && heldFurniture == null)
+        {
+            Vector3 kickDir = IsFacingLeft ? Vector3.left : Vector3.right;
+            nearestFurn.Kick(kickDir);
+            return;
+        }
+
+        // 5. 寄居蟹：战斗中记录按下时刻，按住 = 蓄力，短按 = 踢 / 空挡
+        if (InCombat && hero != null)
+        {
+            _leftHeld = true;
+            _leftDownAt = Time.unscaledTime;
+            _tapFurn = nearestFurn;
+            return;
+        }
+
+        // 6. 空挡 (whiff)
+        if (InCombat && guardCooldownTimer <= 0f)
+        {
+            TriggerShellGuard();
+        }
+    }
+
+    public void LeftRelease()
+    {
+        if (!_leftHeld) return;
+        _leftHeld = false;
+
+        if (isCharging)
+        {
+            isCharging = false;
+            PerformChargedSmash(chargeLevel);
+            return;
+        }
+
+        if (Unavailable || isRolling) return;
+        if (Time.unscaledTime - _leftDownAt >= chargeHoldDelay) return;
+
+        if (_tapFurn != null && heldFurniture == null)
+        {
+            Vector3 kickDir = (_tapFurn.transform.position - transform.position).normalized;
+            _tapFurn.Kick(kickDir);
+            _tapFurn = null;
+            return;
+        }
+
+        if (InCombat && guardCooldownTimer <= 0f)
+        {
+            TriggerShellGuard();
+        }
+    }
+
+    public void CancelLeftHold()
+    {
+        _leftHeld = false;
+        _tapFurn = null;
+        if (isCharging)
+        {
+            isCharging = false;
+            hero?.Stop();
+        }
+    }
+
+    public EnemyController NearestEnemy(float radius)
+    {
+        EnemyController best = null;
+        float bd = radius;
+        for (int i = 0; i < EnemyController.AllEnemies.Count; i++)
+        {
+            var e = EnemyController.AllEnemies[i];
+            if (e == null || !e.IsAlive) continue;
+            float d = Vector2.Distance(transform.position, e.transform.position);
+            if (d <= bd)
+            {
+                best = e;
+                bd = d;
+            }
+        }
+        return best;
+    }
+
+    private void UpdateHeroFace()
+    {
+        if (hero == null || hero.Face == null) return;
+        var f = hero.Face;
+        HeroFace.Expr e;
+        if (isGrabbed || isThrown || Dead) e = HeroFace.Expr.Pain;
+        else if (isCharging || isAttackingAnim || isGuarding) e = HeroFace.Expr.Angry;
+        else e = HeroFace.Expr.Neutral;
+        f.SetBase(e);
+        f.wrapped = isGrabbed;
+    }
+
+    public bool BeginPlace(Vector3 target, System.Action release, System.Action cancel)
+    {
+        if (Dead || Unavailable || isRolling || isCharging || isAttackingAnim) return false;
+        CancelLeftHold();
+        _placeRelease = release; _placeCancel = cancel;
+        Placing = true;
+        StopMovement();
+
+        Vector3 dir = target - transform.position;
+        dir.z = 0;
+        if (dir.sqrMagnitude > 1e-4f) SetVisualFacing(dir.x < 0);
+
+        StartCoroutine(PlaceRoutine());
+        return true;
+    }
+
+    private IEnumerator PlaceRoutine()
+    {
+        if (hero != null) hero.Play("Place");
+        yield return new WaitForSeconds(PlaceRelease);
+        if (Placing)
+        {
+            var r = _placeRelease;
+            _placeRelease = _placeCancel = null;
+            r?.Invoke();
+            Sfx.Play("sfx_swing", 0.6f);
+        }
+        yield return new WaitForSeconds(PlaceTime - PlaceRelease);
+        Placing = false;
+    }
+
+    public void CancelPlace()
+    {
+        if (!Placing) return;
+        Placing = false;
+        StopCoroutine(PlaceRoutine());
+        var c = _placeCancel;
+        _placeRelease = _placeCancel = null;
+        c?.Invoke();
+    }
+
     private void HandleMouseInput()
     {
-        // 1. 鼠标右键 (Button 1)：专用于寻路移动 (单点瞬时寻路 + 长按平滑跟随移动)
+        // 1. 鼠标右键 (Button 1)：专用于战斗锁定敌人与闪避/移动脱战
         if (Input.GetMouseButtonDown(1))
         {
             if (!IsPointerOverUI(-1) && !IsInBottomDockArea(Input.mousePosition))
@@ -963,8 +1207,16 @@ public class PlayerController : MonoBehaviour
                 {
                     Vector3 worldPos = cam.ScreenToWorldPoint(Input.mousePosition);
                     worldPos.z = 0f;
-                    MoveToWorldPoint(worldPos);
-                    rightClickHoldTimer = 0f;
+                    EnemyController clickedEnemy = GetEnemyAtScreenPos(Input.mousePosition, worldPos);
+                    if (clickedEnemy != null)
+                    {
+                        RightClickEnemy(clickedEnemy);
+                    }
+                    else
+                    {
+                        RightClickGround(worldPos);
+                        rightClickHoldTimer = 0f;
+                    }
                 }
             }
         }
@@ -986,7 +1238,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // 2. 鼠标左键 (Button 0)：专用于与家具交互及战术目标交互 (举起/放下/踢飞/锁定/攻击)
+        // 2. 鼠标左键 (Button 0)：QTE / 处决 / 弹刀 / 蓄力砸击 / 踢家具
         if (Input.GetMouseButtonDown(0))
         {
             if (IsPointerOverUI(-1) || IsInBottomDockArea(Input.mousePosition))
@@ -997,11 +1249,13 @@ public class PlayerController : MonoBehaviour
             leftPointerDownPos = Input.mousePosition;
             leftPointerDownTime = Time.time;
             isLeftPointerDown = true;
+            LeftClick();
         }
         else if (Input.GetMouseButtonUp(0))
         {
             if (isLeftPointerDown)
             {
+                LeftRelease();
                 EvaluateLeftClickRelease(Input.mousePosition);
             }
             isLeftPointerDown = false;
@@ -1843,13 +2097,27 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (hero != null && currentTarget != null && currentTarget.IsAlive)
+        if (hero != null)
         {
-            float targetDist = Vector2.Distance(transform.position, currentTarget.transform.position);
-            if (targetDist <= 2.2f)
+            Vector3 punchTarget = (currentTarget != null && currentTarget.IsAlive) ? currentTarget.transform.position : (transform.position + rollDir * 2.2f);
+            hero.ShellPunch(punchTarget);
+            Sfx.Play("sfx_arrow_charge", 0.7f);
+
+            yield return new WaitForSeconds(0.15f);
+            CameraRig.I?.Shake(0.5f, 0.4f);
+            ScreenFX.I?.Pulse();
+            Sfx.Play("sfx_explosion");
+            Vfx.Spawn("VFX_ArrowHit", punchTarget + Vector3.up * 0.4f, 0, 1.3f, true);
+            Vfx.Spawn("VFX_ArrowBurst", punchTarget + Vector3.up * 0.6f, 0, 1.0f, true);
+
+            var enemies = EnemyController.AllEnemies;
+            for (int i = 0; i < enemies.Count; i++)
             {
-                hero.ShellPunch(currentTarget.transform.position);
-                currentTarget.TakeDamage(CurrentAttackDamage * 1.5f, CurrentGuardBreakPower * 1.5f, transform.position);
+                var e = enemies[i];
+                if (e != null && e.IsAlive && Vector2.Distance(punchTarget, e.transform.position) <= 2.2f)
+                {
+                    e.TakeDamage(CurrentAttackDamage * 2.0f, CurrentGuardBreakPower * 2.0f, transform.position);
+                }
             }
         }
 
@@ -2152,6 +2420,7 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(float damage)
     {
         if (IsInvulnerable) return;
+        CancelPlace();
 
         if (isGuarding)
         {

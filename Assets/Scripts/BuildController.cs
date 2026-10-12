@@ -435,27 +435,85 @@ public class BuildController : MonoBehaviour
         }
 
         var adapter = BiomechanicalCombatAdapter.Instance ?? FindObjectOfType<BiomechanicalCombatAdapter>();
+        var player = FindObjectOfType<PlayerController>();
+
         // 放置工坊联动生体构装
         if (selectedProduct != null && adapter != null)
         {
-            var spawned = adapter.SpawnProductAtCell(selectedProduct, cellPos, spawnPos);
-            if (spawned != null)
+            var prodToPlace = selectedProduct;
+
+            if (player != null)
             {
-                Debug.Log($"[BuildSystem] 成功放置生体构装: {selectedProduct.productName} 于格子 {cellPos}");
+                // 主角播放 1s 放置动作（0.56s 抛出胶囊）+ 部署动画
+                bool started = player.BeginPlace(spawnPos, () =>
+                {
+                    // 0.56s 抛出胶囊：生成家具并播放投掷展开动画
+                    var spawned = adapter.SpawnProductAtCell(prodToPlace, cellPos, spawnPos);
+                    if (spawned != null)
+                    {
+                        // 扣除一件仓库构装
+                        PlayerSessionData.RemoveCraftedProduct(prodToPlace);
 
-                var placedProduct = selectedProduct;
+                        Sprite icon = null;
+                        var fo = spawned.GetComponent<FurnitureObject>();
+                        if (fo != null && fo.furnitureRenderer != null)
+                        {
+                            icon = fo.furnitureRenderer.sprite;
+                        }
+                        else
+                        {
+                            var sr = spawned.GetComponentInChildren<SpriteRenderer>();
+                            if (sr != null) icon = sr.sprite;
+                        }
 
-                // 实时通知 BuildDockUI 扣除卡片并更新抽屉状态
+                        // 胶囊抛物线与着陆气浪动画
+                        GameJam.FurnitureDeploy.Begin(spawned, icon, player.PlaceHandPos, () =>
+                        {
+                            // 部署完毕
+                        });
+
+                        // 实时通知 BuildDockUI 扣除卡片并更新抽屉状态
+                        if (BuildDockUI.Instance != null)
+                        {
+                            BuildDockUI.Instance.OnProductPlaced(prodToPlace);
+                        }
+
+                        var remaining = PlayerSessionData.GetCraftedProducts();
+                        if (!remaining.Contains(selectedProduct))
+                        {
+                            selectedProduct = remaining.Count > 0 ? remaining[0] : null;
+                        }
+                    }
+                },
+                () =>
+                {
+                    // 放置被打断（受击 / 被抓）
+                    if (DamageTextManager.Instance != null)
+                    {
+                        DamageTextManager.Instance.ShowText(player.transform.position + Vector3.up * 0.8f, "⚠️ 放置被打断!", Color.yellow, 0.10f);
+                    }
+                });
+
+                if (started)
+                {
+                    ClearSelection();
+                    return;
+                }
+            }
+
+            // 备用兜底：若玩家忙，直接即时放置
+            var directSpawned = adapter.SpawnProductAtCell(prodToPlace, cellPos, spawnPos);
+            if (directSpawned != null)
+            {
+                PlayerSessionData.RemoveCraftedProduct(prodToPlace);
                 if (BuildDockUI.Instance != null)
                 {
-                    BuildDockUI.Instance.OnProductPlaced(placedProduct);
+                    BuildDockUI.Instance.OnProductPlaced(prodToPlace);
                 }
-
-                // 若该物品已全部放置，更新或清空当前选中项以便重新从仓库选择
-                var products = PlayerSessionData.GetCraftedProducts();
-                if (!products.Contains(selectedProduct))
+                var remaining = PlayerSessionData.GetCraftedProducts();
+                if (!remaining.Contains(selectedProduct))
                 {
-                    selectedProduct = products.Count > 0 ? products[0] : null;
+                    selectedProduct = remaining.Count > 0 ? remaining[0] : null;
                 }
                 ClearSelection();
                 return;
