@@ -38,7 +38,7 @@ public class EnemyController : MonoBehaviour
     public float maxHp = 100f;
     public float currentHp = 100f;
     public float moveSpeed = 1.35f;       // 移速适度调缓，节奏从容
-    public float detectRange = 8.5f;      // 索敌警戒范围 (从 5.5m 提升至 8.5m，对齐 integration 分支并适应等距地图)
+    public float detectRange = 14f;       // 索敌警戒范围 (覆盖整个营地防守战场，确保玩家在战场内始终处于感知域)
     public float loseTargetRange = 6.8f;  // 游击脱战拉开距离
     public float attackRange = 1.35f;     // 攻击判定半径
     public float attackDamage = 15f;
@@ -154,12 +154,13 @@ public class EnemyController : MonoBehaviour
 
     [Header("Furniture Targeting (家具目标与游击脱战 - 对齐 gamejam-integration)")]
     public float furnitureSearchRange = 9f;
-    public float chaseGiveUpRange = 10f;
-    public float giveUpFurnitureRange = 20f;
+    public float chaseGiveUpRange = 18f;
+    public float giveUpFurnitureRange = 16f;
     public FurnitureObject furnitureTarget = null;
     public int gaveUpChases = 0;
     private float blockedTimer = 0f;
     private bool wasChasingPlayer = false;
+    private float giveUpTextCooldown = 0f;
 
     public void ForceTauntTarget(FurnitureObject target)
     {
@@ -702,6 +703,8 @@ public class EnemyController : MonoBehaviour
 
         if (attackCooldownTimer > 0f)
             attackCooldownTimer -= Time.deltaTime;
+        if (giveUpTextCooldown > 0f)
+            giveUpTextCooldown -= Time.deltaTime;
 
         // 物理击退平滑阻尼滑行
         if (knockVel.sqrMagnitude > 0.01f && !isDead)
@@ -806,12 +809,21 @@ public class EnemyController : MonoBehaviour
 
     private bool ThinkTarget()
     {
+        if (targetPlayer == null) targetPlayer = FindObjectOfType<PlayerController>();
         bool wasChasing = wasChasingPlayer;
         bool playerInRange = PlayerInRange;
         wasChasingPlayer = false;
 
         if (furnitureTarget != null && !furnitureTarget.Targetable)
+        {
             furnitureTarget = null;
+            // 目标家具已被摧毁或失效，仇恨立刻转移锁定存活的玩家！
+            if (targetPlayer != null && targetPlayer.IsAlive)
+            {
+                wasChasingPlayer = true;
+                playerInRange = true;
+            }
+        }
 
         var taunt = ScreamingValveAuraBehavior.GetTauntingValveNear(transform.position);
         if (taunt != null && taunt.parentFurniture != null && taunt.parentFurniture.Targetable)
@@ -834,8 +846,9 @@ public class EnemyController : MonoBehaviour
         if (wasChasing)
         {
             gaveUpChases++;
-            if (DamageTextManager.Instance != null)
+            if (giveUpTextCooldown <= 0f && DamageTextManager.Instance != null)
             {
+                giveUpTextCooldown = 3.0f; // 至少 3 秒冷却，杜绝连环跳字
                 DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "? 放弃追击", Color.yellow, 0.11f);
             }
             furnitureTarget = FurnitureObject.NearestTargetable(transform.position, giveUpFurnitureRange);
@@ -990,22 +1003,42 @@ public class EnemyController : MonoBehaviour
 
     private void UpdateBreakBarrierState(float distToPlayer)
     {
-        SetMoveAnimation(false);
-        var blockingFurn = FurnitureObject.GetNearestPlaced(transform.position, 1.4f);
-        if (blockingFurn != null && attackCooldownTimer <= 0f)
+        var blockingFurn = FurnitureObject.GetNearestPlaced(transform.position, 2.2f);
+        if (blockingFurn != null)
         {
-            attackCooldownTimer = attackCooldown;
-            blockingFurn.TakeHit(attackDamage, this);
-            if (enemyAnimator != null) enemyAnimator.SetTrigger("Attack");
-            if (DamageTextManager.Instance != null)
+            float d = Vector2.Distance(transform.position, blockingFurn.transform.position);
+            float reach = attackRange + (blockingFurn.hitRadius > 0 ? blockingFurn.hitRadius : 0.6f);
+            if (d > reach)
             {
-                DamageTextManager.Instance.ShowText(blockingFurn.transform.position + Vector3.up * 0.5f, "💥 撞击路障!", new Color(1f, 0.5f, 0.2f), 0.09f);
+                Vector3 moveDir = (blockingFurn.transform.position - transform.position).normalized;
+                transform.position = Vector3.MoveTowards(transform.position, blockingFurn.transform.position, moveSpeed * slowMultiplier * Time.deltaTime);
+                SetVisualFacing(moveDir.x < -0.05f);
+                SetMoveAnimation(true);
+            }
+            else
+            {
+                SetMoveAnimation(false);
+                if (attackCooldownTimer <= 0f)
+                {
+                    attackCooldownTimer = attackCooldown;
+                    blockingFurn.TakeHit(attackDamage, this);
+                    if (enemyAnimator != null) enemyAnimator.SetTrigger("Attack");
+                    if (DamageTextManager.Instance != null)
+                    {
+                        DamageTextManager.Instance.ShowText(blockingFurn.transform.position + Vector3.up * 0.5f, "💥 撞击路障!", new Color(1f, 0.5f, 0.2f), 0.09f);
+                    }
+                }
             }
         }
         else
         {
-            // 若路障已破或目标重新可达，切回 Chase
+            SetMoveAnimation(false);
+            // 若路障已破或目标重新可达，切回 Chase 并锁玩家
             aiState = EnemyAIState.Chase;
+            if (targetPlayer != null && targetPlayer.IsAlive)
+            {
+                wasChasingPlayer = true;
+            }
         }
     }
 
@@ -1223,7 +1256,14 @@ public class EnemyController : MonoBehaviour
         {
             ApplyFlash(0f, Color.white);
             if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
-            if (furnitureTarget != null && !furnitureTarget.Targetable) furnitureTarget = null;
+            if (furnitureTarget != null && !furnitureTarget.Targetable)
+            {
+                furnitureTarget = null;
+                if (targetPlayer != null && targetPlayer.IsAlive)
+                {
+                    wasChasingPlayer = true;
+                }
+            }
             aiState = EnemyAIState.Recover;
             stateTimer = 0.5f;
         }
@@ -1383,6 +1423,10 @@ public class EnemyController : MonoBehaviour
         {
             aiState = EnemyAIState.Chase;
             attackCooldownTimer = attackCooldown;
+            if (furnitureTarget == null && targetPlayer != null && targetPlayer.IsAlive)
+            {
+                wasChasingPlayer = true;
+            }
         }
     }
 
@@ -1532,11 +1576,18 @@ public class EnemyController : MonoBehaviour
         if (aiState != EnemyAIState.Pending && aiState != EnemyAIState.Grabbing)
         {
             aiState = EnemyAIState.Chase;
-            var taunt = ScreamingValveAuraBehavior.GetTauntingValveNear(transform.position);
-            if (taunt == null || taunt.parentFurniture == null || !taunt.parentFurniture.Targetable)
+
+            // 检查伤害来源：如果当前在攻击家具，只有受到来自玩家的主动攻击时才转火玩家
+            // （避免家具的反伤、陷阱、光环等持续触发清空家具目标并狂跳放弃追击）
+            bool isFromPlayer = (targetPlayer != null && Vector2.Distance(attackerPos, targetPlayer.transform.position) < 1.4f);
+            if (furnitureTarget == null || isFromPlayer)
             {
-                furnitureTarget = null;
-                wasChasingPlayer = true;
+                var taunt = ScreamingValveAuraBehavior.GetTauntingValveNear(transform.position);
+                if (taunt == null || taunt.parentFurniture == null || !taunt.parentFurniture.Targetable)
+                {
+                    furnitureTarget = null;
+                    wasChasingPlayer = true;
+                }
             }
         }
 
