@@ -74,7 +74,7 @@ public class PlayerController : MonoBehaviour
     [Header("Hero2D (寄居蟹骨骼角色与动作驱动)")]
     public HeroActions hero;
     public bool autoAttachHero2D = true;
-    public float hero2DScale = 0.42f;
+    public float hero2DScale = 0.22f;
     private HeroFacing heroFacing;
     private HeroGait heroGait;
     private HeroSpringBones heroSprings;
@@ -296,6 +296,12 @@ public class PlayerController : MonoBehaviour
         if (playerAnimator != null) playerAnimator.enabled = false;
 
         Transform parentTransform = visualRoot != null ? visualRoot : transform;
+        foreach (Transform child in parentTransform)
+        {
+            if (child.name != "Hero2D_Flip")
+                child.gameObject.SetActive(false);
+        }
+
         var flipGo = new GameObject("Hero2D_Flip");
         flipGo.transform.SetParent(parentTransform, false);
         flipGo.transform.localScale = Vector3.one * hero2DScale;
@@ -318,8 +324,8 @@ public class PlayerController : MonoBehaviour
 
         heroGait = go.GetComponent<HeroGait>() ?? go.AddComponent<HeroGait>();
         heroGait.motion = transform;
-        heroGait.strideLength = 1.2f;
-        heroGait.stepHeight = 0.35f;
+        heroGait.strideLength = 0.75f;
+        heroGait.stepHeight = 0.22f;
 
         heroSprings = go.GetComponent<HeroSpringBones>() ?? go.AddComponent<HeroSpringBones>();
         heroSprings.motion = transform;
@@ -1397,28 +1403,34 @@ public class PlayerController : MonoBehaviour
                 transform.position = nextPos;
             }
 
-            if (visualRoot != null)
+            if (hero == null)
             {
-                float currentAngle = Mathf.Lerp(0f, totalSpin, t);
-                visualRoot.localRotation = Quaternion.Euler(0f, 0f, currentAngle);
-            }
-            else if (playerRenderer != null)
-            {
-                float currentAngle = Mathf.Lerp(0f, totalSpin, t);
-                playerRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, currentAngle);
+                if (visualRoot != null)
+                {
+                    float currentAngle = Mathf.Lerp(0f, totalSpin, t);
+                    visualRoot.localRotation = Quaternion.Euler(0f, 0f, currentAngle);
+                }
+                else if (playerRenderer != null)
+                {
+                    float currentAngle = Mathf.Lerp(0f, totalSpin, t);
+                    playerRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, currentAngle);
+                }
             }
 
             yield return null;
         }
 
-        if (visualRoot != null)
+        if (hero == null)
         {
-            visualRoot.localRotation = Quaternion.identity;
-        }
-        if (playerRenderer != null)
-        {
-            playerRenderer.transform.localRotation = Quaternion.identity;
-            playerRenderer.transform.localPosition = Vector3.zero;
+            if (visualRoot != null)
+            {
+                visualRoot.localRotation = Quaternion.identity;
+            }
+            if (playerRenderer != null)
+            {
+                playerRenderer.transform.localRotation = Quaternion.identity;
+                playerRenderer.transform.localPosition = Vector3.zero;
+            }
         }
 
         if (hero != null && currentTarget != null && currentTarget.IsAlive)

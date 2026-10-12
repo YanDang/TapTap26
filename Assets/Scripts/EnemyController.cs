@@ -55,7 +55,9 @@ public class EnemyController : MonoBehaviour
     public SquidAnimator squid;
     public SquidFace squidFace;
     public bool autoAttachSquid = true;
-    public float squidScale = 0.45f;
+    public float squidTargetHeight = 2.4f;
+    public float squidHover = 0.25f;
+    public float squidScale = 1.0f;
 
     [Header("Pathfinding (智能绕障寻路)")]
     public IsometricPathfinder pathfinder;
@@ -212,14 +214,34 @@ public class EnemyController : MonoBehaviour
         if (prefab == null) return;
 
         if (monsterRenderer != null) monsterRenderer.enabled = false;
+        if (enemyAnimator != null) enemyAnimator.enabled = false;
 
         Transform parentTransform = visualRoot != null ? visualRoot : transform;
+        foreach (Transform child in parentTransform)
+        {
+            if (child.name != "SquidRig")
+                child.gameObject.SetActive(false);
+        }
+
         var go = Instantiate(prefab, parentTransform);
         go.name = "SquidRig";
-        go.transform.localPosition = Vector3.zero;
-        go.transform.localScale = Vector3.one * squidScale;
+
+        // 用骨骼量尺寸计算自适应归一化缩放（Squid 原模高约 46.5 单位）
+        float minY = float.MaxValue, maxY = float.MinValue, bodyX = 0f;
+        foreach (var t in go.GetComponentsInChildren<Transform>(true))
+        {
+            var lp = go.transform.InverseTransformPoint(t.position);
+            minY = Mathf.Min(minY, lp.y);
+            maxY = Mathf.Max(maxY, lp.y);
+            if (t.name == "身体根") bodyX = lp.x;
+        }
+        float modelHeight = Mathf.Max(maxY - minY, 1e-3f);
+        float k = (squidTargetHeight * squidScale) / modelHeight;
+        go.transform.localScale = Vector3.one * k;
+        go.transform.localPosition = new Vector3(-bodyX * k, -minY * k + squidHover, 0f);
 
         squid = go.GetComponent<SquidAnimator>() ?? go.AddComponent<SquidAnimator>();
+        squid.motion = transform;
         squidFace = go.GetComponent<SquidFace>() ?? go.AddComponent<SquidFace>();
 
         var srs = go.GetComponentsInChildren<SpriteRenderer>(true);
