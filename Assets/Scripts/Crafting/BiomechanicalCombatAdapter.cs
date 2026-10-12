@@ -47,11 +47,29 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
             }
         }
 
+        // 彻底清理场景中残留的怪物，确保初始战场绝对没有怪物！怪物仅由地图边缘门扉在开启后生成
+        var initialEnemies = FindObjectsOfType<EnemyController>();
+        foreach (var enemy in initialEnemies)
+        {
+            if (enemy != null && enemy.gameObject != null)
+            {
+                Destroy(enemy.gameObject);
+            }
+        }
+
+        if (PlayerController.Instance != null && PlayerController.Instance.currentTarget != null)
+        {
+            PlayerController.Instance.ClearAttackTarget();
+        }
+
         // 仓库开局为空，不再自动注入初始家具，全部由玩家在工坊中合成！
     }
 
     void Start()
     {
+        // 开局在地图北侧边缘部署异界采集之门
+        EnsurePortalDoorAtEdge();
+
         if (autoSpawnShowcaseOnStart)
         {
             var activeAuras = FindObjectsOfType<BiomechanicalAuraBase>();
@@ -59,6 +77,33 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
             {
                 SpawnShowcaseArray();
             }
+        }
+    }
+
+    /// <summary>
+    /// 确保在地图边缘（北侧边界 (0.0f, 5.0f, 0f)）部署一扇异界采集之门
+    /// </summary>
+    public void EnsurePortalDoorAtEdge()
+    {
+        var existingDoor = FindObjectOfType<GatherDoorAuraBehavior>();
+        if (existingDoor != null) return;
+
+        // 地图北侧高地边缘坐标 (0, 5, 0)，居中且正对上方视口边缘
+        Vector3 edgePos = new Vector3(0.0f, 5.0f, 0f);
+        GameObject doorGo = SpawnConstructDirect(
+            "furn_gather_door",
+            "精制·异界裂隙之门",
+            "空间设施",
+            false,
+            25, 25, 25, 25,
+            new Color(0.2f, 0.9f, 0.8f),
+            edgePos,
+            "Portal_Gather_Door"
+        );
+
+        if (doorGo != null)
+        {
+            Debug.Log("<color=#38bdf8>[BiomechanicalCombatAdapter] 异界采集之门已成功部署于地图北侧边缘 (0, 5, 0)！</color>");
         }
     }
 
@@ -85,11 +130,10 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
         SpawnConstructDirect("scrap_mud_coral", "粗糙·漏电的烂泥珊瑚块", "活性杂交废料", true, 15, 50, 25, 55, new Color(0.85f, 0.55f, 0.95f), new Vector3(0.3f, 1.5f, 0f));
         SpawnConstructDirect("scrap_symbiotic_sludge", "粗糙·活性共生杂交残渣", "活性杂交废料", true, 20, 15, 60, 35, new Color(0.7f, 0.85f, 0.5f), new Vector3(-0.5f, 2.6f, 0f));
 
-        EnsureEnemyTrio();
-        Debug.Log("<color=#38bdf8>[BiomechanicalCombatAdapter] 战场 10 大生体构装与协同阵列已成功动态部署！</color>");
+        Debug.Log("<color=#38bdf8>[BiomechanicalCombatAdapter] 战场生体构装阵列已成功部署！</color>");
     }
 
-    private GameObject SpawnConstructDirect(string id, string name, string category, bool isScrap, int p, int e, int g, int w, Color color, Vector3 pos)
+    private GameObject SpawnConstructDirect(string id, string name, string category, bool isScrap, int p, int e, int g, int w, Color color, Vector3 pos, string customName = null)
     {
         if (genericFurniturePrefab == null)
         {
@@ -98,7 +142,7 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
         if (genericFurniturePrefab == null) return null;
 
         GameObject go = Instantiate(genericFurniturePrefab, pos, Quaternion.identity);
-        go.name = $"{id}_Showcase";
+        go.name = !string.IsNullOrEmpty(customName) ? customName : $"{id}_Showcase";
 
         var prod = CreateSampleProduct(id, name, category, isScrap, p, e, g, w, color);
         var furn = go.GetComponent<FurnitureObject>() ?? go.AddComponent<FurnitureObject>();
@@ -139,36 +183,7 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
 
     private void EnsureEnemyTrio()
     {
-        var demons = FindObjectsOfType<EnemyController>();
-        if (demons.Length > 0 && demons.Length < 3)
-        {
-            GameObject baseDemon = demons[0].gameObject;
-            baseDemon.name = "Enemy_Demon_WaterElec";
-            baseDemon.transform.position = new Vector3(3.8f, 2.8f, 0f);
-            var c1 = baseDemon.GetComponent<EnemyController>();
-            if (c1 != null) { c1.spawnPosition = baseDemon.transform.position; c1.autoRespawn = true; }
-
-            GameObject demon2 = Instantiate(baseDemon, new Vector3(-4.5f, 2.2f, 0f), Quaternion.identity);
-            demon2.name = "Enemy_Demon_Chokepoint";
-            var c2 = demon2.GetComponent<EnemyController>();
-            if (c2 != null) { c2.spawnPosition = demon2.transform.position; c2.autoRespawn = true; c2.respawnDelay = 5f; }
-
-            GameObject demon3 = Instantiate(baseDemon, new Vector3(1.4f, 4.2f, 0f), Quaternion.identity);
-            demon3.name = "Enemy_Demon_Incubator";
-            var c3 = demon3.GetComponent<EnemyController>();
-            if (c3 != null) { c3.spawnPosition = demon3.transform.position; c3.autoRespawn = true; c3.respawnDelay = 5.5f; }
-        }
-        else if (demons.Length >= 3)
-        {
-            for (int i = 0; i < demons.Length; i++)
-            {
-                if (demons[i] != null)
-                {
-                    demons[i].spawnPosition = demons[i].transform.position;
-                    demons[i].autoRespawn = true;
-                }
-            }
-        }
+        // 初始场景无怪物，怪兽全部由地图边缘的裂隙门在开启后生成
     }
 
     /// <summary>

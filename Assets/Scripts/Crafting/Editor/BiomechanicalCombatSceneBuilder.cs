@@ -68,13 +68,16 @@ namespace BiomechanicalCrafting.Editor
                 Object.DestroyImmediate(furnitureRoot);
             }
 
-            // 8. 配置多只恶魔敌人以供完整战斗协同测试
-            ConfigureDemonEnemies();
+            // 8. 清理所有场景怪物：开局战场纯净无怪，怪兽仅由地图边缘裂隙门在开启后生成
+            RemoveAllEnemies();
 
-            // 9. 更新 EditorBuildSettings
+            // 9. 在地图北侧边缘部署异界裂隙之门
+            PlacePortalDoorAtEdge(adapter, lavaPrefab);
+
+            // 10. 更新 EditorBuildSettings
             EnsureSceneInBuildSettings(scenePath);
 
-            // 10. 持久化保存新场景
+            // 11. 持久化保存新场景
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, scenePath);
             Debug.Log($"<color=#38bdf8>[BiomechanicalCombatSceneBuilder]</color> 成功构建并保存家具战斗协同新场景: {scenePath}");
@@ -109,43 +112,68 @@ namespace BiomechanicalCrafting.Editor
             return go;
         }
 
-        private static void ConfigureDemonEnemies()
+        private static void RemoveAllEnemies()
         {
             var demons = Object.FindObjectsOfType<EnemyController>();
-            GameObject baseDemonGo = demons.Length > 0 ? demons[0].gameObject : null;
-
-            if (baseDemonGo != null)
+            foreach (var d in demons)
             {
-                // 恶魔 1: 位于水电回路区域附近
-                baseDemonGo.name = "Enemy_Demon_WaterElec";
-                baseDemonGo.transform.position = new Vector3(3.8f, 2.8f, 0f);
-                demons[0].autoRespawn = true;
-                demons[0].respawnDelay = 4.5f;
-
-                // 若只有1只，再克隆出另外两只部署在防线和驯化区
-                if (demons.Length < 2)
+                if (d != null && d.gameObject != null)
                 {
-                    // 恶魔 2: 位于珊瑚墙与弹力跳板前方
-                    GameObject demon2 = Object.Instantiate(baseDemonGo, new Vector3(-4.5f, 2.2f, 0f), Quaternion.identity);
-                    demon2.name = "Enemy_Demon_Chokepoint";
-                    var ctrl2 = demon2.GetComponent<EnemyController>();
-                    if (ctrl2 != null)
-                    {
-                        ctrl2.autoRespawn = true;
-                        ctrl2.respawnDelay = 5.0f;
-                    }
-
-                    // 恶魔 3: 位于培养箱附近巡逻
-                    GameObject demon3 = Object.Instantiate(baseDemonGo, new Vector3(1.4f, 4.2f, 0f), Quaternion.identity);
-                    demon3.name = "Enemy_Demon_Incubator";
-                    var ctrl3 = demon3.GetComponent<EnemyController>();
-                    if (ctrl3 != null)
-                    {
-                        ctrl3.autoRespawn = true;
-                        ctrl3.respawnDelay = 5.5f;
-                    }
+                    Object.DestroyImmediate(d.gameObject);
                 }
             }
+
+            var player = Object.FindObjectOfType<PlayerController>();
+            if (player != null && player.currentTarget != null)
+            {
+                player.ClearAttackTarget();
+            }
+        }
+
+        private static void PlacePortalDoorAtEdge(BiomechanicalCombatAdapter adapter, GameObject prefab)
+        {
+            var existingDoor = Object.FindObjectOfType<GatherDoorAuraBehavior>();
+            if (existingDoor != null)
+            {
+                return;
+            }
+
+            if (prefab == null) return;
+            Vector3 doorPos = new Vector3(0.0f, 5.0f, 0f);
+            GameObject go = Object.Instantiate(prefab, doorPos, Quaternion.identity);
+            go.name = "Preplaced_Gather_Door";
+
+            var prod = BiomechanicalCombatAdapter.CreateSampleProduct(
+                "furn_gather_door", "精制·异界裂隙之门", "空间设施", false, 25, 25, 25, 25, new Color(0.2f, 0.9f, 0.8f)
+            );
+            var furn = go.GetComponent<FurnitureObject>() ?? go.AddComponent<FurnitureObject>();
+            furn.instanceId = "furn_gather_door";
+            furn.furnitureName = "精制·异界裂隙之门";
+            furn.originalProduct = prod;
+
+            furn.maxDurability = 300f;
+            furn.currentDurability = 300f;
+            furn.kickDamage = 0f;
+            furn.kickGuardBreak = 0f;
+
+            if (furn.furnitureRenderer != null)
+            {
+                var realSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Resources/FurnitureSprites/furn_gather_door.png");
+                if (realSprite != null)
+                {
+                    furn.furnitureRenderer.sprite = realSprite;
+                    furn.furnitureRenderer.color = Color.white;
+                }
+            }
+
+            if (furn.furnitureCollider is CircleCollider2D col)
+            {
+                col.radius = 0.52f;
+                col.offset = new Vector2(0f, 0.12f);
+            }
+
+            adapter.AttachTacticalAura(go, prod);
+            furn.SnapToNearestGrid();
         }
 
         private static void EnsureSceneInBuildSettings(string scenePath)
