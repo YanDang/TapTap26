@@ -52,7 +52,7 @@ public class EnemyController : MonoBehaviour
     public float hitRange = 1.85f;                // 攻击命中有效距离
     [Range(0f, 1f)] public float grabChance = 0.45f; // 抓取发起概率
     public float grabWindup = 1.4f;               // 抓取前摇蓄力时长 (红光闪烁)
-    public float grabRange = 2.8f;                // 抓取范围判定 (对齐 TapTap26)
+    public float grabRange = 1.65f;               // 抓取范围判定 (缩小至近战合理距离)
     public float grabHold = 2.8f;                 // 缠住时长
     public float grabTick = 0.85f;                // 缠住挤压扣血周期
     public float grabDamage = 10f;                // 每次挤压伤害
@@ -111,8 +111,8 @@ public class EnemyController : MonoBehaviour
     public SquidAnimator squid;
     public SquidFace squidFace;
     public bool autoAttachSquid = true;
-    public float squidTargetHeight = 2.4f;
-    public float squidHover = 0.25f;
+    public float squidTargetHeight = 1.75f;
+    public float squidHover = 0.2f;
     public float squidScale = 1.0f;
 
     [Header("Pathfinding (智能绕障寻路)")]

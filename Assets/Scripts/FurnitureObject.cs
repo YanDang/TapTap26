@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using GameJam;
 
 /// <summary>
 /// 家具三态实体（基于 COMBAT_CRAFTING_INTEGRATION_SPEC 规范）：
@@ -565,6 +566,11 @@ public class FurnitureObject : MonoBehaviour
         {
             DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, "💥 碎裂爆发!", new Color(1f, 0.3f, 0.1f), 0.12f);
         }
+
+        // 视听爆发反馈 (对齐 gamejam-integration)
+        CameraRig.I?.Shake(0.35f, 0.25f);
+        Sfx.Play("sfx_explosion", 0.65f);
+        Vfx.Spawn("VFX_ArrowBurst", transform.position + Vector3.up * 0.4f, 0, 1.2f, true);
 
         // 范围伤害 80，范围破防 100
         Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, 1.8f);

@@ -1,4 +1,5 @@
 using UnityEngine;
+using GameJam;
 
 /// <summary>
 /// 2. 增生珊瑚管排墙 (furn_coral_wall)
@@ -38,10 +39,13 @@ public class CoralWallAuraBehavior : BiomechanicalAuraBase
 
     private void OnFurnitureHit(float damage, EnemyController attacker)
     {
-        // 荆棘反噬
+        // 荆棘反噬 (来自 gamejam-integration)
         if (attacker != null && attacker.IsAlive && !attacker.isPacified)
         {
             attacker.TakeDamage(thornsDamage, 20f, transform.position);
+            Vfx.Spawn("VFX_ParrySpark", attacker.transform.position + Vector3.up * 0.7f, Random.Range(0f, 360f), 0.9f, false, null, new Color(0.29f, 0.85f, 0.44f));
+            Sfx.Play("sfx_parry", 0.6f);
+
             if (DamageTextManager.Instance != null)
             {
                 DamageTextManager.Instance.ShowText(attacker.transform.position + Vector3.up * 0.7f, $"🌵 荆棘反噬 -{thornsDamage:0}!", new Color(0.29f, 0.85f, 0.44f), 0.11f);
