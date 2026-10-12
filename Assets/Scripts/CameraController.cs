@@ -65,8 +65,13 @@ public class CameraController : MonoBehaviour
     private float lastPinchDistance = 0f;
     private bool isPinching = false;
 
+    public static CameraController Instance { get; private set; }
+    private Coroutine shakeCoroutine;
+    private Vector3 shakeOffset = Vector3.zero;
+
     void Awake()
     {
+        Instance = this;
         cam = GetComponent<Camera>();
         targetZoom = cam.orthographicSize;
         targetPosition = transform.position;
@@ -314,15 +319,15 @@ public class CameraController : MonoBehaviour
         // 阻尼过渡
         if (panSmoothTime > 0.001f)
         {
-            Vector3 newPos = Vector3.SmoothDamp(transform.position, targetPosition, ref panVelocity, panSmoothTime);
+            Vector3 newPos = Vector3.SmoothDamp(transform.position - shakeOffset, targetPosition, ref panVelocity, panSmoothTime);
             if (!float.IsNaN(newPos.x) && !float.IsNaN(newPos.y) && !float.IsNaN(newPos.z))
             {
-                transform.position = newPos;
+                transform.position = newPos + shakeOffset;
             }
         }
         else
         {
-            transform.position = targetPosition;
+            transform.position = targetPosition + shakeOffset;
         }
 
         if (zoomSmoothTime > 0.001f)
@@ -340,6 +345,31 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
+    /// 震屏特效 (支持真实时间)
+    /// </summary>
+    public void Shake(float duration, float magnitude)
+    {
+        if (shakeCoroutine != null) StopCoroutine(shakeCoroutine);
+        shakeCoroutine = StartCoroutine(DoShake(duration, magnitude));
+    }
+
+    private System.Collections.IEnumerator DoShake(float duration, float magnitude)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = elapsed / Mathf.Max(duration, 0.001f);
+            float damper = 1f - Mathf.Clamp01(t);
+            Vector2 r = Random.insideUnitCircle * (magnitude * damper);
+            shakeOffset = new Vector3(r.x, r.y, 0f);
+            yield return null;
+        }
+        shakeOffset = Vector3.zero;
+        shakeCoroutine = null;
+    }
+
+    /// <summary>
     /// 供外部聚焦定位
     /// </summary>
     public void FocusOn(Vector2 worldPosition, float zoom = -1f)
@@ -350,4 +380,12 @@ public class CameraController : MonoBehaviour
             targetZoom = Mathf.Clamp(zoom, minZoom, maxZoom);
         }
     }
+}
+
+/// <summary>
+/// 兼容旧版与 gamejam-integration 的全局震屏门面
+/// </summary>
+public static class CameraRig
+{
+    public static CameraController I => CameraController.Instance;
 }

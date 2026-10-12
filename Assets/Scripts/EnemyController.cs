@@ -23,6 +23,13 @@ public class EnemyController : MonoBehaviour
         Patrol,       // 巡逻游荡
         Alert,        // 警觉搜寻 (头上 "?")
         Chase,        // 追击玩家
+        Attack,       // 普通攻击蓄力前摇 (黄光预警，可格挡)
+        GrabWindup,   // 狂暴抓取蓄力前摇 (红光急促闪烁，触手狂舞，不可格挡)
+        Grabbing,     // 触手缠绕勒紧 (周期扣血)
+        Recover,      // 攻击/抓取后硬直恢复
+        Pending,      // 完美格挡后虚弱处决就绪态 (通透世界慢动作，冰蓝脉冲)
+        Executing,    // 处于被处决斩杀中
+        Stagger,      // 破防瘫痪硬直
         BreakBarrier  // 攻击挡路防御设施
     }
 
@@ -32,10 +39,41 @@ public class EnemyController : MonoBehaviour
     public float moveSpeed = 1.35f;       // 移速适度调缓，节奏从容
     public float detectRange = 5.5f;      // 索敌警戒范围
     public float loseTargetRange = 6.8f;  // 游击脱战拉开距离
-    public float attackRange = 0.95f;     // 攻击判定半径
+    public float attackRange = 1.35f;     // 攻击判定半径
     public float attackDamage = 15f;
     public float attackCooldown = 2.2f;   // 攻击间隔加长
-    public float attackWindup = 0.75f;    // 蓄力前摇加长，给玩家充足反应时间
+    public float attackWindup = 0.6f;     // 蓄力前摇
+
+    [Header("Combat & Grab Tuning (战斗与抓取参数 - 来自 gamejam-integration)")]
+    public float normalImpact = 0.6f;             // 普通攻击蓄力命中时点 (秒)
+    public float windowStart = 0.05f;             // 格挡窗口开启时刻
+    public float windowEnd = 0.5f;                // 格挡窗口结束时刻
+    public float hitRange = 1.85f;                // 攻击命中有效距离
+    [Range(0f, 1f)] public float grabChance = 0.35f; // 抓取发起概率
+    public float grabWindup = 1.4f;               // 抓取前摇蓄力时长 (红光闪烁)
+    public float grabRange = 2.0f;                // 抓取范围判定
+    public float grabHold = 2.6f;                 // 缠住时长
+    public float grabTick = 0.85f;                // 缠住挤压扣血周期
+    public float grabDamage = 10f;                // 每次挤压伤害
+    public bool forceGrabNext = false;            // 强制下一次攻击为抓取 (测试用)
+
+    public static readonly Color AttackGlow = new Color(1f, 0.8f, 0.08f); // 金黄色 = 可格挡
+    public static readonly Color GrabGlow = new Color(1f, 0.08f, 0.05f);   // 鲜红色 = 抓取不可格挡
+    public static readonly Color PendingGlow = new Color(0.55f, 0.9f, 1f); // 冰蓝色 = 处决就绪
+
+    public static EnemyController Grabber;        // 当前正在进行抓取的唯一怪物
+    public static EnemyController FindPending()
+    {
+        for (int i = 0; i < AllEnemies.Count; i++)
+        {
+            var e = AllEnemies[i];
+            if (e != null && e.aiState == EnemyAIState.Pending && e.IsAlive)
+                return e;
+        }
+        return null;
+    }
+
+    public bool ParryWindowOpen => aiState == EnemyAIState.Attack && stateTimer >= windowStart && stateTimer <= windowEnd;
 
     [Header("Guard Break & Stagger (破防瘫痪规范参数)")]
     public float maxGuardBreak = 100f;
@@ -94,18 +132,26 @@ public class EnemyController : MonoBehaviour
     void OnDisable()
     {
         AllEnemies.Remove(this);
+        if (Grabber == this) Grabber = null;
     }
 
     public bool IsAlive => currentHp > 0 && !isDead;
     public bool IsStaggered => isStaggered;
+    public bool IsAttacking => aiState == EnemyAIState.Attack || aiState == EnemyAIState.GrabWindup || aiState == EnemyAIState.Grabbing;
 
     private bool isDead = false;
-    private bool isAttacking = false;
     private bool isStaggered = false;
     private float staggerTimer = 0f;
     private float attackCooldownTimer = 0f;
     private float repathTimer = 0f;
     private float alertTimer = 0f;
+    private float stateTimer = 0f;
+    private float grabTickTimer = 0f;
+    private bool impactDone = false;
+    private float flashUntil = -1f;
+    private float flashDuration = 0.12f;
+    private Color flashColor = Color.white;
+    private Vector3 knockVel = Vector3.zero;
 
     // 寻路航点
     private readonly List<Vector3> waypoints = new List<Vector3>();
@@ -131,7 +177,6 @@ public class EnemyController : MonoBehaviour
     void Awake()
     {
         isDead = false;
-        isAttacking = false;
         isStaggered = false;
         currentHp = maxHp;
         currentGuardBreak = maxGuardBreak;
@@ -251,7 +296,6 @@ public class EnemyController : MonoBehaviour
     void Start()
     {
         isDead = false;
-        isAttacking = false;
         isStaggered = false;
         aiState = EnemyAIState.Patrol;
 
@@ -330,6 +374,51 @@ public class EnemyController : MonoBehaviour
     {
         if (visualRoot != null) visualRoot.localPosition = localPos;
         else if (monsterRenderer != null) monsterRenderer.transform.localPosition = localPos;
+    }
+
+    /// <summary>
+    /// 短暂受击闪白 (支持无缩放时间)
+    /// </summary>
+    public void Flash(Color c, float dur = 0.12f)
+    {
+        flashColor = c;
+        flashDuration = dur;
+        flashUntil = Time.unscaledTime + dur;
+    }
+
+    /// <summary>
+    /// 骨骼多部件高光染色（黄光预警、红光狂舞、处决冰蓝脉冲）
+    /// </summary>
+    public void ApplyFlash(float persistent, Color persistentColor)
+    {
+        float hit = Mathf.Clamp01((flashUntil - Time.unscaledTime) / Mathf.Max(flashDuration, 1e-3f));
+        Color c = hit > persistent ? flashColor : persistentColor;
+        float amount = Mathf.Max(hit * 0.85f, persistent);
+
+        if (visualRenderers != null && visualRenderers.Length > 0)
+        {
+            for (int i = 0; i < visualRenderers.Length; i++)
+            {
+                var r = visualRenderers[i];
+                if (r != null)
+                {
+                    r.color = amount > 0.01f ? Color.Lerp(Color.white, c, amount) : Color.white;
+                }
+            }
+        }
+        else if (monsterRenderer != null)
+        {
+            monsterRenderer.color = amount > 0.01f ? Color.Lerp(Color.white, c, amount) : Color.white;
+        }
+    }
+
+    /// <summary>
+    /// 物理击退平滑阻尼
+    /// </summary>
+    public void Knockback(Vector3 dir, float distance)
+    {
+        dir.z = 0f;
+        knockVel = dir.normalized * distance * 8f;
     }
 
     private void CreateTargetRing()
@@ -492,12 +581,41 @@ public class EnemyController : MonoBehaviour
         if (attackCooldownTimer > 0f)
             attackCooldownTimer -= Time.deltaTime;
 
+        // 物理击退平滑阻尼滑行
+        if (knockVel.sqrMagnitude > 0.01f && !isDead)
+        {
+            Vector3 step = knockVel * Time.deltaTime;
+            Vector3 cand = transform.position + step;
+            if (pathfinder != null && pathfinder.groundTilemap != null)
+            {
+                Vector3Int cell = pathfinder.WorldToCell(cand);
+                if (pathfinder.groundTilemap.HasTile(cell))
+                {
+                    transform.position = cand;
+                }
+            }
+            else
+            {
+                transform.position = cand;
+            }
+            knockVel *= Mathf.Exp(-8f * Time.deltaTime);
+        }
+
+        if (squid != null)
+        {
+            squid.energy = (aiState == EnemyAIState.Stagger || aiState == EnemyAIState.Pending || aiState == EnemyAIState.Executing) ? 0.25f : 1.0f;
+        }
+        if (squidFace != null)
+        {
+            squidFace.SetAngry(aiState == EnemyAIState.Attack || aiState == EnemyAIState.GrabWindup || aiState == EnemyAIState.Grabbing);
+        }
+
         if (targetPlayer == null)
             targetPlayer = FindObjectOfType<PlayerController>();
 
-        if (targetPlayer == null || isAttacking)
+        if (targetPlayer == null)
         {
-            if (isAttacking) SetMoveAnimation(false);
+            SetMoveAnimation(false);
             return;
         }
 
@@ -518,6 +636,30 @@ public class EnemyController : MonoBehaviour
 
             case EnemyAIState.Chase:
                 UpdateChaseState(dist);
+                break;
+
+            case EnemyAIState.Attack:
+                UpdateAttackState(dist);
+                break;
+
+            case EnemyAIState.GrabWindup:
+                UpdateGrabWindupState(dist);
+                break;
+
+            case EnemyAIState.Grabbing:
+                UpdateGrabbingState(dist);
+                break;
+
+            case EnemyAIState.Recover:
+                UpdateRecoverState(dist);
+                break;
+
+            case EnemyAIState.Pending:
+                UpdatePendingState(dist);
+                break;
+
+            case EnemyAIState.Executing:
+                UpdateExecutingState(dist);
                 break;
 
             case EnemyAIState.BreakBarrier:
@@ -631,11 +773,25 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
-        // 进入近战范围且冷却就绪，发动带危险圈的前摇挥击
+        // 玩家被缠 / 被丢 / 起身中：其他怪先等着，不发起攻击
+        if (targetPlayer != null && targetPlayer.Unavailable)
+        {
+            SetMoveAnimation(false);
+            return;
+        }
+
+        // 进入近战范围且冷却就绪，发起普通挥击（黄光）或狂暴抓取（红光）
         if (distToPlayer <= attackRange && attackCooldownTimer <= 0f)
         {
             SetMoveAnimation(false);
-            attackCoroutine = StartCoroutine(PerformAttackRoutine());
+            if (squid != null && Grabber == null && !targetPlayer.Unavailable && (forceGrabNext || Random.value < grabChance))
+            {
+                StartGrab();
+            }
+            else
+            {
+                StartNormalAttack();
+            }
             return;
         }
 
@@ -701,8 +857,7 @@ public class EnemyController : MonoBehaviour
                 }
                 else
                 {
-                    // 核心修复（需求6）：如果玩家躲在全封闭防御建筑里导致无路可走，
-                    // 绝对严禁穿模直线走过去！而是就近寻找阻挡的家具/路障并进行破坏！
+                    // 如果玩家躲在全封闭防御建筑里导致无路可走，攻击阻挡的家具/路障
                     waypoints.Clear();
                     var blockingFurn = FurnitureObject.GetNearestPlaced(transform.position, 2.2f);
                     if (blockingFurn != null)
@@ -743,35 +898,32 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 攻击协程：展示地面【红色危险判定圈 (0.75s)】 -> 抓痕判定 -> 冷却
-    /// </summary>
-    private IEnumerator PerformAttackRoutine()
+    #region Combat & Grab State Machine Handlers (来自 gamejam-integration 核心战斗逻辑)
+
+    private void StartNormalAttack()
     {
-        isAttacking = true;
+        aiState = EnemyAIState.Attack;
+        stateTimer = 0f;
+        impactDone = false;
         SetMoveAnimation(false);
 
-        // 1. 身体蓄力泛红并微涨，触发攻击动画
-        SetVisualColor(new Color(1f, 0.35f, 0.15f, 1f));
-        if (monsterRenderer != null)
+        if (targetPlayer != null)
         {
-            monsterRenderer.transform.localScale = originalScale * 1.2f;
+            Vector3 dir = targetPlayer.transform.position - transform.position;
+            SetVisualFacing(dir.x < -0.05f);
+        }
+
+        int side = (targetPlayer != null && targetPlayer.transform.position.x > transform.position.x) ? 1 : -1;
+        if (squid != null)
+        {
+            squid.Attack(side, -1, normalImpact);
         }
         if (enemyAnimator != null)
         {
             enemyAnimator.SetTrigger("Attack");
         }
-        if (squid != null)
-        {
-            int side = (targetPlayer != null && targetPlayer.transform.position.x > transform.position.x) ? 1 : -1;
-            squid.Attack(side, -1, attackWindup);
-        }
-        if (squidFace != null)
-        {
-            squidFace.SetAngry(true);
-        }
+        Sfx.Play("sfx_enemy_windup", 0.85f);
 
-        // 2. 激活地面危险判定圈 (Danger Zone Indicator)
         if (dangerZoneObject != null)
         {
             dangerZoneObject.SetActive(true);
@@ -779,68 +931,289 @@ public class EnemyController : MonoBehaviour
 
         if (DamageTextManager.Instance != null)
         {
-            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, "!", Color.red, 0.11f);
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, "!", Color.yellow, 0.11f);
+        }
+    }
+
+    private void UpdateAttackState(float distToPlayer)
+    {
+        SetMoveAnimation(false);
+        stateTimer += Time.deltaTime;
+
+        // 黄光预警（0.05 ~ 0.55s 内闪烁）
+        if (stateTimer <= windowEnd + 0.05f)
+        {
+            float glow = 0.55f + 0.25f * Mathf.Sin(Time.time * 30f);
+            ApplyFlash(glow, AttackGlow);
         }
 
-        // 3. 0.75 秒充足蓄力反应时间（闪烁提示）
-        float elapsed = 0f;
-        while (elapsed < attackWindup)
+        // 危险判定圈脉冲
+        if (dangerZoneObject != null)
         {
-            elapsed += Time.deltaTime;
-            if (dangerZoneObject != null)
+            float pulse = 0.35f + Mathf.Sin(stateTimer * 18f) * 0.15f;
+            var mr = dangerZoneObject.GetComponent<MeshRenderer>();
+            if (mr != null) mr.material.color = new Color(1f, 0.8f, 0.1f, pulse);
+        }
+
+        // 命中时点
+        if (!impactDone && stateTimer >= normalImpact)
+        {
+            impactDone = true;
+            if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
+            SpawnClawEffect();
+
+            if (targetPlayer != null && !isStaggered && targetPlayer.IsAlive)
             {
-                float pulse = 0.35f + Mathf.Sin(elapsed * 18f) * 0.15f;
-                var mr = dangerZoneObject.GetComponent<MeshRenderer>();
-                if (mr != null) mr.material.color = new Color(1f, 0.15f, 0.15f, pulse);
-            }
-            yield return null;
-        }
-
-        // 4. 隐藏判定圈，恢复体型与原色
-        if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
-
-        SetVisualColor(originalColor);
-        if (monsterRenderer != null)
-        {
-            monsterRenderer.transform.localScale = originalScale;
-        }
-        if (squidFace != null)
-        {
-            squidFace.SetAngry(false);
-        }
-
-        SpawnClawEffect();
-
-        // 5. 命中结算与格挡/闪避判定
-        if (targetPlayer != null && !isStaggered)
-        {
-            float dist = Vector2.Distance(transform.position, targetPlayer.transform.position);
-            if (dist <= attackRange * 1.15f)
-            {
-                if (targetPlayer.IsGuarding)
+                float dist = Vector2.Distance(transform.position, targetPlayer.transform.position);
+                if (dist <= hitRange)
                 {
-                    // 玩家格挡成功！触发完美格挡、子弹时间与自身瘫痪
-                    targetPlayer.OnParrySuccess(this);
-                    TriggerStagger();
-                }
-                else if (targetPlayer.IsInvulnerable)
-                {
-                    if (DamageTextManager.Instance != null)
+                    if (targetPlayer.IsGuarding)
                     {
-                        DamageTextManager.Instance.ShowText(targetPlayer.transform.position + Vector3.up * 0.4f, "DODGE!", new Color(0.2f, 1f, 0.8f), 0.11f);
+                        targetPlayer.OnParrySuccess(this);
+                        return;
+                    }
+                    else if (targetPlayer.IsInvulnerable)
+                    {
+                        if (DamageTextManager.Instance != null)
+                        {
+                            DamageTextManager.Instance.ShowText(targetPlayer.transform.position + Vector3.up * 0.4f, "DODGE!", new Color(0.2f, 1f, 0.8f), 0.11f);
+                        }
+                    }
+                    else
+                    {
+                        targetPlayer.TakeDamage(attackDamage);
+                        Sfx.Play("sfx_hit");
+                        CameraRig.I?.Shake(0.12f, 0.15f);
                     }
                 }
-                else
-                {
-                    targetPlayer.TakeDamage(attackDamage);
-                }
             }
         }
 
-        attackCooldownTimer = attackCooldown;
-        isAttacking = false;
-        attackCoroutine = null;
+        // 攻击后摇结束
+        if (stateTimer >= normalImpact + 0.35f)
+        {
+            ApplyFlash(0f, Color.white);
+            if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
+            aiState = EnemyAIState.Recover;
+            stateTimer = 0.5f;
+        }
     }
+
+    private void StartGrab()
+    {
+        aiState = EnemyAIState.GrabWindup;
+        stateTimer = 0f;
+        Grabber = this;
+        forceGrabNext = false;
+
+        if (targetPlayer != null)
+        {
+            SetVisualFacing(targetPlayer.transform.position.x < transform.position.x);
+        }
+
+        if (squid != null)
+        {
+            squid.BeginFrenzy();
+        }
+        Sfx.Play("sfx_enemy_windup", 1.0f);
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.7f, "⚠️ 狂暴抓取!", Color.red, 0.12f);
+        }
+    }
+
+    private void UpdateGrabWindupState(float distToPlayer)
+    {
+        stateTimer += Time.deltaTime;
+
+        // 红光急促闪烁
+        float glow = Mathf.Repeat(stateTimer * 7f, 1f) < 0.5f ? 0.85f : 0.3f;
+        ApplyFlash(glow, GrabGlow);
+
+        if (targetPlayer == null || !targetPlayer.IsAlive)
+        {
+            CancelGrab();
+            aiState = EnemyAIState.Recover;
+            stateTimer = 0.5f;
+            return;
+        }
+
+        // 慢慢逼近主角
+        Vector3 v = (targetPlayer.transform.position - transform.position);
+        SetVisualFacing(v.x < -0.05f);
+        if (v.magnitude > grabRange * 0.75f)
+        {
+            SetMoveAnimation(true);
+            transform.position = Vector3.MoveTowards(transform.position, targetPlayer.transform.position, (moveSpeed * 0.45f * slowMultiplier) * Time.deltaTime);
+        }
+        else
+        {
+            SetMoveAnimation(false);
+        }
+
+        // 前摇时间到 -> 判定抓取
+        if (stateTimer >= grabWindup)
+        {
+            int side = (targetPlayer.transform.position.x > transform.position.x) ? 1 : -1;
+            if (v.magnitude <= grabRange && targetPlayer.TryGrab(this))
+            {
+                aiState = EnemyAIState.Grabbing;
+                stateTimer = 0f;
+                grabTickTimer = grabTick;
+                if (squid != null) squid.GrabHold(side);
+                CameraRig.I?.Shake(0.25f, 0.2f);
+                Sfx.Play("sfx_hit");
+            }
+            else
+            {
+                // 抓空
+                if (squid != null)
+                {
+                    squid.EndFrenzy();
+                    squid.Attack(side, -1, 0.12f);
+                }
+                if (Grabber == this) Grabber = null;
+                aiState = EnemyAIState.Recover;
+                stateTimer = 0.8f;
+                if (DamageTextManager.Instance != null)
+                {
+                    DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "抓空!", Color.gray, 0.09f);
+                }
+            }
+        }
+    }
+
+    private void UpdateGrabbingState(float distToPlayer)
+    {
+        SetMoveAnimation(false);
+        stateTimer += Time.deltaTime;
+        ApplyFlash(0.35f, GrabGlow);
+
+        if (targetPlayer == null || !targetPlayer.IsAlive || !targetPlayer.IsGrabbed)
+        {
+            CancelGrab();
+            aiState = EnemyAIState.Recover;
+            stateTimer = 0.8f;
+            return;
+        }
+
+        grabTickTimer -= Time.deltaTime;
+        if (grabTickTimer <= 0f)
+        {
+            grabTickTimer += grabTick;
+            targetPlayer.GrabTick(grabDamage);
+        }
+
+        if (stateTimer >= grabHold && targetPlayer.IsGrabbed)
+        {
+            targetPlayer.ThrowFrom(this);
+            if (squid != null) squid.GrabRelease();
+            if (Grabber == this) Grabber = null;
+            CameraRig.I?.Shake(0.35f, 0.25f);
+            Sfx.Play("sfx_swing", 1f);
+            aiState = EnemyAIState.Recover;
+            stateTimer = 1.0f;
+        }
+    }
+
+    private void UpdateRecoverState(float distToPlayer)
+    {
+        SetMoveAnimation(false);
+        stateTimer -= Time.deltaTime;
+        ApplyFlash(0f, Color.white);
+
+        if (stateTimer <= 0f)
+        {
+            aiState = EnemyAIState.Chase;
+            attackCooldownTimer = attackCooldown;
+        }
+    }
+
+    private void UpdatePendingState(float distToPlayer)
+    {
+        SetMoveAnimation(false);
+        // 冰蓝脉冲
+        float glow = 0.25f + 0.15f * Mathf.Sin(Time.unscaledTime * 10f);
+        ApplyFlash(glow, PendingGlow);
+
+        if (squid != null) squid.energy = 0.25f;
+
+        // 若 slow-mo 结束无人处决，缓慢复原
+        if (TimeManager.I != null && !TimeManager.SlowMo)
+        {
+            aiState = EnemyAIState.Recover;
+            stateTimer = 0.5f;
+            if (squid != null) squid.energy = 1.0f;
+            ApplyFlash(0f, Color.white);
+            if (DamageTextManager.Instance != null)
+            {
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "复苏", Color.white, 0.08f);
+            }
+        }
+    }
+
+    private void UpdateExecutingState(float distToPlayer)
+    {
+        SetMoveAnimation(false);
+        if (squid != null) squid.energy = 0.2f;
+    }
+
+    public void Parried()
+    {
+        aiState = EnemyAIState.Pending;
+        stateTimer = 0f;
+        CancelGrab();
+        if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
+        if (squid != null)
+        {
+            squid.Interrupt();
+            squid.energy = 0.25f;
+        }
+        Flash(Color.white, 0.2f);
+    }
+
+    public void BeginExecuted()
+    {
+        aiState = EnemyAIState.Executing;
+        CancelGrab();
+        if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
+        if (squid != null) squid.Interrupt();
+        Flash(Color.white, 0.3f);
+    }
+
+    public void KillByExecution(Vector3 dir)
+    {
+        currentHp = 0f;
+        Flash(Color.white, 0.3f);
+        ApplyKnockback(dir, 0.8f, 0.25f);
+        Die();
+    }
+
+    public void YieldToGrab()
+    {
+        if (aiState == EnemyAIState.Attack || aiState == EnemyAIState.GrabWindup)
+        {
+            if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
+            if (squid != null) squid.Interrupt();
+            CancelGrab();
+            aiState = EnemyAIState.Chase;
+            attackCooldownTimer = 1.0f;
+        }
+    }
+
+    public void CancelGrab()
+    {
+        if (Grabber == this) Grabber = null;
+        if (squid != null)
+        {
+            squid.EndFrenzy();
+            squid.GrabRelease();
+        }
+        if (squidFace != null) squidFace.SetAngry(false);
+    }
+
+    #endregion
 
     private void SpawnClawEffect()
     {
@@ -882,13 +1255,26 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(float damage, float guardBreakDamage, Vector3 attackerPos)
     {
-        if (isDead) return;
+        if (isDead || aiState == EnemyAIState.Executing) return;
 
-        // 受伤立即激怒进入追击！
-        aiState = EnemyAIState.Chase;
+        Flash(Color.white, 0.12f);
+        Knockback((transform.position - attackerPos).normalized, 0.18f);
+
+        // 如果在被安抚中挨打，醒过来
+        if (isPacified)
+        {
+            isPacified = false;
+            pacifiedTargetEnemy = null;
+        }
+
+        // 如果在处决就绪状态下，保持 Pending 不变，方便处决
+        if (aiState != EnemyAIState.Pending && aiState != EnemyAIState.Grabbing)
+        {
+            aiState = EnemyAIState.Chase;
+        }
 
         float finalDmg = damage;
-        bool isCrit = isStaggered;
+        bool isCrit = isStaggered || aiState == EnemyAIState.Pending;
         if (isCrit) finalDmg *= 1.5f;
 
         currentHp -= finalDmg;
@@ -910,7 +1296,7 @@ public class EnemyController : MonoBehaviour
             DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.75f, $"{prefix}{finalDmg:0}", dmgColor, isCrit ? 0.11f : 0.08f);
         }
 
-        if (currentGuardBreak <= 0f && !isStaggered && currentHp > 0f)
+        if (currentGuardBreak <= 0f && !isStaggered && currentHp > 0f && aiState != EnemyAIState.Pending)
         {
             TriggerStagger();
         }
@@ -918,10 +1304,6 @@ public class EnemyController : MonoBehaviour
         if (currentHp <= 0f)
         {
             Die();
-        }
-        else
-        {
-            StartCoroutine(DamageFlashRoutine(attackerPos));
         }
     }
 
@@ -937,7 +1319,6 @@ public class EnemyController : MonoBehaviour
         {
             StopCoroutine(attackCoroutine);
             attackCoroutine = null;
-            isAttacking = false;
         }
 
         if (DamageTextManager.Instance != null)
@@ -973,23 +1354,9 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    private IEnumerator DamageFlashRoutine(Vector3 attackerPos)
-    {
-        Vector3 pushDir = (transform.position - attackerPos).normalized;
-        pushDir.z = 0;
-        transform.position += pushDir * 0.08f;
-
-        SetVisualColor(Color.red);
-        yield return new WaitForSeconds(0.08f);
-
-        if (!isStaggered)
-            SetVisualColor(originalColor);
-        else
-            SetVisualColor(new Color(0.7f, 0.7f, 1f, 1f));
-    }
-
     private void Die()
     {
+        if (isDead) return;
         isDead = true;
         SetMoveAnimation(false);
         if (dangerZoneObject != null) dangerZoneObject.SetActive(false);
@@ -998,6 +1365,12 @@ public class EnemyController : MonoBehaviour
             StopCoroutine(attackCoroutine);
             attackCoroutine = null;
         }
+
+        if (aiState == EnemyAIState.Grabbing && targetPlayer != null)
+        {
+            targetPlayer.ThrowFrom(this);
+        }
+        CancelGrab();
 
         if (hpBarRoot != null) hpBarRoot.SetActive(false);
         if (targetRingObject != null) targetRingObject.SetActive(false);
@@ -1066,7 +1439,6 @@ public class EnemyController : MonoBehaviour
         currentHp = maxHp;
         currentGuardBreak = maxGuardBreak;
         isStaggered = false;
-        isAttacking = false;
         isPacified = false;
         pacifiedTargetEnemy = null;
         currentTargetEnemy = null;
@@ -1345,6 +1717,7 @@ public class EnemyController : MonoBehaviour
     void OnDestroy()
     {
         AllEnemies.Remove(this);
+        if (Grabber == this) Grabber = null;
 
         // 统一清理动态创建的 Native 材质球，防止显存与 Native 内存泄漏
         if (targetRingRenderer != null && targetRingRenderer.material != null)

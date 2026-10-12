@@ -1,0 +1,129 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f011c23fc80d2f4f86519346039b35e, type: 3}
+  m_Name: VFX
+  m_EditorClassIdentifier: 
+  clips:
+  - name: VFX_Slash
+    fps: 20
+    loop: 0
+    dirs:
+    - down
+    frames: 8
+    sprites:
+    - {fileID: 5801760510542917550, guid: 2555d6f921ed3b2409ad825eb67b1a2e, type: 3}
+    - {fileID: 7653624992958364458, guid: 2555d6f921ed3b2409ad825eb67b1a2e, type: 3}
+    - {fileID: -2246569969179559773, guid: 2555d6f921ed3b2409ad825eb67b1a2e, type: 3}
+    - {fileID: 5360620795195990195, guid: 2555d6f921ed3b2409ad825eb67b1a2e, type: 3}
+    - {fileID: 2824999663245872676, guid: 2555d6f921ed3b2409ad825eb67b1a2e, type: 3}
+    - {fileID: 2804898957430877705, guid: 2555d6f921ed3b2409ad825eb67b1a2e, type: 3}
+    - {fileID: -1104359361139295658, guid: 2555d6f921ed3b2409ad825eb67b1a2e, type: 3}
+    - {fileID: 7956945077371821478, guid: 2555d6f921ed3b2409ad825eb67b1a2e, type: 3}
+  - name: VFX_ExecuteSlash
+    fps: 20
+    loop: 0
+    dirs:
+    - down
+    frames: 10
+    sprites:
+    - {fileID: -8728389533762875885, guid: be933d41a3332e64f9abd086700ffc59, type: 3}
+    - {fileID: 4258701954481083163, guid: be933d41a3332e64f9abd086700ffc59, type: 3}
+    - {fileID: -1822966380009224459, guid: be933d41a3332e64f9abd086700ffc59, type: 3}
+    - {fileID: -221149930820287287, guid: be933d41a3332e64f9abd086700ffc59, type: 3}
+    - {fileID: -7768568146468214548, guid: be933d41a3332e64f9abd086700ffc59, type: 3}
+    - {fileID: 6552722782555605735, guid: be933d41a3332e64f9abd086700ffc59, type: 3}
+    - {fileID: 1273032198792339139, guid: be933d41a3332e64f9abd086700ffc59, type: 3}
+    - {fileID: 7652936580287200246, guid: be933d41a3332e64f9abd086700ffc59, type: 3}
+    - {fileID: -7906692188550378699, guid: be933d41a3332e64f9abd086700ffc59, type: 3}
+    - {fileID: -4739965782982640228, guid: be933d41a3332e64f9abd086700ffc59, type: 3}
+  - name: VFX_ArrowCharge
+    fps: 14
+    loop: 0
+    dirs:
+    - down
+    frames: 8
+    sprites:
+    - {fileID: -5702678637640883170, guid: 8287a0c2e8397eb45842fb25341e3faa, type: 3}
+    - {fileID: 7180665836115661052, guid: 8287a0c2e8397eb45842fb25341e3faa, type: 3}
+    - {fileID: -2338406259453711654, guid: 8287a0c2e8397eb45842fb25341e3faa, type: 3}
+    - {fileID: 5029199890199841129, guid: 8287a0c2e8397eb45842fb25341e3faa, type: 3}
+    - {fileID: -131064875938018315, guid: 8287a0c2e8397eb45842fb25341e3faa, type: 3}
+    - {fileID: 4582152427823049781, guid: 8287a0c2e8397eb45842fb25341e3faa, type: 3}
+    - {fileID: 5231416131499308325, guid: 8287a0c2e8397eb45842fb25341e3faa, type: 3}
+    - {fileID: -4178015550492320473, guid: 8287a0c2e8397eb45842fb25341e3faa, type: 3}
+  - name: VFX_ArrowFly
+    fps: 16
+    loop: 1
+    dirs:
+    - down
+    frames: 4
+    sprites:
+    - {fileID: 8954503296290905713, guid: 086c1ff3c0ae6b74281488bd5b888d90, type: 3}
+    - {fileID: -4297433795221362208, guid: 086c1ff3c0ae6b74281488bd5b888d90, type: 3}
+    - {fileID: 326050448775032619, guid: 086c1ff3c0ae6b74281488bd5b888d90, type: 3}
+    - {fileID: 5179991372476621428, guid: 086c1ff3c0ae6b74281488bd5b888d90, type: 3}
+  - name: VFX_ArrowBurst
+    fps: 16
+    loop: 0
+    dirs:
+    - down
+    frames: 8
+    sprites:
+    - {fileID: -2972134982267915365, guid: f307d7e9c1893994daa208ba9aa4e2bc, type: 3}
+    - {fileID: -2659046606108530146, guid: f307d7e9c1893994daa208ba9aa4e2bc, type: 3}
+    - {fileID: -4529051079463203115, guid: f307d7e9c1893994daa208ba9aa4e2bc, type: 3}
+    - {fileID: -4306984856809752810, guid: f307d7e9c1893994daa208ba9aa4e2bc, type: 3}
+    - {fileID: 7992322616712911139, guid: f307d7e9c1893994daa208ba9aa4e2bc, type: 3}
+    - {fileID: 261268377320568640, guid: f307d7e9c1893994daa208ba9aa4e2bc, type: 3}
+    - {fileID: 7518379510885086952, guid: f307d7e9c1893994daa208ba9aa4e2bc, type: 3}
+    - {fileID: -7069896265053462642, guid: f307d7e9c1893994daa208ba9aa4e2bc, type: 3}
+  - name: VFX_ArrowHit
+    fps: 16
+    loop: 0
+    dirs:
+    - down
+    frames: 8
+    sprites:
+    - {fileID: -1618349865197986175, guid: 968a26eada0c8c24798f0749334831ba, type: 3}
+    - {fileID: 4041226572567684224, guid: 968a26eada0c8c24798f0749334831ba, type: 3}
+    - {fileID: 9051854927150882335, guid: 968a26eada0c8c24798f0749334831ba, type: 3}
+    - {fileID: 8980637559576148296, guid: 968a26eada0c8c24798f0749334831ba, type: 3}
+    - {fileID: -3875322219987295791, guid: 968a26eada0c8c24798f0749334831ba, type: 3}
+    - {fileID: -4657197249133572812, guid: 968a26eada0c8c24798f0749334831ba, type: 3}
+    - {fileID: -2265976824154645742, guid: 968a26eada0c8c24798f0749334831ba, type: 3}
+    - {fileID: 1804156311247492317, guid: 968a26eada0c8c24798f0749334831ba, type: 3}
+  - name: VFX_ParrySpark
+    fps: 18
+    loop: 0
+    dirs:
+    - down
+    frames: 6
+    sprites:
+    - {fileID: 4996831831145216848, guid: ca6e4093c87f2514dadbd72d2c6eae83, type: 3}
+    - {fileID: 5712472614543207392, guid: ca6e4093c87f2514dadbd72d2c6eae83, type: 3}
+    - {fileID: 2802173998354769257, guid: ca6e4093c87f2514dadbd72d2c6eae83, type: 3}
+    - {fileID: 567500731988519437, guid: ca6e4093c87f2514dadbd72d2c6eae83, type: 3}
+    - {fileID: -459043196022994682, guid: ca6e4093c87f2514dadbd72d2c6eae83, type: 3}
+    - {fileID: -2615872695236910884, guid: ca6e4093c87f2514dadbd72d2c6eae83, type: 3}
+  - name: VFX_StunStars
+    fps: 10
+    loop: 1
+    dirs:
+    - down
+    frames: 6
+    sprites:
+    - {fileID: 46507158824441792, guid: 4eff9b69d2beb6347a326e194f13ef14, type: 3}
+    - {fileID: 3745560734592417115, guid: 4eff9b69d2beb6347a326e194f13ef14, type: 3}
+    - {fileID: 6132015982482556364, guid: 4eff9b69d2beb6347a326e194f13ef14, type: 3}
+    - {fileID: -2181030125433049797, guid: 4eff9b69d2beb6347a326e194f13ef14, type: 3}
+    - {fileID: -8539134390616351100, guid: 4eff9b69d2beb6347a326e194f13ef14, type: 3}
+    - {fileID: -1588650818703467188, guid: 4eff9b69d2beb6347a326e194f13ef14, type: 3}

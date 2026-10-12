@@ -34,6 +34,8 @@ public class PlayerController : MonoBehaviour
     [Header("Health & Movement (生命与移动属性)")]
     public float maxHp = 100f;
     public float currentHp = 100f;
+    public bool IsAlive => currentHp > 0f;
+    public bool Dead => currentHp <= 0f;
     public float baseMoveSpeed = 4.0f;
     public float groundHeightOffset = 0.5f;
     public bool canMove = true;
@@ -121,12 +123,18 @@ public class PlayerController : MonoBehaviour
     public bool enableBottomDockBlock = true;
 
     // 状态
-    public bool IsInvulnerable => isRolling || isInvulnerable;
-    public bool CanRoll => rollCooldownTimer <= 0f && !isRolling;
+    public bool Unavailable => isGrabbed || isThrown;
+    public bool IsGrabbed => isGrabbed;
+    public bool IsThrown => isThrown;
+    public bool IsInvulnerable => isRolling || isInvulnerable || Unavailable;
+    public bool CanRoll => rollCooldownTimer <= 0f && !isRolling && !Unavailable;
     public float RollCooldownTimer => rollCooldownTimer;
     public float RollCooldown => rollCooldown;
     private bool isRolling = false;
     private bool isInvulnerable = false;
+    private bool isGrabbed = false;
+    private bool isThrown = false;
+    private EnemyController grabberEnemy = null;
     private float rollCooldownTimer = 0f;
 
     // 攻击冷却内置计时器（严格保证攻击间隔，彻底防止连续点击快速攻击作弊）
@@ -336,7 +344,7 @@ public class PlayerController : MonoBehaviour
 
     public void TriggerShellGuard()
     {
-        if (guardCooldownTimer > 0f || isRolling || isCharging || heldFurniture != null) return;
+        if (guardCooldownTimer > 0f || isRolling || isCharging || heldFurniture != null || Unavailable) return;
 
         isGuarding = true;
         guardWindowTimer = guardWindowDuration;
@@ -363,18 +371,217 @@ public class PlayerController : MonoBehaviour
         guardWindowTimer = 0f;
 
         TimeManager.I?.StartSlowMo(2.5f);
+        ScreenFX.I?.Pulse();
+        CameraRig.I?.Shake(0.2f, 0.25f);
+        Sfx.Play("sfx_parry", 1f, true);
+        Sfx.Play("sfx_tongtou", 0.9f, true);
+
+        Vector3 sparkPos = (attacker != null) ? Vector3.Lerp(transform.position, attacker.transform.position, 0.5f) : (transform.position + (IsFacingLeft ? Vector3.left : Vector3.right) * 0.5f);
+        Vfx.Spawn("VFX_ParrySpark", sparkPos + Vector3.up * 0.6f, 0, 1.2f, true);
 
         if (DamageTextManager.Instance != null)
         {
             DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.7f, "⚡ 完美格挡! (PERFECT PARRY)", new Color(1f, 0.9f, 0.2f), 0.15f);
         }
 
-        Sfx.Play("parry_success");
-
         if (attacker != null)
         {
             SetAttackTarget(attacker);
+            attacker.Parried();
         }
+    }
+
+    public bool TryGrab(EnemyController by)
+    {
+        if (currentHp <= 0 || IsInvulnerable || Unavailable) return false;
+
+        // 打断现有动作与寻路
+        StopMovement();
+        isCharging = false;
+        isGuarding = false;
+        isAttackingAnim = false;
+
+        if (heldFurniture != null)
+        {
+            var f = heldFurniture;
+            DropFurniture();
+            f.PutDown(transform.position);
+        }
+
+        isGrabbed = true;
+        grabberEnemy = by;
+
+        if (TimeManager.I != null && TimeManager.SlowMo)
+        {
+            TimeManager.I.EndSlowMo();
+        }
+
+        if (hero != null)
+        {
+            hero.BeginStruggle();
+            hero.Face?.TriggerPain();
+        }
+
+        // 别的怪先不打玩家
+        foreach (var e in EnemyController.AllEnemies)
+        {
+            if (e != null && e != by) e.YieldToGrab();
+        }
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "被触手缠住!", Color.red, 0.12f);
+        }
+
+        CameraRig.I?.Shake(0.3f, 0.25f);
+        Sfx.Play("sfx_player_hurt");
+
+        if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
+        hurtCoroutine = StartCoroutine(PlayerHurtRoutine());
+
+        return true;
+    }
+
+    public void GrabTick(float dmg)
+    {
+        if (!isGrabbed) return;
+
+        currentHp = Mathf.Max(0f, currentHp - dmg);
+        if (hero != null) hero.SqueezeKick();
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, $"-{dmg:0}", Color.red, 0.1f);
+        }
+
+        CameraRig.I?.Shake(0.18f, 0.2f);
+        Sfx.Play("sfx_player_hurt");
+
+        if (hurtCoroutine != null) StopCoroutine(hurtCoroutine);
+        hurtCoroutine = StartCoroutine(PlayerHurtRoutine());
+
+        if (currentHp <= 0f)
+        {
+            if (hero != null) hero.EndStruggle();
+            isGrabbed = false;
+            grabberEnemy = null;
+            if (DamageTextManager.Instance != null)
+            {
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "DEFEATED", Color.red, 0.15f);
+            }
+        }
+    }
+
+    public void ThrowFrom(EnemyController by)
+    {
+        if (!isGrabbed) return;
+        isGrabbed = false;
+        grabberEnemy = null;
+        StartCoroutine(ThrownRoutine(by));
+    }
+
+    private IEnumerator ThrownRoutine(EnemyController by)
+    {
+        isThrown = true;
+        StopMovement();
+
+        Vector3 throwDir = (by != null) ? (transform.position - by.transform.position).normalized : (IsFacingLeft ? Vector3.right : Vector3.left);
+        if (throwDir.sqrMagnitude < 0.01f) throwDir = Vector3.right;
+        throwDir.z = 0;
+
+        float throwFlight = 0.45f;
+        float throwDistance = 2.2f;
+
+        if (hero != null)
+        {
+            hero.EndStruggle();
+            hero.Play("Thrown");
+        }
+
+        Sfx.Play("sfx_swing", 0.9f);
+
+        float elapsed = 0f;
+        Vector3 startPos = transform.position;
+        Vector3 targetPos = startPos + throwDir * throwDistance;
+
+        while (elapsed < throwFlight)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / throwFlight);
+            float ease = Mathf.Sin(t * Mathf.PI * 0.5f);
+            Vector3 cand = Vector3.Lerp(startPos, targetPos, ease);
+
+            // 地形边界保护
+            Vector3 groundRayPos = new Vector3(cand.x, cand.y - groundHeightOffset, 0f);
+            Vector3Int nextCell = grid != null ? grid.WorldToCell(groundRayPos) : Vector3Int.zero;
+            if (groundTilemap == null || groundTilemap.HasTile(nextCell))
+            {
+                transform.position = cand;
+            }
+            yield return null;
+        }
+
+        CameraRig.I?.Shake(0.3f, 0.25f);
+        Sfx.Play("sfx_kick", 0.9f);
+
+        if (DamageTextManager.Instance != null)
+        {
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.4f, "砸在地面!", new Color(1f, 0.5f, 0.2f), 0.09f);
+        }
+
+        // 瘫地缓慢起身
+        yield return new WaitForSeconds(0.45f);
+
+        isThrown = false;
+    }
+
+    public void ExecuteEnemy(EnemyController enemy)
+    {
+        if (enemy == null || !enemy.IsAlive) return;
+        StartCoroutine(ExecuteRoutine(enemy));
+    }
+
+    private IEnumerator ExecuteRoutine(EnemyController enemy)
+    {
+        isAttackingAnim = true;
+        StopMovement();
+        enemy.BeginExecuted();
+
+        Vector3 dashDir = (enemy.transform.position - transform.position).normalized;
+        dashDir.z = 0f;
+        SetVisualFacing(dashDir.x < 0);
+
+        if (hero != null)
+        {
+            hero.Play("Execute");
+            hero.Face?.TriggerHappy();
+        }
+
+        if (TimeManager.I != null) TimeManager.I.EndSlowMo();
+        ScreenFX.I?.Pulse();
+        Sfx.Play("sfx_execute", 1f, true);
+
+        // 瞬间闪身冲刺到敌人面前/穿身而过
+        Vector3 startPos = transform.position;
+        Vector3 targetPos = enemy.transform.position - dashDir * 0.25f;
+        float dashTime = 0.12f;
+        float elapsed = 0f;
+        while (elapsed < dashTime)
+        {
+            elapsed += Time.deltaTime;
+            transform.position = Vector3.Lerp(startPos, targetPos, elapsed / dashTime);
+            yield return null;
+        }
+
+        // 处决大刀光特效
+        Vfx.Spawn("VFX_ExecuteSlash", enemy.transform.position + Vector3.up * 0.5f, dashDir.x >= 0 ? 0 : 180f, 1.4f, true);
+        CameraRig.I?.Shake(0.35f, 0.3f);
+
+        // 斩杀敌人
+        enemy.KillByExecution(dashDir);
+
+        yield return new WaitForSeconds(0.35f);
+        isAttackingAnim = false;
     }
 
     public void PerformChargedSmash(float level)
@@ -466,6 +673,26 @@ public class PlayerController : MonoBehaviour
     {
         // 工坊或温室叠加开启时，战斗角色输入与逻辑全面静默冻结
         if (PlayerSessionData.isCraftingOpen) return;
+
+        // 处于被缠绕状态时，吸附在鱿鱼触手前并禁止主动操作
+        if (isGrabbed)
+        {
+            if (grabberEnemy != null && grabberEnemy.IsAlive)
+            {
+                Vector3 holdPos = grabberEnemy.transform.position + (transform.position.x > grabberEnemy.transform.position.x ? Vector3.right : Vector3.left) * 0.45f;
+                transform.position = Vector3.Lerp(transform.position, holdPos, Time.deltaTime * 12f);
+            }
+            else
+            {
+                ThrowFrom(grabberEnemy);
+            }
+            return;
+        }
+
+        if (isThrown)
+        {
+            return;
+        }
 
         if (rollCooldownTimer > 0f)
             rollCooldownTimer -= Time.deltaTime;
@@ -1104,7 +1331,15 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void UpdateAutoAttack()
     {
-        if (isRolling || !canMove || isAttackingAnim) return;
+        if (isRolling || !canMove || isAttackingAnim || Unavailable) return;
+
+        // 优先检查附近是否有处决就绪 (Pending) 的怪物
+        var pendingEnemy = EnemyController.FindPending();
+        if (pendingEnemy != null && Vector2.Distance(transform.position, pendingEnemy.transform.position) <= attackRange * 1.5f)
+        {
+            ExecuteEnemy(pendingEnemy);
+            return;
+        }
 
         // 1. 优先检查当前锁定目标是否在近战攻击距离内
         EnemyController targetToAttack = null;
@@ -1171,11 +1406,19 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// 手动释放普通攻击（支持空挥与锁定攻击）
+    /// 手动释放普通攻击（支持空挥、锁定攻击与处决就绪绝杀）
     /// </summary>
     public void TriggerManualAttack()
     {
-        if (attackCooldownTimer > 0f || isAttackingAnim) return;
+        if (Unavailable || attackCooldownTimer > 0f || isAttackingAnim) return;
+
+        // 优先检查附近是否有处决就绪 (Pending) 的怪物！
+        var pendingEnemy = EnemyController.FindPending();
+        if (pendingEnemy != null && Vector2.Distance(transform.position, pendingEnemy.transform.position) <= 3.6f)
+        {
+            ExecuteEnemy(pendingEnemy);
+            return;
+        }
 
         // 若当前未锁定敌人，但在前方附近有怪物，自动辅助锁定
         if (currentTarget == null || !currentTarget.IsAlive)
@@ -1622,7 +1865,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public bool TriggerDodgeRoll(Vector2? optionalDir = null)
     {
-        if (rollCooldownTimer > 0f || isRolling) return false;
+        if (rollCooldownTimer > 0f || isRolling || Unavailable) return false;
 
         // 翻滚消耗 15 点精力
         if (!ConsumeStamina(rollStaminaCost))
@@ -1665,11 +1908,20 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// 供手机 UI 底座一键触发普通攻击（自动锁定附近敌人出招）
+    /// 供手机 UI 底座一键触发普通攻击（自动锁定附近敌人出招或绝杀处决）
     /// </summary>
     public void PerformManualAttack()
     {
-        if (isRolling) return;
+        if (isRolling || Unavailable) return;
+
+        // 优先检查附近是否有处决就绪 (Pending) 的怪物！
+        var pendingEnemy = EnemyController.FindPending();
+        if (pendingEnemy != null && Vector2.Distance(transform.position, pendingEnemy.transform.position) <= 3.6f)
+        {
+            ExecuteEnemy(pendingEnemy);
+            return;
+        }
+
         if (currentTarget == null || !currentTarget.IsAlive)
         {
             var nearest = FindEnemyNear(transform.position, 4.0f);
