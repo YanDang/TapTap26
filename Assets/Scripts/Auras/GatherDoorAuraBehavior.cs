@@ -56,11 +56,12 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
             originalVisualScale = parentFurniture.furnitureRenderer.transform.localScale;
         }
 
-        // 附加点击感应触发器，确保点击门扉任何部位均能灵敏响应
-        var clickCol = gameObject.GetComponent<BoxCollider2D>() ?? gameObject.AddComponent<BoxCollider2D>();
-        clickCol.isTrigger = true;
-        clickCol.size = new Vector2(1.6f, 2.2f);
-        clickCol.offset = new Vector2(0f, 1.0f);
+        // 调整物理与点击感应碰撞体覆盖范围，完美包覆整座裂隙门扉
+        if (parentFurniture != null && parentFurniture.furnitureCollider is CircleCollider2D circleCol)
+        {
+            circleCol.radius = 0.85f;
+            circleCol.offset = new Vector2(0f, 0.6f);
+        }
 
         CreateOverheadPrompt();
         UpdatePromptText();
@@ -354,8 +355,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
 
         var camCtrl = FindObjectOfType<CameraController>();
         if (camCtrl != null) camCtrl.enabled = false;
-        var myAl = FindObjectOfType<AudioListener>();
-        if (myAl != null) myAl.enabled = false;
+        // 保持 AudioListener 开启，确保叠加场景中的 2D 采集音效能正常被听到，同时消除全局无侦听器的警告
 
         Sfx.Play("sfx_parry", 0.9f, true);
 

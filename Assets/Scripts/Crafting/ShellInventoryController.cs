@@ -164,7 +164,27 @@ namespace BiomechanicalCrafting
                     if (r != null && r.name == "Main Camera")
                     {
                         var al = r.GetComponent<AudioListener>();
-                        if (al != null) Destroy(al);
+                        if (al != null)
+                        {
+                            var listeners = FindObjectsOfType<AudioListener>();
+                            bool hasOtherActive = false;
+                            foreach (var other in listeners)
+                            {
+                                if (other != al && other.enabled && other.gameObject.activeInHierarchy)
+                                {
+                                    hasOtherActive = true;
+                                    break;
+                                }
+                            }
+                            if (hasOtherActive)
+                            {
+                                Destroy(al);
+                            }
+                            else
+                            {
+                                al.enabled = true;
+                            }
+                        }
                     }
                 }
             }

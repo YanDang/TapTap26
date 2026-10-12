@@ -457,8 +457,7 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
         
         var camCtrl = FindObjectOfType<CameraController>();
         if (camCtrl != null) camCtrl.enabled = false;
-        var myAl = FindObjectOfType<AudioListener>();
-        if (myAl != null) myAl.enabled = false;
+        // 保持 AudioListener 开启，确保工坊界面的 2D 音效可被正常侦听且控制台不报无侦听器警告
 
         Time.timeScale = 0f; // 冻结战斗
         SceneManager.LoadSceneAsync(craftingSceneName, LoadSceneMode.Additive);

@@ -172,8 +172,16 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
 
         if (furn.furnitureCollider is CircleCollider2D circleCol1)
         {
-            circleCol1.radius = 0.52f;
-            circleCol1.offset = new Vector2(0f, 0.12f);
+            if (id == "furn_gather_door")
+            {
+                circleCol1.radius = 0.85f;
+                circleCol1.offset = new Vector2(0f, 0.6f);
+            }
+            else
+            {
+                circleCol1.radius = 0.52f;
+                circleCol1.offset = new Vector2(0f, 0.12f);
+            }
         }
 
         AttachTacticalAura(go, prod);
@@ -217,8 +225,16 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
         // 统一物理碰撞体覆盖度，使其贴合 1.0m 等距菱形地块，杜绝怪物从边缘穿模
         if (furn.furnitureCollider is CircleCollider2D circleCol2)
         {
-            circleCol2.radius = 0.52f;
-            circleCol2.offset = new Vector2(0f, 0.12f);
+            if (product.id == "furn_gather_door")
+            {
+                circleCol2.radius = 0.85f;
+                circleCol2.offset = new Vector2(0f, 0.6f);
+            }
+            else
+            {
+                circleCol2.radius = 0.52f;
+                circleCol2.offset = new Vector2(0f, 0.12f);
+            }
         }
 
         // 3. 根据构装四大要素 totalP, totalE, totalG, totalW 动态赋能物理三态数值
