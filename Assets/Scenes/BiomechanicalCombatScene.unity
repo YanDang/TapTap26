@@ -4694,7 +4694,6 @@ MonoBehaviour:
   clickMaxDistance: 15
   clickMaxDuration: 0.35
   isBuildMode: 0
-  hideLegacyDock: 1
 --- !u!4 &938845455
 Transform:
   m_ObjectHideFlags: 0
@@ -4818,8 +4817,6 @@ MonoBehaviour:
   rollStaminaCost: 15
   buildModeStaminaCost: 30
   enableClickToMove: 1
-  bottomUIDockRatio: 0.16
-  enableBottomDockBlock: 1
   moveSpeedMultiplier: 1
   staminaCostMultiplier: 1
 --- !u!4 &972876809
@@ -5886,7 +5883,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1389270117}
   - component: {fileID: 1389270116}
-  - component: {fileID: 1389270118}
   m_Layer: 0
   m_Name: CombatCraftingEntrance
   m_TagString: Untagged
@@ -5907,9 +5903,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   craftingSceneName: Mix
-  shortcutKey: 98
-  bottomDockRatio: 0.16
-  hideLegacyGUI: 1
+  shortcutKey: 9
 --- !u!4 &1389270117
 Transform:
   m_ObjectHideFlags: 0
@@ -5925,20 +5919,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1389270118
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1389270115}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ddc339e56b5bd5d4eb2063feb0b634f2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  genericFurniturePrefab: {fileID: 7433066335162133932, guid: cb4cb5d04cc0cf142bcac97d8d4ef3bd, type: 3}
-  autoSpawnShowcaseOnStart: 0
 --- !u!1 &1567545631
 GameObject:
   m_ObjectHideFlags: 0

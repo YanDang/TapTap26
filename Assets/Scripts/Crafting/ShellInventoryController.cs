@@ -94,6 +94,9 @@ namespace BiomechanicalCrafting
         public Button switchClamBtn;
         public Button switchCanBtn;
 
+        [SerializeField] private bool enableDevelopmentTools = false;
+        public bool DevelopmentToolsEnabled => enableDevelopmentTools && (Application.isEditor || Debug.isDebugBuild);
+
         public Button btnAddRandom;
         public Button btnFillAll;
         public Button btnClearAll;
@@ -101,7 +104,6 @@ namespace BiomechanicalCrafting
 
         [Header("Scene Navigation")]
         public Button btnReturnToCombat;
-        [System.NonSerialized] public Button btnGathering;
         [System.NonSerialized] public Button btnDeleteSelected;
 
         [Header("Trash Bin & Deletion")]
@@ -200,60 +202,33 @@ namespace BiomechanicalCrafting
             // 结合采集系统：合成系统初始为空，或从全局持久化数据无缝加载
             LoadFromPlayerSessionData();
             UpdateLiveStrokeHUD();
+            ConfigureDevelopmentTools();
         }
 
         void Update()
         {
-            // ESC 键：先关弹窗，若无弹窗则退出工坊返回战斗场景
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (GameplaySceneTransition.IsBusy) return;
+            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Tab))
             {
                 if (detailPopupPanel != null && detailPopupPanel.activeSelf)
-                {
                     CloseDetailPopup();
-                }
                 else if (craftResultModal != null && craftResultModal.activeSelf)
-                {
                     CancelCraftProduct();
-                }
-                else if (codexModal != null && ((codexModal.modalRoot != null && codexModal.modalRoot.activeSelf) || codexModal.gameObject.activeSelf))
-                {
-                    codexModal.Toggle();
-                }
+                else if (codexModal != null && codexModal.IsOpen)
+                    codexModal.Close();
                 else
-                {
                     ReturnToCombatScene();
-                }
+                return;
             }
 
-            // B 键：与战斗场景按 B 打开工坊相呼应，按 B 退出工坊返回战斗场景
-            if (Input.GetKeyDown(KeyCode.B))
-            {
-                if (detailPopupPanel != null && detailPopupPanel.activeSelf)
-                {
-                    CloseDetailPopup();
-                }
-                else if (craftResultModal != null && craftResultModal.activeSelf)
-                {
-                    CancelCraftProduct();
-                }
-                else if (codexModal != null && ((codexModal.modalRoot != null && codexModal.modalRoot.activeSelf) || codexModal.gameObject.activeSelf))
-                {
-                    codexModal.Toggle();
-                }
-                else
-                {
-                    ReturnToCombatScene();
-                }
-            }
-
-            // 键盘快捷测试键
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Tab))
-            {
+            if (Input.GetKeyDown(KeyCode.Space))
                 SetMode(currentMode == InteractionMode.LineCrafting ? InteractionMode.Reorder : InteractionMode.LineCrafting);
+            if (DevelopmentToolsEnabled)
+            {
+                if (Input.GetKeyDown(KeyCode.R)) AddRandomMaterial();
+                if (Input.GetKeyDown(KeyCode.F)) FillAllSlotsRandomly();
+                if (Input.GetKeyDown(KeyCode.C)) ClearAllSlots();
             }
-            if (Input.GetKeyDown(KeyCode.R)) AddRandomMaterial();
-            if (Input.GetKeyDown(KeyCode.F)) FillAllSlotsRandomly();
-            if (Input.GetKeyDown(KeyCode.C)) ClearAllSlots();
             if (Input.GetKeyDown(KeyCode.Alpha1)) SwitchShell(ShellType.ConchShell);
             if (Input.GetKeyDown(KeyCode.Alpha2)) SwitchShell(ShellType.ClamShell);
             if (Input.GetKeyDown(KeyCode.Alpha3)) SwitchShell(ShellType.RustedCanShell);
@@ -360,8 +335,14 @@ namespace BiomechanicalCrafting
 
         public void SwitchShell(ShellType newType)
         {
+            if ((GameplaySceneTransition.IsBusy && slotViews.Count > 0) || pendingProduct != null || isDrawingStroke || dragSourceSlot != null) return;
+            if (slotViews.Count > 0) SyncSlotsToPlayerSessionData();
+            if (!PlayerSessionData.TrySwitchShell(newType, out string failure))
+            {
+                if (shellFlavorText != null) shellFlavorText.text = failure;
+                return;
+            }
             currentShellType = newType;
-            PlayerSessionData.currentShellType = newType;
             activeConfig = ShellConfig.CreateConfig(newType);
 
             // 更新标题与韵味文本
@@ -411,7 +392,7 @@ namespace BiomechanicalCrafting
                 Create2x2OverlayForSlot(slotViews[i], overlayContainer, step, spanSize);
             }
 
-            // 统一刷新所有槽位视图（包含 2x2 覆盖层与 1x1 状态）
+            LoadFromPlayerSessionData();
             RefreshSlotVisuals();
 
             // 更新背包装满警告
@@ -430,9 +411,22 @@ namespace BiomechanicalCrafting
 
             // 更新 Shell Switcher 按钮选中高亮
             UpdateShellButtonHighlights();
+            UpdateShellCapacityLabels();
 
             // 保存当前背壳类型到全局存储
             PlayerSessionData.SaveBackpackToStorage();
+        }
+
+        private void UpdateShellCapacityLabels()
+        {
+            var buttons = new[] { switchConchBtn, switchClamBtn, switchCanBtn };
+            for (int index = 0; index < buttons.Length; index++)
+            {
+                if (buttons[index] == null) continue;
+                var label = buttons[index].GetComponentInChildren<Text>();
+                var config = ShellConfig.CreateConfig((ShellType)index);
+                if (label != null) label.text = config.shellName + " (" + config.TotalSlotCount + "格)";
+            }
         }
 
         private ShellSlotView CreateSlotViewGameObject(ShellSlotLayout layout)
@@ -770,33 +764,7 @@ namespace BiomechanicalCrafting
 
         private bool CheckMaterialAdjacency(BiomechanicalMaterial matA, BiomechanicalMaterial matB)
         {
-            if (matA == null || matB == null || activeConfig == null) return false;
-
-            List<int> slotsA = (matA.occupiedSlotIds != null && matA.occupiedSlotIds.Count > 0)
-                ? matA.occupiedSlotIds
-                : new List<int> { matA.rootSlotId };
-
-            List<int> slotsB = (matB.occupiedSlotIds != null && matB.occupiedSlotIds.Count > 0)
-                ? matB.occupiedSlotIds
-                : new List<int> { matB.rootSlotId };
-
-            foreach (int idA in slotsA)
-            {
-                if (idA < 0 || idA >= activeConfig.slots.Count) continue;
-                var layoutA = activeConfig.slots[idA];
-
-                foreach (int idB in slotsB)
-                {
-                    if (idB < 0 || idB >= activeConfig.slots.Count) continue;
-                    var layoutB = activeConfig.slots[idB];
-
-                    if (layoutA.IsAdjacent8Way(layoutB))
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return BlueprintRecipeRules.AreAdjacent(matA, matB, activeConfig);
         }
 
         private void HandleSlotPointerUp(ShellSlotView slot, PointerEventData eventData)
@@ -932,6 +900,7 @@ namespace BiomechanicalCrafting
 
         private void ExecuteReorderDrop(ShellSlotView srcView, ShellSlotView dstView)
         {
+            if (GameplaySceneTransition.IsBusy || pendingProduct != null) return;
             if (srcView == null || dstView == null || activeConfig == null) return;
             var draggedMat = srcView.currentMaterial;
             if (draggedMat == null) return;
@@ -1217,7 +1186,7 @@ namespace BiomechanicalCrafting
             // 6. 实时涌现产物预演 (>=2 节点立即推演蓝图或废料)
             if (liveStrokePredictText != null)
             {
-                if (lineMats.Count < 2)
+                if (!BlueprintRecipeRules.IsValidStroke(lineMats, activeConfig))
                 {
                     liveStrokePredictText.text = "<color=#94A3B8>✦ 继续滑动连接相邻槽位，聚合回路以达成生体共振...</color>";
                 }
@@ -1375,6 +1344,7 @@ namespace BiomechanicalCrafting
 
         public void ConfirmCraftProduct()
         {
+            if (GameplaySceneTransition.IsBusy || pendingProduct == null) return;
             // 确认收纳成品：清空消耗掉的宫格（包括 2x2 与 1x1）！
             foreach (int slotIdx in pendingConsumedSlotIndices)
             {
@@ -1464,6 +1434,7 @@ namespace BiomechanicalCrafting
         /// </summary>
         public void DeleteMaterialAtSlot(int slotId)
         {
+            if (GameplaySceneTransition.IsBusy || pendingProduct != null) return;
             if (slotId < 0 || slotId >= slotItems.Length) return;
             var mat = slotItems[slotId];
             if (mat == null) return;
@@ -1671,6 +1642,24 @@ namespace BiomechanicalCrafting
                 foreach (var aid in bp.requiredAnyIds) targetIds.Add(aid);
             }
 
+            // 补充备选合成组件的联动高亮
+            if (bp.id == "furn_gather_door")
+            {
+                targetIds.Add("mat_wood_hollow_coral");
+            }
+            else if (bp.id == "furn_coral_wall")
+            {
+                targetIds.Add("mat_wood_hollow_coral");
+                targetIds.Add("mat_wood_root_gear");
+                targetIds.Add("mat_wood_symbiotic_fungi");
+            }
+            else if (bp.id == "furn_water_tower")
+            {
+                targetIds.Add("mat_water_sponge_filter");
+                targetIds.Add("mat_water_siphon_tube");
+            }
+
+            targetIds.UnionWith(BlueprintRecipeRules.GetIngredientIds(bp.id));
             Color highlightColor = bp.ThemeColor;
 
             foreach (var sv in slotViews)
@@ -1774,6 +1763,7 @@ namespace BiomechanicalCrafting
 
         public void AddRandomMaterial()
         {
+            if (!DevelopmentToolsEnabled) return;
             var allMats = BiomechanicalMaterialDatabase.GetAllMaterials();
             if (allMats.Count == 0) return;
 
@@ -1812,6 +1802,7 @@ namespace BiomechanicalCrafting
 
         public void FillAllSlotsRandomly()
         {
+            if (!DevelopmentToolsEnabled) return;
             var allMats = BiomechanicalMaterialDatabase.GetAllMaterials();
             if (allMats.Count == 0 || activeConfig == null) return;
 
@@ -1846,6 +1837,7 @@ namespace BiomechanicalCrafting
 
         public void ClearAllSlots()
         {
+            if (!DevelopmentToolsEnabled) return;
             for (int i = 0; i < slotItems.Length; i++)
             {
                 slotItems[i] = null;
@@ -1925,17 +1917,6 @@ namespace BiomechanicalCrafting
             if (btnFillAll != null) { btnFillAll.onClick.RemoveAllListeners(); btnFillAll.onClick.AddListener(FillAllSlotsRandomly); }
             if (btnClearAll != null) { btnClearAll.onClick.RemoveAllListeners(); btnClearAll.onClick.AddListener(ClearAllSlots); }
             if (btnDemoStroke != null) { btnDemoStroke.onClick.RemoveAllListeners(); btnDemoStroke.onClick.AddListener(DemoStrokeCrafting); }
-
-            if (btnGathering == null)
-            {
-                var gb = GameObject.Find("BtnGatheringRoom");
-                if (gb != null) btnGathering = gb.GetComponent<Button>();
-            }
-            if (btnGathering != null)
-            {
-                btnGathering.onClick.RemoveAllListeners();
-                btnGathering.onClick.AddListener(GoToCollectScene);
-            }
 
             EnsureReturnButtonUI();
 
@@ -2023,57 +2004,25 @@ namespace BiomechanicalCrafting
             if (switchCanBtn != null) switchCanBtn.image.color = currentShellType == ShellType.RustedCanShell ? activeColor : normalColor;
         }
 
-        private bool isTransitioningToCollect = false;
-
-        public void GoToCollectScene()
+        private void ConfigureDevelopmentTools()
         {
-            if (isTransitioningToCollect) return;
-            isTransitioningToCollect = true;
+            foreach (var button in new[] { btnAddRandom, btnFillAll, btnClearAll })
+                if (button != null) button.gameObject.SetActive(DevelopmentToolsEnabled);
 
-            Debug.Log("<color=#70FF90>[场景跳转]</color> 正在前往采集温室 (Collect)...");
-            SyncSlotsToPlayerSessionData();
-            PlayerSessionData.SaveCraftedProductsToStorage();
-
-            if (UnityEngine.SceneManagement.SceneManager.sceneCount > 1)
-            {
-                var myScene = gameObject.scene;
-                var loadOp = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Collect", UnityEngine.SceneManagement.LoadSceneMode.Additive);
-                loadOp.completed += (_) =>
-                {
-                    UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(myScene);
-                };
-            }
-            else
-            {
-                UnityEngine.SceneManagement.SceneManager.LoadScene("Collect");
-            }
+            if (btnDemoStroke != null)
+                btnDemoStroke.GetComponent<RectTransform>().anchoredPosition = new Vector2(DevelopmentToolsEnabled ? 485f : 65f, 0f);
+            if (btnDeleteSelected != null)
+                btnDeleteSelected.GetComponent<RectTransform>().anchoredPosition = new Vector2(DevelopmentToolsEnabled ? 625f : 205f, 0f);
         }
 
         public void ReturnToCombatScene()
         {
-            Debug.Log("<color=#38BDF8>[ShellInventoryController] 正在同步保存背壳工坊数据并返回战斗场景...</color>");
-
-            // 1. 同步保存当前背壳背包材料与构装仓库
-            SyncSlotsToPlayerSessionData();
-            PlayerSessionData.SaveCraftedProductsToStorage();
-
-            // 2. 状态标记更新与恢复游戏时间
-            PlayerSessionData.hasJustReturnedFromCrafting = true;
-            PlayerSessionData.isCraftingOpen = false;
-            Time.timeScale = 1.0f;
-
-            // 3. 卸载叠加场景或加载单场景
-            if (UnityEngine.SceneManagement.SceneManager.sceneCount > 1)
+            GameplaySceneTransition.TryReturn(gameObject.scene, () =>
             {
-                Debug.Log($"<color=#70FF90>[ShellInventoryController]</color> 卸载叠加工坊场景 {gameObject.scene.name}，返回战斗场景！");
-                UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(gameObject.scene);
-            }
-            else
-            {
-                string targetScene = string.IsNullOrEmpty(PlayerSessionData.returnCombatSceneName) ? "BiomechanicalCombatScene" : PlayerSessionData.returnCombatSceneName;
-                Debug.Log($"<color=#70FF90>[ShellInventoryController]</color> 单独场景运行，加载战斗场景: {targetScene}");
-                UnityEngine.SceneManagement.SceneManager.LoadScene(targetScene);
-            }
+                CancelCraftProduct();
+                SyncSlotsToPlayerSessionData();
+                PlayerSessionData.SaveCraftedProductsToStorage();
+            });
         }
 
         private void EnsureReturnButtonUI()
@@ -2134,7 +2083,7 @@ namespace BiomechanicalCrafting
             rt.anchorMin = new Vector2(0, 0.5f);
             rt.anchorMax = new Vector2(0, 0.5f);
             rt.pivot = new Vector2(0, 0.5f);
-            rt.anchoredPosition = new Vector2(600, 0);
+            rt.anchoredPosition = new Vector2(460, 0);
             rt.sizeDelta = new Vector2(160, 48);
 
             Image img = returnBtnGO.AddComponent<Image>();

@@ -198,6 +198,7 @@ public class BuildController : MonoBehaviour
 
     private void HandleInput()
     {
+        if (PlayerSessionData.IsCombatInputBlocked) return;
         // 若未开启建造模式，不接收建造点击
         if (!isBuildMode)
         {
@@ -357,6 +358,7 @@ public class BuildController : MonoBehaviour
     /// </summary>
     private CellAction EvaluateCellAction(Vector3Int cellPos)
     {
+        if (CraftedPlacementTransaction.IsReserved(cellPos)) return CellAction.Invalid;
         // 1. 检查网格上是否已有放置状态的家具（可拆除回收）
         var furn = FurnitureObject.GetFurnitureAtCell(cellPos);
         if (furn != null)
@@ -423,113 +425,57 @@ public class BuildController : MonoBehaviour
         PlaceFurniture(cellPos);
     }
 
+    private CraftedPlacementTransaction placementTransaction;
+
+    private void OnDisable()
+    {
+        CancelPendingPlacement();
+    }
+
+    public void CancelPendingPlacement()
+    {
+        placementTransaction?.Dispose();
+        placementTransaction = null;
+    }
+
     private void PlaceFurniture(Vector3Int cellPos)
     {
+        if (PlayerSessionData.IsCombatInputBlocked || placementTransaction != null || EvaluateCellAction(cellPos) != CellAction.Place) return;
+        var player = FindObjectOfType<PlayerController>();
+        var adapter = BiomechanicalCombatAdapter.Instance;
+        if (player == null || adapter == null || player.Placing) return;
+        var products = PlayerSessionData.GetCraftedProducts();
+        if (selectedProduct == null) selectedProduct = products.Find(product => !PlayerSessionData.IsProductReserved(product));
+        if (selectedProduct == null || !products.Contains(selectedProduct)) return;
         var activeTilemap = groundTilemap != null ? groundTilemap : (buildTilemap ?? targetTilemap);
         Vector3 cellCenter = activeTilemap != null ? activeTilemap.GetCellCenterWorld(cellPos) : grid.GetCellCenterWorld(cellPos);
         Vector3 spawnPos = new Vector3(cellCenter.x, cellCenter.y + groundHeightOffset, 0f);
-
-        // 若当前未选定构装，自动从 PlayerSessionData 仓库中选择第一件
-        if (selectedProduct == null)
+        var transaction = CraftedPlacementTransaction.TryBegin(selectedProduct, cellPos);
+        if (transaction == null) return;
+        placementTransaction = transaction;
+        bool started = player.BeginPlace(spawnPos, () =>
         {
-            var products = PlayerSessionData.GetCraftedProducts();
-            if (products.Count > 0)
-            {
-                selectedProduct = products[0];
-            }
-        }
-
-        var adapter = BiomechanicalCombatAdapter.Instance ?? FindObjectOfType<BiomechanicalCombatAdapter>();
-        var player = FindObjectOfType<PlayerController>();
-
-        // 放置工坊联动生体构装
-        if (selectedProduct != null && adapter != null)
+            var spawned = transaction.Commit(adapter, spawnPos, () => this != null && isActiveAndEnabled && !PlayerSessionData.IsCombatInputBlocked && CanCommitPlacement(cellPos));
+            placementTransaction = null;
+            if (spawned == null) return;
+            var furniture = spawned.GetComponent<FurnitureObject>();
+            var icon = furniture != null && furniture.furnitureRenderer != null ? furniture.furnitureRenderer.sprite : null;
+            GameJam.FurnitureDeploy.Begin(spawned, icon, player.PlaceHandPos, () => { });
+            if (BuildDockUI.Instance != null) BuildDockUI.Instance.OnProductPlaced(transaction.Product);
+            if (!products.Contains(selectedProduct)) selectedProduct = products.Find(product => !PlayerSessionData.IsProductReserved(product));
+        }, () =>
         {
-            var prodToPlace = selectedProduct;
-
-            if (player != null)
-            {
-                // 主角播放 1s 放置动作（0.56s 抛出胶囊）+ 部署动画
-                bool started = player.BeginPlace(spawnPos, () =>
-                {
-                    // 0.56s 抛出胶囊：生成家具并播放投掷展开动画
-                    var spawned = adapter.SpawnProductAtCell(prodToPlace, cellPos, spawnPos);
-                    if (spawned != null)
-                    {
-                        // 扣除一件仓库构装
-                        PlayerSessionData.RemoveCraftedProduct(prodToPlace);
-
-                        Sprite icon = null;
-                        var fo = spawned.GetComponent<FurnitureObject>();
-                        if (fo != null && fo.furnitureRenderer != null)
-                        {
-                            icon = fo.furnitureRenderer.sprite;
-                        }
-                        else
-                        {
-                            var sr = spawned.GetComponentInChildren<SpriteRenderer>();
-                            if (sr != null) icon = sr.sprite;
-                        }
-
-                        // 胶囊抛物线与着陆气浪动画
-                        GameJam.FurnitureDeploy.Begin(spawned, icon, player.PlaceHandPos, () =>
-                        {
-                            // 部署完毕
-                        });
-
-                        // 实时通知 BuildDockUI 扣除卡片并更新抽屉状态
-                        if (BuildDockUI.Instance != null)
-                        {
-                            BuildDockUI.Instance.OnProductPlaced(prodToPlace);
-                        }
-
-                        var remaining = PlayerSessionData.GetCraftedProducts();
-                        if (!remaining.Contains(selectedProduct))
-                        {
-                            selectedProduct = remaining.Count > 0 ? remaining[0] : null;
-                        }
-                    }
-                },
-                () =>
-                {
-                    // 放置被打断（受击 / 被抓）
-                    if (DamageTextManager.Instance != null)
-                    {
-                        DamageTextManager.Instance.ShowText(player.transform.position + Vector3.up * 0.8f, "⚠️ 放置被打断!", Color.yellow, 0.10f);
-                    }
-                });
-
-                if (started)
-                {
-                    ClearSelection();
-                    return;
-                }
-            }
-
-            // 备用兜底：若玩家忙，直接即时放置
-            var directSpawned = adapter.SpawnProductAtCell(prodToPlace, cellPos, spawnPos);
-            if (directSpawned != null)
-            {
-                PlayerSessionData.RemoveCraftedProduct(prodToPlace);
-                if (BuildDockUI.Instance != null)
-                {
-                    BuildDockUI.Instance.OnProductPlaced(prodToPlace);
-                }
-                var remaining = PlayerSessionData.GetCraftedProducts();
-                if (!remaining.Contains(selectedProduct))
-                {
-                    selectedProduct = remaining.Count > 0 ? remaining[0] : null;
-                }
-                ClearSelection();
-                return;
-            }
-        }
-
-        if (DamageTextManager.Instance != null)
-        {
-            DamageTextManager.Instance.ShowText(spawnPos + Vector3.up * 0.6f, "⚠️ 仓库中暂无可用构装，请前往工坊合成！", new Color(1f, 0.4f, 0.4f), 0.12f);
-        }
+            transaction.Dispose();
+            if (ReferenceEquals(placementTransaction, transaction)) placementTransaction = null;
+        });
+        if (!started) CancelPendingPlacement();
         ClearSelection();
+    }
+
+    private bool CanCommitPlacement(Vector3Int cellPos)
+    {
+        var buildMap = buildTilemap != null ? buildTilemap : targetTilemap;
+        return groundTilemap != null && groundTilemap.HasTile(cellPos) && FurnitureObject.GetFurnitureAtCell(cellPos) == null && (buildMap == null || buildMap == groundTilemap || !buildMap.HasTile(cellPos));
     }
 
     private void DeleteObject(Vector3Int cellPos)
@@ -575,6 +521,7 @@ public class BuildController : MonoBehaviour
                 }
             }
 
+            furn.gameObject.SetActive(false);
             Destroy(furn.gameObject);
             Debug.Log($"[BuildSystem] 成功拆除并回收了格子 {cellPos} 上的家具: {fName}");
             ClearSelection();
@@ -676,90 +623,6 @@ public class BuildController : MonoBehaviour
         highlightObject.transform.localScale = new Vector3(scale, scale, 1f);
     }
 
-    private Vector2 warehouseScrollPos = Vector2.zero;
-
-    [Tooltip("隐藏旧版 IMGUI 代码式构装仓库")]
-    public bool hideLegacyDock = true;
-
-    void OnGUI()
-    {
-        if (hideLegacyDock || !isBuildMode) return;
-
-        float dockHeight = 125f;
-        float dockY = Screen.height - dockHeight;
-
-        // 半透明暗底
-        GUI.Box(new Rect(10f, dockY, Screen.width - 20f, dockHeight), "");
-
-        GUIStyle titleStyle = new GUIStyle(GUI.skin.label)
-        {
-            fontSize = 15,
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleLeft
-        };
-        titleStyle.normal.textColor = new Color(0.95f, 0.85f, 0.3f);
-
-        string selName = selectedProduct != null ? selectedProduct.productName : "未选定（点击下方卡片）";
-        GUI.Label(new Rect(20f, dockY + 6f, Screen.width - 200f, 22f), $"📦 战术构装仓库选择 (点击卡片选中，点击地面绿框部署，点击红框回收入库) | 当前选中: <color=#38bdf8><b>{selName}</b></color>", titleStyle);
-
-        // 快捷前往生体工坊按钮
-        if (GUI.Button(new Rect(Screen.width - 200f, dockY + 6f, 185f, 24f), "🔨 前往生体工坊 (B)"))
-        {
-            var entrance = FindObjectOfType<CombatSceneCraftingEntrance>();
-            if (entrance != null)
-            {
-                entrance.EnterCraftingScene();
-            }
-            else
-            {
-                PlayerSessionData.isCraftingOpen = true;
-                PlayerSessionData.returnCombatSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-                UnityEngine.SceneManagement.SceneManager.LoadScene("Mix", UnityEngine.SceneManagement.LoadSceneMode.Additive);
-            }
-        }
-
-        var products = PlayerSessionData.GetCraftedProducts();
-        if (products.Count == 0)
-        {
-            GUI.Label(new Rect(25f, dockY + 40f, 750f, 30f), "<color=#94A3B8>📦 战术仓库开局为空。请点击右上角【前往生体工坊 (B)】连线合成构装，合成后即可在此选取并部署到战场！</color>");
-            return;
-        }
-
-        // 横向滚动构装卡片列表
-        float scrollWidth = Screen.width - 40f;
-        float contentWidth = Mathf.Max(scrollWidth, products.Count * 220f + 20f);
-        warehouseScrollPos = GUI.BeginScrollView(new Rect(20f, dockY + 32f, scrollWidth, 80f), warehouseScrollPos, new Rect(0, 0, contentWidth, 65f), true, false);
-
-        for (int i = 0; i < products.Count; i++)
-        {
-            var p = products[i];
-            if (p == null) continue;
-
-            float itemX = i * 220f;
-            bool isSelected = selectedProduct == p;
-
-            Color oldBg = GUI.backgroundColor;
-            GUI.backgroundColor = isSelected ? new Color(0.2f, 0.95f, 0.45f, 1f) : (p.isAberrantScrap ? new Color(0.9f, 0.45f, 0.65f, 0.9f) : new Color(0.2f, 0.45f, 0.75f, 0.9f));
-
-            string tag = p.isAberrantScrap ? "[废料]" : $"[{p.category}]";
-            string btnText = $"{tag} {p.productName}\nP:{p.totalP} E:{p.totalE} G:{p.totalG} W:{p.totalW}";
-
-            Sprite furnSprite = Resources.Load<Sprite>("FurnitureSprites/" + p.id);
-            GUIContent btnContent = furnSprite != null && furnSprite.texture != null
-                ? new GUIContent(btnText, furnSprite.texture)
-                : new GUIContent(btnText);
-
-            if (GUI.Button(new Rect(itemX, 0, 210f, 55f), btnContent))
-            {
-                selectedProduct = p;
-                ClearSelection();
-            }
-
-            GUI.backgroundColor = oldBg;
-        }
-
-        GUI.EndScrollView();
-    }
 
     void OnDestroy()
     {

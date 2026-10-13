@@ -179,13 +179,6 @@ public class PlayerController : MonoBehaviour
     [Tooltip("是否允许点击地面寻路移动（默认开启，与虚拟摇杆同时支持，满足不同玩家操作习惯）")]
     public bool enableClickToMove = true;
 
-    [Header("Mobile Adaptation (手机适配与底部面板)")]
-    [Tooltip("底部功能UI占屏幕高度比例（默认 0.16f，释放 84%+ 广阔视野）")]
-    [Range(0f, 0.5f)]
-    public float bottomUIDockRatio = 0.16f;
-    [Tooltip("是否阻止点击底部面板区域触发人物移动或划动物体")]
-    public bool enableBottomDockBlock = true;
-
     // 状态
     public bool Unavailable => isGrabbed || isThrown;
     public bool IsGrabbed => isGrabbed;
@@ -975,6 +968,7 @@ public class PlayerController : MonoBehaviour
 
     void OnDisable()
     {
+        CancelPlace();
         if (hurtCoroutine != null)
         {
             StopCoroutine(hurtCoroutine);
@@ -1044,7 +1038,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         // 工坊或温室叠加开启时，战斗角色输入与逻辑全面静默冻结
-        if (PlayerSessionData.isCraftingOpen) return;
+        if (PlayerSessionData.IsCombatInputBlocked) return;
 
         // 阵亡状态下等待复苏协程，不处理常规操作
         if (isDefeatedRoutineRunning || currentHp <= 0f)
@@ -1407,7 +1401,7 @@ public class PlayerController : MonoBehaviour
 
     public bool BeginPlace(Vector3 target, System.Action release, System.Action cancel)
     {
-        if (Dead || Unavailable || isRolling || isCharging || isAttackingAnim) return false;
+        if (PlayerSessionData.IsCombatInputBlocked || Placing || Dead || Unavailable || isRolling || isCharging || isAttackingAnim) return false;
         CancelLeftHold();
         _placeRelease = release; _placeCancel = cancel;
         Placing = true;
@@ -1417,9 +1411,11 @@ public class PlayerController : MonoBehaviour
         dir.z = 0;
         if (dir.sqrMagnitude > 1e-4f) SetVisualFacing(dir.x < 0);
 
-        StartCoroutine(PlaceRoutine());
+        placeRoutine = StartCoroutine(PlaceRoutine());
         return true;
     }
+
+    private Coroutine placeRoutine;
 
     private IEnumerator PlaceRoutine()
     {
@@ -1440,7 +1436,8 @@ public class PlayerController : MonoBehaviour
     {
         if (!Placing) return;
         Placing = false;
-        StopCoroutine(PlaceRoutine());
+        if (placeRoutine != null) StopCoroutine(placeRoutine);
+        placeRoutine = null;
         var c = _placeCancel;
         _placeRelease = _placeCancel = null;
         c?.Invoke();
@@ -1745,9 +1742,7 @@ public class PlayerController : MonoBehaviour
 
     public bool IsInBottomDockArea(Vector2 screenPos)
     {
-        if (!enableBottomDockBlock) return false;
-        // 手机屏幕坐标 (0,0) 为左下角，y < Screen.height * bottomUIDockRatio 为底部功能底座区域
-        return screenPos.y < Screen.height * bottomUIDockRatio;
+        return BuildDockUI.Instance != null && BuildDockUI.Instance.IsPointerOverDrawer(screenPos);
     }
 
     private bool IsPointerOverUI(int fingerId)

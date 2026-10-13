@@ -112,23 +112,13 @@ public static class ShellInventorySceneBuilder
         codexRT.anchoredPosition = new Vector2(320, 0);
         controller.btnBlueprintCodex = btnCodex;
 
-        // 🌱 采集温室按钮 (前往 Collect 场景)
-        Button btnGathering = CreateButton(headerGO.transform, "BtnGatheringRoom", "🌱 采集温室", new Vector2(130, 48), new Color(0.18f, 0.48f, 0.35f, 0.95f), Color.white, 14);
-        RectTransform gatherRT = btnGathering.GetComponent<RectTransform>();
-        gatherRT.anchorMin = new Vector2(0, 0.5f);
-        gatherRT.anchorMax = new Vector2(0, 0.5f);
-        gatherRT.pivot = new Vector2(0, 0.5f);
-        gatherRT.anchoredPosition = new Vector2(460, 0);
-        btnGathering.onClick.AddListener(() => UnityEngine.SceneManagement.SceneManager.LoadScene("Collect"));
-        controller.btnGathering = btnGathering;
-
         // ⚔️ 返回战场按钮
         Button btnReturn = CreateButton(headerGO.transform, "BtnReturnToCombat", "⚔️ 返回战场", new Vector2(130, 48), new Color(0.85f, 0.32f, 0.22f, 0.95f), Color.white, 14);
         RectTransform returnRT = btnReturn.GetComponent<RectTransform>();
         returnRT.anchorMin = new Vector2(0, 0.5f);
         returnRT.anchorMax = new Vector2(0, 0.5f);
         returnRT.pivot = new Vector2(0, 0.5f);
-        returnRT.anchoredPosition = new Vector2(600, 0);
+returnRT.anchoredPosition = new Vector2(460, 0);
         btnReturn.onClick.AddListener(() => controller.ReturnToCombatScene());
         controller.btnReturnToCombat = btnReturn;
 
@@ -159,15 +149,15 @@ public static class ShellInventorySceneBuilder
         shellGroupRT.anchoredPosition = new Vector2(-30, 0);
         shellGroupRT.sizeDelta = new Vector2(480, 56);
 
-        Button switchConch = CreateButton(shellGroupGO.transform, "SwitchConch", "🐚 海螺壳 (16格)", new Vector2(150, 46), new Color(0.98f, 0.82f, 0.18f, 0.9f), Color.black, 14);
+        Button switchConch = CreateButton(shellGroupGO.transform, "SwitchConch", $"海螺壳 ({ShellConfig.CreateConfig(ShellType.ConchShell).TotalSlotCount}格)", new Vector2(150, 46), new Color(0.98f, 0.82f, 0.18f, 0.9f), Color.black, 14);
         switchConch.GetComponent<RectTransform>().anchoredPosition = new Vector2(-330, 0);
         controller.switchConchBtn = switchConch;
 
-        Button switchClam = CreateButton(shellGroupGO.transform, "SwitchClam", "🦪 扇贝壳 (18格)", new Vector2(150, 46), new Color(0.2f, 0.3f, 0.4f, 0.7f), Color.white, 14);
+        Button switchClam = CreateButton(shellGroupGO.transform, "SwitchClam", $"扇贝壳 ({ShellConfig.CreateConfig(ShellType.ClamShell).TotalSlotCount}格)", new Vector2(150, 46), new Color(0.2f, 0.3f, 0.4f, 0.7f), Color.white, 14);
         switchClam.GetComponent<RectTransform>().anchoredPosition = new Vector2(-165, 0);
         controller.switchClamBtn = switchClam;
 
-        Button switchCan = CreateButton(shellGroupGO.transform, "SwitchCan", "🥫 铁皮罐 (20格)", new Vector2(150, 46), new Color(0.2f, 0.3f, 0.4f, 0.7f), Color.white, 14);
+        Button switchCan = CreateButton(shellGroupGO.transform, "SwitchCan", $"铁皮罐 ({ShellConfig.CreateConfig(ShellType.RustedCanShell).TotalSlotCount}格)", new Vector2(150, 46), new Color(0.2f, 0.3f, 0.4f, 0.7f), Color.white, 14);
         switchCan.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
         controller.switchCanBtn = switchCan;
 
@@ -458,21 +448,24 @@ public static class ShellInventorySceneBuilder
         Button btnAdd = CreateButton(actGroupGO.transform, "BtnAddRandom", "🎲 拾取随机", new Vector2(130, 48), new Color(0.18f, 0.35f, 0.5f, 0.9f), Color.white, 14);
         btnAdd.GetComponent<RectTransform>().anchoredPosition = new Vector2(65, 0);
         controller.btnAddRandom = btnAdd;
+        btnAdd.gameObject.SetActive(false);
 
         Button btnFill = CreateButton(actGroupGO.transform, "BtnFillAll", "🎒 填满背壳", new Vector2(130, 48), new Color(0.25f, 0.45f, 0.35f, 0.9f), Color.white, 14);
         btnFill.GetComponent<RectTransform>().anchoredPosition = new Vector2(205, 0);
         controller.btnFillAll = btnFill;
+        btnFill.gameObject.SetActive(false);
 
         Button btnClear = CreateButton(actGroupGO.transform, "BtnClearAll", "🧹 清空背壳", new Vector2(130, 48), new Color(0.5f, 0.22f, 0.22f, 0.9f), Color.white, 14);
         btnClear.GetComponent<RectTransform>().anchoredPosition = new Vector2(345, 0);
         controller.btnClearAll = btnClear;
+        btnClear.gameObject.SetActive(false);
 
         Button btnDemo = CreateButton(actGroupGO.transform, "BtnDemoStroke", "💡 连线示例", new Vector2(130, 48), new Color(0.48f, 0.32f, 0.65f, 0.9f), Color.white, 14);
-        btnDemo.GetComponent<RectTransform>().anchoredPosition = new Vector2(485, 0);
+        btnDemo.GetComponent<RectTransform>().anchoredPosition = new Vector2(65, 0);
         controller.btnDemoStroke = btnDemo;
 
         Button btnDelete = CreateButton(actGroupGO.transform, "BtnDeleteSelected", "🗑️ 丢弃材料", new Vector2(130, 48), new Color(0.72f, 0.2f, 0.2f, 0.95f), Color.white, 14);
-        btnDelete.GetComponent<RectTransform>().anchoredPosition = new Vector2(625, 0);
+        btnDelete.GetComponent<RectTransform>().anchoredPosition = new Vector2(205, 0);
         controller.btnDeleteSelected = btnDelete;
 
         GameObject hintTxtGO = CreateText(bottomBarGO.transform, "HintText", "【操作指引】左键连线合成；右键直接删除材料；拖拽材料至垃圾桶丢弃；点击材料可查看详情与丢弃。", 12, FontStyle.Normal, new Color(0.6f, 0.72f, 0.85f), TextAnchor.MiddleRight);

@@ -12,6 +12,7 @@ public class HydroCannonAuraBehavior : BiomechanicalAuraBase
     [Header("Cannon Stats")]
     public float shotRange = 6.2f;
     public float blastImpact = 35f;
+    public float shotDamage = 32f;
     public float cooldown = 2.2f;
 
     public bool isOverclocked = false;
@@ -121,7 +122,7 @@ public class HydroCannonAuraBehavior : BiomechanicalAuraBase
 
         var proj = bladeGO.AddComponent<WaterBladeProjectile>();
         proj.direction = dir;
-        proj.damage = 32f;
+        proj.damage = shotDamage;
         proj.guardBreak = 40f;
         proj.knockbackPower = blastImpact;
 

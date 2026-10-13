@@ -96,6 +96,7 @@ public class GameModeManager : MonoBehaviour
 
     public void EnterBuildMode(bool ignoreStaminaCost)
     {
+        if (PlayerSessionData.IsCombatInputBlocked) return;
         // 机制落地（需求4）：消耗 30 点精力开启建造模式，避免无成本频繁开启
         if (!ignoreStaminaCost && playerController != null)
         {

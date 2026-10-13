@@ -100,7 +100,7 @@ public class BioIncubatorAuraBehavior : BiomechanicalAuraBase
 
                     if (DamageTextManager.Instance != null)
                     {
-                        DamageTextManager.Instance.ShowText(e.transform.position + Vector3.up * 0.8f, "🕊️ 安抚 (5s)", new Color(0.45f, 0.85f, 1f), 0.12f);
+                        DamageTextManager.Instance.ShowText(e.transform.position + Vector3.up * 0.8f, $"🕊️ 安抚 ({calmSeconds:0.#}s)", new Color(0.45f, 0.85f, 1f), 0.12f);
                     }
                 }
             }

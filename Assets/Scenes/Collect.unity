@@ -375,7 +375,7 @@ GameObject:
   - component: {fileID: 460815579}
   - component: {fileID: 460815581}
   m_Layer: 0
-  m_Name: BtnGoCrafting
+  m_Name: BtnReturnCombat
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1446,7 +1446,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\U0001F41A \u524D\u5F80\u80CC\u58F3\u5DE5\u574A (Mix)"
+  m_Text: "\u8FD4\u56DE\u6218\u573A"
 --- !u!222 &1725056870
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1490,7 +1490,7 @@ MonoBehaviour:
   dayTitleText: {fileID: 1105786631}
   daySubText: {fileID: 813867841}
   btnNextDay: {fileID: 1689140992}
-  btnGoToCrafting: {fileID: 460815581}
+  btnReturnToCombat: {fileID: 460815581}
   basketContainer: {fileID: 2106035357}
   basketCountText: {fileID: 1554900114}
   basketIcon: {fileID: 1701132614}

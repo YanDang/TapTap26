@@ -21,13 +21,25 @@ public static class PlayerSessionData
 
     /// <summary>[gamejam 移植] 仓库里的成品增减时触发（替代原工程直接调 BuildDockUI.PopulateCards）。</summary>
     public static event Action OnCraftedProductsChanged;
-    public static void NotifyCraftedProductsChanged() => OnCraftedProductsChanged?.Invoke();
+    public static void NotifyCraftedProductsChanged()
+    {
+        if (OnCraftedProductsChanged == null) return;
+        foreach (Action listener in OnCraftedProductsChanged.GetInvocationList())
+        {
+            try { listener(); }
+            catch (Exception exception) { Debug.LogException(exception); }
+        }
+    }
 
     // 状态标记：刚从工坊合成归来
     public static bool hasJustReturnedFromCrafting = false;
 
     // 当前是否正处于工坊开启状态（用于无缝叠加模式）
     public static bool isCraftingOpen = false;
+
+    public static bool IsCombatInputBlocked => GameplaySceneTransition.IsBusy || isCraftingOpen
+        || UnityEngine.SceneManagement.SceneManager.GetSceneByName("Mix").isLoaded
+        || UnityEngine.SceneManagement.SceneManager.GetSceneByName("Collect").isLoaded;
 
     // 玩家在温室采集到的生体机械材料库历史记录
     public static List<BiomechanicalMaterial> gatheredBiomechanicalMaterials = new List<BiomechanicalMaterial>();
@@ -37,6 +49,32 @@ public static class PlayerSessionData
     // 存放工坊合成出的成品，不占用背壳材料背包，供战斗场景部署使用！
     // =========================================================================
     public static List<CraftedProduct> craftedProducts = new List<CraftedProduct>();
+    private static readonly Dictionary<CraftedProduct, object> reservedProducts = new Dictionary<CraftedProduct, object>();
+
+    public static bool TryReserveProduct(CraftedProduct product, object owner)
+    {
+        EnsureInitialized();
+        if (product == null || owner == null || !craftedProducts.Contains(product) || reservedProducts.ContainsKey(product)) return false;
+        reservedProducts.Add(product, owner);
+        return true;
+    }
+
+    public static bool CommitReservedProduct(CraftedProduct product, object owner)
+    {
+        if (!reservedProducts.TryGetValue(product, out var reservation) || !ReferenceEquals(reservation, owner)) return false;
+        if (!craftedProducts.Remove(product)) return false;
+        reservedProducts.Remove(product);
+        SaveCraftedProductsToStorage();
+        return true;
+    }
+
+    public static void ReleaseReservedProduct(CraftedProduct product, object owner)
+    {
+        if (product != null && reservedProducts.TryGetValue(product, out var reservation) && ReferenceEquals(reservation, owner)) reservedProducts.Remove(product);
+    }
+
+    public static bool IsProductReserved(CraftedProduct product) => product != null && reservedProducts.ContainsKey(product);
+
     private const string PrefKey_CraftedProducts = "TAP_CRAFTED_PRODUCTS_DATA_V2";
 
     /// <summary>
@@ -44,6 +82,7 @@ public static class PlayerSessionData
     /// </summary>
     public static void ClearCraftedProducts()
     {
+        if (reservedProducts.Count > 0) return;
         craftedProducts.Clear();
         PlayerPrefs.DeleteKey(PrefKey_CraftedProducts);
         PlayerPrefs.Save();
@@ -82,6 +121,7 @@ public static class PlayerSessionData
     public static bool RemoveCraftedProduct(CraftedProduct product)
     {
         EnsureInitialized();
+        if (IsProductReserved(product)) return false;
         bool removed = craftedProducts.Remove(product);
         if (removed) SaveCraftedProductsToStorage();
         return removed;
@@ -93,7 +133,7 @@ public static class PlayerSessionData
     public static bool RemoveCraftedProductById(string productId)
     {
         EnsureInitialized();
-        int idx = craftedProducts.FindIndex(p => p != null && p.id == productId);
+        int idx = craftedProducts.FindIndex(p => p != null && p.id == productId && !IsProductReserved(p));
         if (idx >= 0)
         {
             craftedProducts.RemoveAt(idx);
@@ -134,6 +174,8 @@ public static class PlayerSessionData
                     if (wrapper != null && wrapper.products != null)
                     {
                         craftedProducts = wrapper.products;
+                        foreach (var product in craftedProducts)
+                            if (product != null) product.tacticalEffect = CraftedProductStats.Describe(product);
                     }
                 }
             }
@@ -148,6 +190,49 @@ public static class PlayerSessionData
     // 背壳背包跨场景共享数据 (Shell Backpack Shared Slots)
     // =========================================================================
     public static ShellType currentShellType = ShellType.ConchShell;
+    public static GreenhouseDayState greenhouse = new GreenhouseDayState();
+    public static List<GreenhouseDoorState> greenhouseDoors = new List<GreenhouseDoorState>();
+    public static string activeGreenhouseDoorId;
+
+    public static bool IsDoorUsedToday(string doorId)
+    {
+        EnsureInitialized();
+        return greenhouseDoors.Exists(door => door.doorId == doorId && door.lastUsedDay == greenhouse.day);
+    }
+
+    public static bool TryBeginDoorVisit(string doorId)
+    {
+        EnsureInitialized();
+        if (string.IsNullOrEmpty(doorId) || IsDoorUsedToday(doorId)) return false;
+        int day = greenhouse.day;
+        var door = greenhouseDoors.Find(entry => entry.doorId == doorId);
+        if (door == null)
+        {
+            door = new GreenhouseDoorState { doorId = doorId };
+            greenhouseDoors.Add(door);
+        }
+        if (door.greenhouse == null || door.greenhouse.day != day)
+            door.greenhouse = new GreenhouseDayState { day = day };
+        greenhouse = door.greenhouse;
+        activeGreenhouseDoorId = doorId;
+        return true;
+    }
+
+    public static void SetGreenhouseState(GreenhouseDayState value)
+    {
+        greenhouse = value;
+        var door = greenhouseDoors.Find(entry => entry.doorId == activeGreenhouseDoorId);
+        if (door != null) door.greenhouse = value;
+    }
+
+    public static void CommitDoorVisit()
+    {
+        var door = greenhouseDoors.Find(entry => entry.doorId == activeGreenhouseDoorId);
+        if (door == null) return;
+        door.lastUsedDay = greenhouse.day;
+        door.greenhouse = greenhouse;
+        SaveBackpackToStorage();
+    }
 
     // 当前背壳背包各槽位的材料数据 (长度 32，初始全部为空 null)
     public static BiomechanicalMaterial[] shellSlotItems = new BiomechanicalMaterial[32];
@@ -168,6 +253,9 @@ public static class PlayerSessionData
     public class SavedBackpackData
     {
         public int shellType;
+        public GreenhouseDayState greenhouse;
+        public List<GreenhouseDoorState> greenhouseDoors;
+        public string activeGreenhouseDoorId;
         public List<SavedSlotEntry> entries = new List<SavedSlotEntry>();
     }
 
@@ -197,12 +285,32 @@ public static class PlayerSessionData
         SaveBackpackToStorage();
     }
 
+    public static bool TrySwitchShell(ShellType shellType, out string reason)
+    {
+        EnsureInitialized();
+        reason = "";
+        if (!Enum.IsDefined(typeof(ShellType), shellType)) { reason = "未知背壳"; return false; }
+        if (shellType == currentShellType) return true;
+        if (!ShellBackpackLayout.TryRepack(shellSlotItems, ShellConfig.CreateConfig(shellType), out var migrated))
+        {
+            reason = "换壳失败：容量或 2×2 空间不足，请先合成或整理材料。原背包保持不变。";
+            return false;
+        }
+        shellSlotItems = migrated;
+        currentShellType = shellType;
+        SaveBackpackToStorage();
+        return true;
+    }
+
     public static void SaveBackpackToStorage()
     {
         try
         {
             SavedBackpackData data = new SavedBackpackData();
             data.shellType = (int)currentShellType;
+            data.greenhouse = greenhouse;
+            data.greenhouseDoors = greenhouseDoors;
+            data.activeGreenhouseDoorId = activeGreenhouseDoorId;
 
             for (int i = 0; i < shellSlotItems.Length; i++)
             {
@@ -231,6 +339,9 @@ public static class PlayerSessionData
 
     public static void LoadBackpackFromStorage()
     {
+        greenhouse = new GreenhouseDayState();
+        greenhouseDoors = new List<GreenhouseDoorState>();
+        activeGreenhouseDoorId = null;
         try
         {
             for (int i = 0; i < shellSlotItems.Length; i++)
@@ -251,6 +362,18 @@ public static class PlayerSessionData
             if (data == null) return;
 
             currentShellType = (ShellType)data.shellType;
+            greenhouse = data.greenhouse ?? new GreenhouseDayState();
+            if (greenhouse.nodes == null) greenhouse.nodes = new List<GreenhouseNodeState>();
+            greenhouse.day = Mathf.Max(1, greenhouse.day);
+            greenhouseDoors = data.greenhouseDoors ?? new List<GreenhouseDoorState>();
+            greenhouseDoors.RemoveAll(door => door == null || string.IsNullOrEmpty(door.doorId));
+            activeGreenhouseDoorId = data.activeGreenhouseDoorId;
+            foreach (var door in greenhouseDoors)
+            {
+                if (door.greenhouse == null) door.greenhouse = new GreenhouseDayState();
+                if (door.greenhouse.nodes == null) door.greenhouse.nodes = new List<GreenhouseNodeState>();
+                if (door.doorId == activeGreenhouseDoorId) door.greenhouse = greenhouse;
+            }
 
             // 建立已恢复的 2x2 引用字典，防止 2x2 的 4 个格子被实例化成 4 个独立对象
             Dictionary<int, BiomechanicalMaterial> restoredRootMats = new Dictionary<int, BiomechanicalMaterial>();

@@ -70,7 +70,7 @@ public class HybridResidueTrapBehavior : BiomechanicalAuraBase
                 float d = Vector2.Distance(transform.position, e.transform.position);
                 if (d <= 1.5f)
                 {
-                    e.ApplySlow(50, 0.6f);
+                    e.ApplySlow(Mathf.RoundToInt(slowFactor * 100f), 0.6f);
                 }
             }
         }

@@ -35,13 +35,15 @@ namespace BiomechanicalCrafting.Editor
             var adapter = adapterObj.GetComponent<BiomechanicalCombatAdapter>() ?? adapterObj.AddComponent<BiomechanicalCombatAdapter>();
             adapter.genericFurniturePrefab = lavaPrefab;
             adapter.autoSpawnShowcaseOnStart = false;
+            foreach (var duplicate in Object.FindObjectsOfType<BiomechanicalCombatAdapter>())
+                if (duplicate != adapter) Object.DestroyImmediate(duplicate);
 
             // 3. 配置 CombatSceneCraftingEntrance
             var entrance = Object.FindObjectOfType<CombatSceneCraftingEntrance>();
             if (entrance != null)
             {
                 entrance.craftingSceneName = "Mix";
-                entrance.shortcutKey = KeyCode.B;
+                entrance.shortcutKey = KeyCode.Tab;
             }
 
             // 5. 配置 BuildController 与 GameModeManager

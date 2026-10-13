@@ -30,11 +30,14 @@ namespace GameJam
 
         public float slowScale = 0.1f;
         float _slowUntil = -1, _slowStart = -1, _hitstopUntil = -1;
+        private bool overlayPaused;
+        private float overlayPauseStarted;
+        private float Clock => overlayPaused ? overlayPauseStarted : UnityEngine.Time.unscaledTime;
 
-        public static bool SlowMo => I != null && UnityEngine.Time.unscaledTime < I._slowUntil;
-        public static bool Hitstop => I != null && UnityEngine.Time.unscaledTime < I._hitstopUntil;
-        public static float SlowMoRemaining => I != null ? Mathf.Max(0, I._slowUntil - UnityEngine.Time.unscaledTime) : 0;
-        public static float SlowMoElapsed => (I != null && SlowMo) ? UnityEngine.Time.unscaledTime - I._slowStart : 0;
+        public static bool SlowMo => I != null && I.Clock < I._slowUntil;
+        public static bool Hitstop => I != null && I.Clock < I._hitstopUntil;
+        public static float SlowMoRemaining => I != null ? Mathf.Max(0, I._slowUntil - I.Clock) : 0;
+        public static float SlowMoElapsed => (I != null && SlowMo) ? I.Clock - I._slowStart : 0;
 
         /// <summary>Delta time for the player (and other "unscaled" actors): real time, but 0 during hitstop.</summary>
         public static float PlayerDelta => Hitstop ? 0 : Mathf.Min(UnityEngine.Time.unscaledDeltaTime, 0.05f);
@@ -43,7 +46,7 @@ namespace GameJam
 
         public void StartSlowMo(float realSeconds)
         {
-            _slowStart = UnityEngine.Time.unscaledTime;
+            _slowStart = Clock;
             _slowUntil = _slowStart + realSeconds;
             Apply();
         }
@@ -52,15 +55,30 @@ namespace GameJam
 
         public void DoHitstop(float realSeconds)
         {
-            _hitstopUntil = Mathf.Max(_hitstopUntil, UnityEngine.Time.unscaledTime + realSeconds);
+            _hitstopUntil = Mathf.Max(_hitstopUntil, Clock + realSeconds);
             Apply();
         }
 
         void Update() => Apply();
 
+        public void Refresh() => Apply();
+
         void Apply()
         {
-            float ts = Hitstop || PlayerSessionData.isCraftingOpen ? 0f : (SlowMo ? slowScale : 1f);   // 合成工坊开着 = 战斗暂停
+            bool blocked = PlayerSessionData.IsCombatInputBlocked;
+            if (blocked && !overlayPaused)
+            {
+                overlayPauseStarted = UnityEngine.Time.unscaledTime;
+                overlayPaused = true;
+            }
+            else if (!blocked && overlayPaused)
+            {
+                float duration = UnityEngine.Time.unscaledTime - overlayPauseStarted;
+                if (_slowUntil > overlayPauseStarted) { _slowUntil += duration; _slowStart += duration; }
+                if (_hitstopUntil > overlayPauseStarted) _hitstopUntil += duration;
+                overlayPaused = false;
+            }
+            float ts = Hitstop || blocked ? 0f : (SlowMo ? slowScale : 1f);
             UnityEngine.Time.timeScale = ts;
             UnityEngine.Time.fixedDeltaTime = 0.02f * Mathf.Max(ts, 0.05f);
         }

@@ -137,11 +137,10 @@ namespace BiomechanicalCrafting.Editor
             btnNextDayRT.anchoredPosition = new Vector2(-130, 0);
             controller.btnNextDay = btnNextDay;
 
-            // 【前往背壳工坊 (Mix)】按钮
-            Button btnGoMix = CreateButton(centerButtonsGO.transform, "BtnGoCrafting", "🐚 前往背壳工坊 (Mix)", new Vector2(230, 52), new Color(0.16f, 0.42f, 0.32f, 0.95f), new Color(0.85f, 0.98f, 0.85f), 16);
-            RectTransform btnGoMixRT = btnGoMix.GetComponent<RectTransform>();
-            btnGoMixRT.anchoredPosition = new Vector2(125, 0);
-            controller.btnGoToCrafting = btnGoMix;
+            Button btnReturnCombat = CreateButton(centerButtonsGO.transform, "BtnReturnCombat", "返回战场", new Vector2(230, 52), new Color(0.16f, 0.42f, 0.32f, 0.95f), new Color(0.85f, 0.98f, 0.85f), 16);
+            RectTransform btnReturnCombatRT = btnReturnCombat.GetComponent<RectTransform>();
+            btnReturnCombatRT.anchoredPosition = new Vector2(125, 0);
+            controller.btnReturnToCombat = btnReturnCombat;
 
             // 7.3 右侧：采集收纳篮统计 (Basket Counter)
             GameObject basketGO = CreateUIObject("BasketCounter", headerGO.transform);

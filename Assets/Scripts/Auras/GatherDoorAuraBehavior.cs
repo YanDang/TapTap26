@@ -26,12 +26,35 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     {
         Closed,    // 初始关闭状态，等待开启
         Fighting,  // 怪物已涌现，交战中
-        Cleared    // 敌群肃清，通道稳定，可传送进入采集
+        Cleared,
+        Spent
     }
 
     [Header("Door Status")]
     public DoorState state = DoorState.Closed;
+
     public float interactionRadius = 2.2f;
+
+    private string doorId;
+    public string DoorId => doorId ?? (doorId = gameObject.scene.name + ":" +
+        transform.position.x.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + ":" +
+        transform.position.y.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + ":" +
+        transform.position.z.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+
+    private void RefreshDailyState()
+    {
+        bool used = PlayerSessionData.IsDoorUsedToday(DoorId);
+        if (used && state != DoorState.Spent)
+        {
+            state = DoorState.Spent;
+            UpdatePromptText();
+        }
+        else if (!used && state == DoorState.Spent)
+        {
+            state = DoorState.Cleared;
+            UpdatePromptText();
+        }
+    }
 
     [Header("Spawned Enemies")]
     public readonly List<EnemyController> spawnedEnemies = new List<EnemyController>();
@@ -105,6 +128,12 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
 
         switch (state)
         {
+            case DoorState.Spent:
+                promptTextMesh.text = "门已关闭 · 今日已使用，次日可再次进入";
+                promptTextMesh.color = Color.gray;
+                if (rangeRingRenderer != null) rangeRingRenderer.color = Color.gray;
+                break;
+
             case DoorState.Closed:
                 promptTextMesh.text = "🚪 点击或按 [F] 开启裂隙门";
                 promptTextMesh.color = ColorClosed;
@@ -137,6 +166,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
 
     void Update()
     {
+        if (!PlayerSessionData.IsCombatInputBlocked) RefreshDailyState();
         bool isPlaced = (parentFurniture != null && parentFurniture.currentState == FurnitureObject.FurnitureState.Placed);
 
         if (!isPlaced)
@@ -167,7 +197,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         // 光环呼吸微脉冲
         if (rangeRingRenderer != null)
         {
-            Color curCol = (state == DoorState.Closed) ? ColorClosed : (state == DoorState.Fighting ? ColorFighting : ColorCleared);
+            Color curCol = state == DoorState.Spent ? Color.gray : (state == DoorState.Closed ? ColorClosed : (state == DoorState.Fighting ? ColorFighting : ColorCleared));
             float alpha = 0.25f + 0.15f * Mathf.Sin(t * (state == DoorState.Fighting ? 4f : 2f));
             rangeRingRenderer.color = new Color(curCol.r, curCol.g, curCol.b, alpha);
         }
@@ -231,7 +261,11 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     /// </summary>
     public void OnPlayerInteract(PlayerController player)
     {
+        if (PlayerSessionData.IsCombatInputBlocked) return;
+        RefreshDailyState();
+        if (state == DoorState.Spent) return;
         if (player == null) player = PlayerController.Instance ?? FindObjectOfType<PlayerController>();
+        if (player == null || !player.IsAlive) return;
 
         switch (state)
         {
@@ -344,40 +378,18 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     /// </summary>
     public void EnterGatheringScene(PlayerController player)
     {
-        if (PlayerSessionData.isCraftingOpen) return;
-        PlayerSessionData.isCraftingOpen = true;
-
-        PlayerSessionData.returnCombatSceneName = SceneManager.GetActiveScene().name;
-
-        if (player != null && player.equippedWeapon != null)
+        if (PlayerSessionData.IsCombatInputBlocked) return;
+        RefreshDailyState();
+        if (state != DoorState.Cleared) return;
+        var previousGreenhouse = PlayerSessionData.greenhouse;
+        string previousDoorId = PlayerSessionData.activeGreenhouseDoorId;
+        if (!PlayerSessionData.TryBeginDoorVisit(DoorId)) return;
+        System.Action rollback = () =>
         {
-            PlayerSessionData.currentEquippedWeapon = player.equippedWeapon;
-        }
-
-        // 隐藏左上角战斗 HUD
-        if (GameJam.HUD.I != null)
-        {
-            GameJam.HUD.I.SetVisible(false);
-        }
-
-        var camCtrl = FindObjectOfType<CameraController>();
-        if (camCtrl != null) camCtrl.enabled = false;
-        // 保持 AudioListener 开启，确保叠加场景中的 2D 采集音效能正常被听到，同时消除全局无侦听器的警告
-
-        Sfx.Play("sfx_parry", 0.9f, true);
-
-        if (DamageTextManager.Instance != null)
-        {
-            DamageTextManager.Instance.ShowText(
-                transform.position + Vector3.up * 1.2f,
-                "🌀 穿梭裂隙... 前往生体采集温室!",
-                new Color(0.2f, 1f, 0.7f),
-                0.16f
-            );
-        }
-
-        Time.timeScale = 0f; // 冻结当前战场，保留所有现场怪兽与建筑状态
-        SceneManager.LoadSceneAsync("Collect", LoadSceneMode.Additive);
+            PlayerSessionData.greenhouse = previousGreenhouse;
+            PlayerSessionData.activeGreenhouseDoorId = previousDoorId;
+        };
+        if (!GameplaySceneTransition.TryOpen("Collect", player, rollback)) rollback();
     }
 
     void OnMouseDown()

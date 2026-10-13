@@ -10,6 +10,7 @@ public class SpasmMetalTrapBehavior : BiomechanicalAuraBase
     [Header("Spring Trap Stats")]
     public float knockbackForce = 5.2f;
     public float stunDuration = 2.0f;
+    public float damage = 30f;
 
     private bool isTriggered = false;
 
@@ -78,7 +79,7 @@ public class SpasmMetalTrapBehavior : BiomechanicalAuraBase
         Vector3 flingDir = (enemy.transform.position - transform.position).normalized;
         if (flingDir.sqrMagnitude < 0.01f) flingDir = Vector3.up;
 
-        enemy.TakeDamage(30f, 60f, transform.position);
+        enemy.TakeDamage(damage, 60f, transform.position);
         enemy.ApplyKnockback(flingDir, knockbackForce * 0.15f, 0.45f);
         enemy.ApplyParalysis(stunDuration);
 

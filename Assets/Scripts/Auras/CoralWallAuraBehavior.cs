@@ -7,13 +7,15 @@ using GameJam;
 /// - 机制：
 ///   * A* 寻路硬阻挡：阻断寻路，强行改变敌人行进路线
 ///   * 荆棘反噬：怪近战攻击珊瑚墙，即刻受到固定 thorns 点破防物理伤害
-///   * 活体自愈：脱离受击 3 秒后，每秒自动恢复 regen 点耐久
+///   * 活体自愈：按配置间隔恢复耐久，潮湿时加快恢复
 /// </summary>
 public class CoralWallAuraBehavior : BiomechanicalAuraBase
 {
     [Header("Coral Stats")]
     public float thornsDamage = 16f;
-    public float regenRate = 3f;
+    public float regenRate = 1f;
+    public float regenInterval = 4f;
+    public float moistRegenInterval = 2f;
 
     private float regenTimer = 0f;
 
@@ -73,16 +75,16 @@ public class CoralWallAuraBehavior : BiomechanicalAuraBase
         if (parentFurniture != null && parentFurniture.currentDurability < parentFurniture.maxDurability)
         {
             bool isMoist = WaterTowerAuraBehavior.IsPositionMoist(transform.position);
-            float interval = isMoist ? 2.0f : 4.0f;
+            float interval = Mathf.Max(0.01f, isMoist ? moistRegenInterval : regenInterval);
             regenTimer += Time.deltaTime;
             if (regenTimer >= interval)
             {
-                regenTimer = 0f;
-                parentFurniture.currentDurability = Mathf.Min(parentFurniture.maxDurability, parentFurniture.currentDurability + 1f);
+                regenTimer -= interval;
+                parentFurniture.currentDurability = Mathf.Min(parentFurniture.maxDurability, parentFurniture.currentDurability + regenRate);
 
                 if (DamageTextManager.Instance != null)
                 {
-                    string label = isMoist ? "💧 潮湿增生 +1" : "🌿 珊瑚自愈 +1";
+                    string label = (isMoist ? "💧 潮湿增生 +" : "🌿 珊瑚自愈 +") + regenRate.ToString("0.#");
                     DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.5f, label, new Color(0.35f, 1f, 0.5f), 0.09f);
                 }
             }

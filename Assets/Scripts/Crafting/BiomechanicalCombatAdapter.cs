@@ -19,6 +19,11 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
 
     void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this);
+            return;
+        }
         Instance = this;
 
         if (genericFurniturePrefab == null)
@@ -63,6 +68,11 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
         }
 
         // 仓库开局为空，不再自动注入初始家具，全部由玩家在工坊中合成！
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     void Start()
@@ -150,11 +160,13 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
         furn.furnitureName = name;
         furn.originalProduct = prod;
 
-        float dura = g > 0 ? (120f + g * 1.5f) : 160f;
+        var stats = CraftedProductStats.Calculate(prod);
+        prod.tacticalEffect = CraftedProductStats.Describe(prod);
+        float dura = stats.durability;
         furn.maxDurability = dura;
         furn.currentDurability = dura;
-        furn.kickDamage = 60f + p * 0.8f;
-        furn.kickGuardBreak = 80f + p * 0.5f;
+        furn.kickDamage = stats.kickDamage;
+        furn.kickGuardBreak = stats.kickGuardBreak;
 
         if (furn.furnitureRenderer != null)
         {
@@ -225,77 +237,86 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
 
         // 1. 实例化物体
         GameObject go = Instantiate(genericFurniturePrefab, worldPos, Quaternion.identity);
-        go.name = $"{product.id}_{cellPos.x}_{cellPos.y}";
-
-        // 2. 挂载并注入 FurnitureObject 参数
-        var furn = go.GetComponent<FurnitureObject>() ?? go.AddComponent<FurnitureObject>();
-        furn.instanceId = product.id;
-        furn.furnitureName = product.productName;
-        furn.originalProduct = product;
-
-        // 统一物理碰撞体覆盖度，使其贴合 1.0m 等距菱形地块，杜绝怪物从边缘穿模
-        if (furn.furnitureCollider is CircleCollider2D circleCol2)
+        try
         {
-            if (product.id == "furn_gather_door")
+            go.name = $"{product.id}_{cellPos.x}_{cellPos.y}";
+
+            // 2. 挂载并注入 FurnitureObject 参数
+            var furn = go.GetComponent<FurnitureObject>() ?? go.AddComponent<FurnitureObject>();
+            furn.instanceId = product.id;
+            furn.furnitureName = product.productName;
+            furn.originalProduct = product;
+
+            // 统一物理碰撞体覆盖度，使其贴合 1.0m 等距菱形地块，杜绝怪物从边缘穿模
+            if (furn.furnitureCollider is CircleCollider2D circleCol2)
             {
-                circleCol2.radius = 0.85f;
-                circleCol2.offset = new Vector2(0f, 0.6f);
-                furn.isIndestructible = true;
-                furn.isImmovable = true;
-                if (furn.furnitureRenderer != null)
+                if (product.id == "furn_gather_door")
                 {
-                    furn.furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
-                    furn.furnitureRenderer.sortingOrder = 10;
+                    circleCol2.radius = 0.85f;
+                    circleCol2.offset = new Vector2(0f, 0.6f);
+                    furn.isIndestructible = true;
+                    furn.isImmovable = true;
+                    if (furn.furnitureRenderer != null)
+                    {
+                        furn.furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+                        furn.furnitureRenderer.sortingOrder = 10;
+                    }
+                }
+                else
+                {
+                    circleCol2.radius = 0.52f;
+                    circleCol2.offset = new Vector2(0f, 0.12f);
+                    if (furn.furnitureRenderer != null)
+                    {
+                        furn.furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+                    }
                 }
             }
-            else
+
+            // 3. 根据构装四大要素 totalP, totalE, totalG, totalW 动态赋能物理三态数值
+            var stats = CraftedProductStats.Calculate(product);
+            product.tacticalEffect = CraftedProductStats.Describe(product);
+            float dura = stats.durability;
+            furn.maxDurability = dura;
+            furn.currentDurability = dura;
+            furn.kickDamage = stats.kickDamage;
+            furn.kickGuardBreak = stats.kickGuardBreak;
+
+            // 4. 着色与真实生体构装精灵渲染
+            if (furn.furnitureRenderer != null)
             {
-                circleCol2.radius = 0.52f;
-                circleCol2.offset = new Vector2(0f, 0.12f);
-                if (furn.furnitureRenderer != null)
+                var realSprite = Resources.Load<Sprite>("FurnitureSprites/" + product.id);
+                if (realSprite != null)
                 {
-                    furn.furnitureRenderer.spriteSortPoint = SpriteSortPoint.Pivot;
+                    furn.furnitureRenderer.sprite = realSprite;
+                    furn.furnitureRenderer.color = Color.white;
+                }
+                else
+                {
+                    furn.furnitureRenderer.color = product.themeColor;
                 }
             }
-        }
 
-        // 3. 根据构装四大要素 totalP, totalE, totalG, totalW 动态赋能物理三态数值
-        float dura = product.totalG > 0 ? (120f + product.totalG * 1.5f) : 160f;
-        furn.maxDurability = dura;
-        furn.currentDurability = dura;
-        furn.kickDamage = 60f + product.totalP * 0.8f;
-        furn.kickGuardBreak = 80f + product.totalP * 0.5f;
+            // 5. 挂载专属战术光环行为组件
+            AttachTacticalAura(go, product);
 
-        // 4. 着色与真实生体构装精灵渲染
-        if (furn.furnitureRenderer != null)
-        {
-            var realSprite = Resources.Load<Sprite>("FurnitureSprites/" + product.id);
-            if (realSprite != null)
+            // 6. 注册至等距网格阻挡
+            furn.SnapToNearestGrid();
+
+
+            if (DamageTextManager.Instance != null)
             {
-                furn.furnitureRenderer.sprite = realSprite;
-                furn.furnitureRenderer.color = Color.white;
+                DamageTextManager.Instance.ShowText(worldPos + Vector3.up * 0.8f, $"✨ 部署构装: {product.productName}", product.themeColor, 0.12f);
             }
-            else
-            {
-                furn.furnitureRenderer.color = product.themeColor;
-            }
+
+            return go;
         }
-
-        // 5. 挂载专属战术光环行为组件
-        AttachTacticalAura(go, product);
-
-        // 6. 注册至等距网格阻挡
-        furn.SnapToNearestGrid();
-
-        // 7. 从仓库扣除 1 件
-        PlayerSessionData.RemoveCraftedProduct(product);
-
-        if (DamageTextManager.Instance != null)
+        catch
         {
-            DamageTextManager.Instance.ShowText(worldPos + Vector3.up * 0.8f, $"✨ 部署构装: {product.productName}", product.themeColor, 0.12f);
+            go.SetActive(false);
+            Destroy(go);
+            throw;
         }
-
-        return go;
     }
 
     /// <summary>
@@ -304,13 +325,14 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
     public void AttachTacticalAura(GameObject go, CraftedProduct prod)
     {
         if (go == null || prod == null) return;
+        var stats = CraftedProductStats.Calculate(prod);
 
         switch (prod.id)
         {
             case "furn_eel_generator":
                 var elec = go.GetComponent<EelGeneratorAuraBehavior>() ?? go.AddComponent<EelGeneratorAuraBehavior>();
-                elec.paralyzeRadius = Mathf.Clamp(2.0f + prod.totalE / 55.0f, 2.0f, 5.0f);
-                elec.shockDmg = Mathf.Clamp(Mathf.RoundToInt(18 + prod.totalE * 0.35f + prod.totalP * 0.12f), 18, 75);
+                elec.paralyzeRadius = stats.radius;
+                elec.shockDmg = stats.damage;
                 elec.powerGridRadius = 4.5f;
                 elec.productData = prod;
                 elec.SetRingRadius(elec.paralyzeRadius);
@@ -318,40 +340,44 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
 
             case "furn_coral_wall":
                 var wall = go.GetComponent<CoralWallAuraBehavior>() ?? go.AddComponent<CoralWallAuraBehavior>();
-                wall.thornsDamage = Mathf.Clamp(Mathf.RoundToInt(10 + prod.totalE * 0.18f + prod.totalG * 0.16f), 10, 42);
-                wall.regenRate = Mathf.Clamp(Mathf.RoundToInt(prod.totalG / 25.0f + 1), 1, 8);
+                wall.thornsDamage = stats.damage;
+                wall.regenRate = stats.regenAmount;
+                wall.regenInterval = stats.regenInterval;
+                wall.moistRegenInterval = stats.moistRegenInterval;
                 wall.productData = prod;
                 wall.SetRingRadius(1.8f);
                 break;
 
             case "furn_pneumatic_bed":
                 var bed = go.GetComponent<PneumaticBedAuraBehavior>() ?? go.AddComponent<PneumaticBedAuraBehavior>();
-                bed.fieldRadius = Mathf.Clamp(2.5f + prod.totalP / 45.0f, 2.5f, 5.5f);
-                bed.speedBoostPercent = Mathf.Clamp(Mathf.RoundToInt(12 + prod.totalP / 14.0f), 12, 35);
+                bed.fieldRadius = stats.radius;
+                bed.speedBoostPercent = stats.percent;
                 bed.productData = prod;
                 bed.SetRingRadius(bed.fieldRadius);
                 break;
 
             case "furn_water_tower":
                 var water = go.GetComponent<WaterTowerAuraBehavior>() ?? go.AddComponent<WaterTowerAuraBehavior>();
-                water.sprayRadius = Mathf.Clamp(2.5f + prod.totalW / 40.0f, 2.5f, 6.0f);
-                water.slowPercent = Mathf.Clamp(Mathf.RoundToInt(25 + prod.totalW / 9.0f), 25, 60);
+                water.sprayRadius = stats.radius;
+                water.slowPercent = stats.percent;
                 water.productData = prod;
                 water.SetRingRadius(water.sprayRadius);
                 break;
 
             case "furn_bio_incubator":
                 var incubator = go.GetComponent<BioIncubatorAuraBehavior>() ?? go.AddComponent<BioIncubatorAuraBehavior>();
-                incubator.lureRange = Mathf.Clamp(3.0f + (prod.totalW + prod.totalE) / 50.0f, 3.0f, 7.5f);
-                incubator.calmSeconds = Mathf.Clamp(4.0f + prod.totalG / 25.0f, 4.0f, 8.0f);
+                incubator.lureRange = stats.radius;
+                incubator.calmSeconds = stats.duration;
+                incubator.exposureNeeded = stats.exposureSeconds;
                 incubator.productData = prod;
                 incubator.SetRingRadius(incubator.lureRange);
                 break;
 
             case "furn_hydro_cannon":
                 var cannon = go.GetComponent<HydroCannonAuraBehavior>() ?? go.AddComponent<HydroCannonAuraBehavior>();
-                cannon.shotRange = Mathf.Clamp(4.5f + prod.totalP / 38.0f, 4.5f, 8.5f);
-                cannon.blastImpact = Mathf.Clamp(Mathf.RoundToInt(18 + (prod.totalP + prod.totalW) * 0.22f), 18, 65);
+                cannon.shotRange = stats.radius;
+                cannon.blastImpact = stats.force;
+                cannon.shotDamage = stats.damage;
                 cannon.productData = prod;
                 cannon.SetRingRadius(cannon.shotRange);
                 break;
@@ -364,24 +390,25 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
 
             case "scrap_spasm_metal":
                 var spring = go.GetComponent<SpasmMetalTrapBehavior>() ?? go.AddComponent<SpasmMetalTrapBehavior>();
-                spring.knockbackForce = Mathf.Clamp(4.5f + prod.totalP / 30.0f, 4.5f, 7.5f);
-                spring.stunDuration = Mathf.Clamp(1.2f + prod.totalE / 75.0f, 1.2f, 3.0f);
+                spring.knockbackForce = stats.force;
+                spring.stunDuration = stats.duration;
+                spring.damage = stats.damage;
                 spring.productData = prod;
                 spring.SetRingRadius(1.6f);
                 break;
 
             case "scrap_mud_coral":
                 var mud = go.GetComponent<MudCoralTrapBehavior>() ?? go.AddComponent<MudCoralTrapBehavior>();
-                mud.trapRadius = Mathf.Clamp(2.0f + prod.totalW / 45.0f, 2.0f, 4.5f);
-                mud.shockDmg = Mathf.Clamp(Mathf.RoundToInt(12 + prod.totalE * 0.28f), 12, 52);
+                mud.trapRadius = stats.radius;
+                mud.shockDmg = stats.damage;
                 mud.productData = prod;
                 mud.SetRingRadius(mud.trapRadius);
                 break;
 
             case "scrap_gas_cyst":
                 var bomb = go.GetComponent<GasCystMineBehavior>() ?? go.AddComponent<GasCystMineBehavior>();
-                bomb.blastRadius = Mathf.Clamp(2.0f + prod.totalP / 55.0f, 2.0f, 4.5f);
-                bomb.blastDamage = Mathf.Clamp(Mathf.RoundToInt(25 + prod.totalP * 0.36f), 25, 78);
+                bomb.blastRadius = stats.radius;
+                bomb.blastDamage = stats.damage;
                 bomb.productData = prod;
                 bomb.SetRingRadius(bomb.blastRadius);
                 break;
@@ -390,13 +417,16 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
             case "scrap_hybrid_residue":
                 var sludge = go.GetComponent<HybridResidueTrapBehavior>() ?? go.AddComponent<HybridResidueTrapBehavior>();
                 sludge.productData = prod;
+                sludge.slowFactor = stats.percent / 100f;
+                sludge.healAmount = stats.healAmount;
                 sludge.SetRingRadius(2.2f);
                 break;
 
             case "scrap_screaming_valve":
                 var valve = go.GetComponent<ScreamingValveAuraBehavior>() ?? go.AddComponent<ScreamingValveAuraBehavior>();
                 valve.productData = prod;
-                valve.tauntRange = Mathf.Clamp(5.5f + prod.totalE / 35.0f, 5.5f, 9.0f);
+                valve.tauntRange = stats.radius;
+                valve.screamDuration = stats.duration;
                 valve.SetRingRadius(valve.tauntRange);
                 break;
         }
@@ -433,8 +463,8 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
             productName = name,
             category = category,
             isAberrantScrap = isScrap,
-            qualityTier = "精制",
-            nodeCount = 4,
+            qualityTier = name.StartsWith("粗糙") ? "粗糙" : "精制",
+            nodeCount = name.StartsWith("粗糙") ? 3 : 4,
             primaryElement = e > w && e > g && e > p ? "Electric" : (w > g && w > p ? "Water" : (g > p ? "Wood" : "Gas")),
             totalP = p,
             totalE = e,

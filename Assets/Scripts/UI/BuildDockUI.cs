@@ -186,6 +186,7 @@ public class BuildDockUI : MonoBehaviour
 
     private void Update()
     {
+        if (PlayerSessionData.IsCombatInputBlocked) return;
         // 支持快捷键 [B] 展开/收起建造坞
         if (Input.GetKeyDown(KeyCode.B))
         {
@@ -204,6 +205,7 @@ public class BuildDockUI : MonoBehaviour
     /// </summary>
     public void ToggleDrawer()
     {
+        if (PlayerSessionData.IsCombatInputBlocked) return;
         if (isDrawerOpen)
         {
             CloseDrawer();
@@ -219,6 +221,7 @@ public class BuildDockUI : MonoBehaviour
     /// </summary>
     public void OpenDrawer()
     {
+        if (PlayerSessionData.IsCombatInputBlocked) return;
         isDrawerOpen = true;
 
         // 真实读取工坊合成产物并刷新卡片列表

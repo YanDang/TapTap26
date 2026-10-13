@@ -79,7 +79,7 @@ namespace BiomechanicalCrafting
             {
                 if (bp.isAberrant) continue; // 异变废料为自发涌现产物，不作为固定图鉴蓝图
 
-                bool canCraft = EvaluateCraftability(bp, heldMaterialIds);
+                bool canCraft = BlueprintRecipeRules.TryFindPath(bp.id, backpackMaterials, ShellConfig.CreateConfig(PlayerSessionData.currentShellType), out var availablePath);
                 if (canCraft) craftableCount++;
 
                 evaluatedList.Add(new BlueprintStatusItem
@@ -102,7 +102,7 @@ namespace BiomechanicalCrafting
             // 5. 更新顶部汇总状态
             if (statusText != null)
             {
-                statusText.text = $"可即刻合成: <color=#34D399><b>{craftableCount}</b></color> / {evaluatedList.Count}";
+                statusText.text = $"已找到可连配方: <color=#34D399><b>{craftableCount}</b></color> / {evaluatedList.Count}";
             }
 
             // 6. 生成卡片
@@ -111,57 +111,6 @@ namespace BiomechanicalCrafting
                 GameObject cardGO = CreateBlueprintCard(item, heldMaterialIds);
                 activeCards.Add(cardGO);
             }
-        }
-
-        private bool EvaluateCraftability(BiomechanicalBlueprint bp, HashSet<string> heldIds)
-        {
-            if (bp == null) return false;
-
-            // 脉动造水循环塔：若同时拥有海绵滤芯和虹吸管，也算可合成
-            if (bp.id == "furn_water_tower" && heldIds.Contains("mat_water_sponge_filter") && heldIds.Contains("mat_water_siphon_tube"))
-            {
-                return true;
-            }
-
-            // 增生珊瑚管排墙：若同时拥有多孔空心珊瑚与齿轮/菌群辅料，也算可合成
-            if (bp.id == "furn_coral_wall" && heldIds.Contains("mat_wood_hollow_coral") && (heldIds.Contains("mat_wood_root_gear") || heldIds.Contains("mat_wood_symbiotic_fungi")))
-            {
-                return true;
-            }
-
-            // 异界采集之门：拥有珊瑚门框与任意空间开启材料，也算可合成
-            if (bp.id == "furn_gather_door" &&
-                (heldIds.Contains("mat_wood_coral_plate") || heldIds.Contains("mat_wood_hollow_coral")) &&
-                (heldIds.Contains("mat_gas_valve_pipe") || heldIds.Contains("mat_gas_vortex_cartilage") || heldIds.Contains("mat_water_logic_chip")))
-            {
-                return true;
-            }
-
-            // 检查核心材料是否都在背壳中
-            if (bp.requiredCoreIds != null)
-            {
-                foreach (var cid in bp.requiredCoreIds)
-                {
-                    if (!heldIds.Contains(cid)) return false;
-                }
-            }
-
-            // 如果有任意可选辅料，检查是否至少拥有一种
-            if (bp.requiredAnyIds != null && bp.requiredAnyIds.Count > 0)
-            {
-                bool hasAny = false;
-                foreach (var aid in bp.requiredAnyIds)
-                {
-                    if (heldIds.Contains(aid))
-                    {
-                        hasAny = true;
-                        break;
-                    }
-                }
-                if (!hasAny) return false;
-            }
-
-            return true;
         }
 
         private GameObject CreateBlueprintCard(BlueprintStatusItem statusItem, HashSet<string> heldIds)
@@ -184,9 +133,12 @@ namespace BiomechanicalCrafting
             // 卡片背景与边框
             Image bg = card.AddComponent<Image>();
             Color bgColor = isCraftable
-                ? new Color(0.05f, 0.12f, 0.14f, 0.95f)
-                : new Color(0.07f, 0.09f, 0.13f, 0.9f);
+                ? new Color(0.06f, 0.14f, 0.16f, 0.95f)
+                : new Color(0.06f, 0.08f, 0.11f, 0.88f);
             bg.color = bgColor;
+
+            CanvasGroup cg = card.AddComponent<CanvasGroup>();
+            cg.alpha = isSelected ? 1.0f : (isCraftable ? 1.0f : 0.42f);
 
             // 边框高光
             GameObject borderGO = new GameObject("Border");
@@ -201,8 +153,8 @@ namespace BiomechanicalCrafting
             Color borderColor = isSelected
                 ? new Color(0.98f, 0.85f, 0.25f, 1f) // 选中金黄
                 : (isCraftable
-                    ? new Color(0.2f, 0.88f, 0.55f, 0.9f) // 可合成荧光翠绿
-                    : new Color(0.25f, 0.32f, 0.42f, 0.5f)); // 灰色
+                    ? new Color(0.2f, 0.88f, 0.55f, 0.95f) // 可合成荧光翠绿
+                    : new Color(0.18f, 0.22f, 0.28f, 0.5f)); // 灰色暗淡
             bImg.color = borderColor;
 
             // 1. 图标预览 (左侧)
@@ -218,6 +170,7 @@ namespace BiomechanicalCrafting
             iconImg.sprite = bp.GetIconSprite();
             iconImg.preserveAspect = true;
             iconImg.raycastTarget = false;
+            iconImg.color = isCraftable ? Color.white : new Color(0.65f, 0.68f, 0.72f, 0.55f);
 
             // 2. 标题与品质/分类 (顶部)
             GameObject titleGO = new GameObject("Title");
@@ -232,7 +185,7 @@ namespace BiomechanicalCrafting
             tText.font = defaultFont;
             tText.fontSize = 15;
             tText.fontStyle = FontStyle.Bold;
-            tText.color = bp.ThemeColor;
+            tText.color = isCraftable ? bp.ThemeColor : Color.Lerp(bp.ThemeColor, new Color(0.55f, 0.6f, 0.7f), 0.65f);
             tText.raycastTarget = false;
             tText.text = bp.name;
 
@@ -253,7 +206,7 @@ namespace BiomechanicalCrafting
             bText.raycastTarget = false;
             bText.text = isCraftable
                 ? "<color=#34D399><b>【⚡ 可即刻合成】</b></color>"
-                : "<color=#94A3B8>材料不足</color>";
+                : "<color=#64748B>缺料或需重排</color>";
 
             // 4. 配方材料清单 (标明 2x2 核心与 1x1 辅料及拥有状态)
             GameObject ingrGO = new GameObject("Ingredients");
@@ -270,33 +223,7 @@ namespace BiomechanicalCrafting
             ingText.lineSpacing = 1.15f;
             ingText.raycastTarget = false;
 
-            List<string> ingList = new List<string>();
-            foreach (var cid in bp.requiredCoreIds)
-            {
-                var mat = BiomechanicalMaterialDatabase.GetById(cid);
-                string mName = mat != null ? mat.materialName : cid;
-                bool isHeld = heldIds.Contains(cid);
-                string tag = isHeld ? "<color=#34D399>[✓在壳内]</color>" : "<color=#F87171>[✗缺少]</color>";
-                string sizeLabel = (mat != null && mat.isMajor) ? "<color=#FBBF24>[2x2核心·占4格]</color>" : "<color=#38BDF8>[1x1辅料]</color>";
-                ingList.Add($"• {mName} {sizeLabel} {tag}");
-            }
-            if (bp.requiredAnyIds != null && bp.requiredAnyIds.Count > 0)
-            {
-                bool hasAny = false;
-                foreach (var aid in bp.requiredAnyIds)
-                {
-                    if (heldIds.Contains(aid)) { hasAny = true; break; }
-                }
-                string tag = hasAny ? "<color=#34D399>[✓在壳内]</color>" : "<color=#F87171>[✗缺少]</color>";
-                List<string> anyNames = new List<string>();
-                foreach (var aid in bp.requiredAnyIds)
-                {
-                    var am = BiomechanicalMaterialDatabase.GetById(aid);
-                    if (am != null) anyNames.Add(am.materialName);
-                }
-                string anyDesc = anyNames.Count > 0 ? string.Join("/", anyNames) : "同系辅料配件";
-                ingList.Add($"• 辅料 ({anyDesc}) <color=#38BDF8>[1x1]</color> {tag}");
-            }
+            List<string> ingList = BuildIngredientDisplayList(bp, heldIds);
             ingText.text = string.Join("\n", ingList);
 
             // 5. 简短效能
@@ -311,9 +238,11 @@ namespace BiomechanicalCrafting
             Text effText = effGO.AddComponent<Text>();
             effText.font = defaultFont;
             effText.fontSize = 11;
-            effText.color = new Color(0.7f, 0.8f, 0.9f);
+            effText.color = isCraftable ? new Color(0.7f, 0.8f, 0.9f) : new Color(0.5f, 0.55f, 0.65f);
             effText.raycastTarget = false;
-            effText.text = $"<color=#FFE050>战术效果:</color> {bp.formulaDescription}";
+            effText.text = isCraftable
+                ? $"<color=#FFE050>战术效果:</color> {bp.formulaDescription}"
+                : $"<color=#8090A0>战术效果:</color> {bp.formulaDescription}";
 
             // 6. 点击事件按钮
             Button btn = card.AddComponent<Button>();
@@ -332,12 +261,27 @@ namespace BiomechanicalCrafting
             activeCardDataList.Add(new ActiveCardData
             {
                 cardGO = card,
+                canvasGroup = cg,
                 borderImage = bImg,
                 blueprint = bp,
                 isCraftable = isCraftable
             });
 
             return card;
+        }
+
+        private List<string> BuildIngredientDisplayList(BiomechanicalBlueprint bp, HashSet<string> heldIds)
+        {
+            var ingredients = new List<string>();
+            foreach (var id in BlueprintRecipeRules.GetPreferredIngredients(bp.id, heldIds))
+            {
+                var material = BiomechanicalMaterialDatabase.GetById(id);
+                string name = material != null ? material.materialName : id;
+                string size = material != null && material.isMajor ? "2×2核心·占4格" : "1×1辅料";
+                string tag = heldIds.Contains(id) ? "<color=#34D399>[✓在壳内]</color>" : "<color=#F87171>[✗缺少]</color>";
+                ingredients.Add($"• {name} [{size}] {tag}");
+            }
+            return ingredients;
         }
 
         private void OnCardClicked(BiomechanicalBlueprint bp)
@@ -375,14 +319,22 @@ namespace BiomechanicalCrafting
                 if (isThisSelected)
                 {
                     data.borderImage.color = new Color(0.98f, 0.85f, 0.25f, 1f); // 亮金色选中
-                    if (data.cardGO != null) data.cardGO.transform.localScale = new Vector3(1.02f, 1.02f, 1f);
+                    if (data.cardGO != null)
+                    {
+                        data.cardGO.transform.localScale = new Vector3(1.02f, 1.02f, 1f);
+                        if (data.canvasGroup != null) data.canvasGroup.alpha = 1f;
+                    }
                 }
                 else
                 {
-                    if (data.cardGO != null) data.cardGO.transform.localScale = Vector3.one;
+                    if (data.cardGO != null)
+                    {
+                        data.cardGO.transform.localScale = Vector3.one;
+                        if (data.canvasGroup != null) data.canvasGroup.alpha = data.isCraftable ? 1f : 0.42f;
+                    }
                     data.borderImage.color = data.isCraftable
-                        ? new Color(0.2f, 0.88f, 0.55f, 0.9f) // 翠绿未选中
-                        : new Color(0.25f, 0.32f, 0.42f, 0.5f); // 灰色未选中
+                        ? new Color(0.2f, 0.88f, 0.55f, 0.95f) // 翠绿未选中
+                        : new Color(0.18f, 0.22f, 0.28f, 0.5f); // 灰色未选中
                 }
             }
         }
@@ -390,6 +342,7 @@ namespace BiomechanicalCrafting
         private class ActiveCardData
         {
             public GameObject cardGO;
+            public CanvasGroup canvasGroup;
             public Image borderImage;
             public BiomechanicalBlueprint blueprint;
             public bool isCraftable;

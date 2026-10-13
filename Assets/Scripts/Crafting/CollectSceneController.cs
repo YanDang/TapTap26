@@ -18,7 +18,7 @@ public class CollectSceneController : MonoBehaviour
     public Text dayTitleText;
     public Text daySubText;
     public Button btnNextDay;
-    public Button btnGoToCrafting;
+    public Button btnReturnToCombat;
     public RectTransform basketContainer;
     public Text basketCountText;
     public Image basketIcon;
@@ -37,8 +37,9 @@ public class CollectSceneController : MonoBehaviour
     private AudioClip refusalClip;
 
     // 运行态数据
-    private int currentDay = 1;
-    private int todayHarvestedCount = 0;
+    private int currentDay => PlayerSessionData.greenhouse.day;
+    private int todayHarvestedCount => PlayerSessionData.greenhouse.harvestedCount;
+    private readonly Dictionary<HarvestItemNode, GreenhouseNodeState> nodeStates = new Dictionary<HarvestItemNode, GreenhouseNodeState>();
     private List<HarvestItemNode> activeNodes = new List<HarvestItemNode>();
 
     // 悬停轻量属性透视卡片 (Hover Tooltip Card)
@@ -75,7 +76,7 @@ public class CollectSceneController : MonoBehaviour
         new Vector2(810, -300)   // 16: 右下角高压生体圆柱管
     };
 
-    private bool isTransitioning = false;
+    private bool isRefreshingDay;
 
     void Awake()
     {
@@ -139,14 +140,7 @@ public class CollectSceneController : MonoBehaviour
         // 支持 ESC 快捷键平滑返回
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (SceneManager.sceneCount > 1)
-            {
-                ReturnToCombatScene();
-            }
-            else
-            {
-                GoToCraftingScene();
-            }
+            ReturnToCombatScene();
         }
     }
 
@@ -161,6 +155,7 @@ public class CollectSceneController : MonoBehaviour
         InitButtons();
         InitHoverTooltip();
         SproutDay(currentDay);
+        PlayerSessionData.CommitDoorVisit();
     }
 
     private void InitAudio()
@@ -232,36 +227,14 @@ public class CollectSceneController : MonoBehaviour
             btnNextDay.onClick.AddListener(OnNextDayClicked);
         }
 
-        if (btnGoToCrafting == null)
+        if (btnReturnToCombat == null)
         {
-            var c = GameObject.Find("BtnGoCrafting")?.GetComponent<Button>();
-            if (c != null) btnGoToCrafting = c;
+            btnReturnToCombat = GameObject.Find("BtnReturnCombat")?.GetComponent<Button>();
         }
-        if (btnGoToCrafting != null)
+        if (btnReturnToCombat != null)
         {
-            btnGoToCrafting.onClick.RemoveAllListeners();
-            btnGoToCrafting.onClick.AddListener(GoToCraftingScene);
-
-            // 当存在后台战斗场景时，生成直达返回战场的便捷按钮
-            if (SceneManager.sceneCount > 1 && btnGoToCrafting.transform.parent != null)
-            {
-                var existingReturn = btnGoToCrafting.transform.parent.Find("BtnReturnCombat");
-                if (existingReturn == null)
-                {
-                    var returnGo = Instantiate(btnGoToCrafting.gameObject, btnGoToCrafting.transform.parent);
-                    returnGo.name = "BtnReturnCombat";
-                    var rt = returnGo.GetComponent<RectTransform>();
-                    if (rt != null) rt.anchoredPosition = new Vector2(365, 0);
-                    var txt = returnGo.GetComponentInChildren<Text>();
-                    if (txt != null) txt.text = "⚔️ 返回战场";
-                    var btn = returnGo.GetComponent<Button>();
-                    if (btn != null)
-                    {
-                        btn.onClick.RemoveAllListeners();
-                        btn.onClick.AddListener(ReturnToCombatScene);
-                    }
-                }
-            }
+            btnReturnToCombat.onClick.RemoveAllListeners();
+            btnReturnToCombat.onClick.AddListener(ReturnToCombatScene);
         }
     }
 
@@ -270,64 +243,8 @@ public class CollectSceneController : MonoBehaviour
     /// </summary>
     public void ReturnToCombatScene()
     {
-        if (isTransitioning) return;
-        isTransitioning = true;
-
-        Debug.Log("<color=#70D2FF>[CollectScene]</color> 正在离开温室，返回战场...");
-        PlayerSessionData.SaveBackpackSlots(PlayerSessionData.shellSlotItems);
-        PlayerSessionData.hasJustReturnedFromCrafting = true;
-        PlayerSessionData.isCraftingOpen = false;
-        Time.timeScale = 1.0f;
-
-        if (GameJam.HUD.I != null)
-        {
-            GameJam.HUD.I.SetVisible(true);
-        }
-
-        if (SceneManager.sceneCount > 1)
-        {
-            var myScene = gameObject.scene;
-            var loadOp = SceneManager.UnloadSceneAsync(myScene);
-            loadOp.completed += (_) =>
-            {
-                var camCtrl = FindObjectOfType<CameraController>();
-                if (camCtrl != null) camCtrl.enabled = true;
-                var myAl = FindObjectOfType<AudioListener>();
-                if (myAl != null) myAl.enabled = true;
-            };
-        }
-        else
-        {
-            string target = string.IsNullOrEmpty(PlayerSessionData.returnCombatSceneName) ? "BiomechanicalCombatScene" : PlayerSessionData.returnCombatSceneName;
-            SceneManager.LoadScene(target);
-        }
-    }
-
-    /// <summary>
-    /// 返回背壳工坊 (Mix)：
-    /// 若处于 Additive 叠加模式（后台常驻战斗场景），则叠加异步加载 Mix，完成后卸载本温室 Collect 场景，无缝守护战斗现场！
-    /// </summary>
-    public void GoToCraftingScene()
-    {
-        if (isTransitioning) return;
-        isTransitioning = true;
-
-        Debug.Log("<color=#70D2FF>[CollectScene]</color> 正在进入背壳工坊 (Mix)...");
-        PlayerSessionData.SaveBackpackSlots(PlayerSessionData.shellSlotItems);
-
-        if (SceneManager.sceneCount > 1)
-        {
-            var myScene = gameObject.scene;
-            var loadOp = SceneManager.LoadSceneAsync("Mix", LoadSceneMode.Additive);
-            loadOp.completed += (_) =>
-            {
-                SceneManager.UnloadSceneAsync(myScene);
-            };
-        }
-        else
-        {
-            SceneManager.LoadScene("Mix");
-        }
+        if (isRefreshingDay) return;
+        GameplaySceneTransition.TryReturn(gameObject.scene, () => PlayerSessionData.SaveBackpackSlots(PlayerSessionData.shellSlotItems));
     }
 
     /// <summary>
@@ -335,37 +252,64 @@ public class CollectSceneController : MonoBehaviour
     /// </summary>
     public void OnNextDayClicked()
     {
+        if (isRefreshingDay || GameplaySceneTransition.IsBusy) return;
+        isRefreshingDay = true;
+        if (btnNextDay != null) btnNextDay.interactable = false;
+        if (btnReturnToCombat != null) btnReturnToCombat.interactable = false;
         StartCoroutine(NextDayRoutine());
     }
 
     private IEnumerator NextDayRoutine()
     {
-        // 柔和破晓淡入淡出动效 (采用 unscaledDeltaTime 确保任何时停或冻结下正常流转)
-        if (dayTransitionFadeGroup != null)
+        try
         {
-            float elapsed = 0f;
-            while (elapsed < 0.25f)
+            yield return null;
+            if (dayTransitionFadeGroup != null)
             {
-                elapsed += Time.unscaledDeltaTime;
-                dayTransitionFadeGroup.alpha = Mathf.Clamp01(elapsed / 0.25f);
-                yield return null;
+                dayTransitionFadeGroup.blocksRaycasts = true;
+                float elapsed = 0f;
+                while (elapsed < 0.25f)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    dayTransitionFadeGroup.alpha = Mathf.Clamp01(elapsed / 0.25f);
+                    yield return null;
+                }
+            }
+            PlayerSessionData.SetGreenhouseState(GenerateDay(currentDay + 1));
+            PlayerSessionData.CommitDoorVisit();
+            PlayerSessionData.SaveBackpackToStorage();
+            SproutDay(currentDay);
+            if (dayTransitionFadeGroup != null)
+            {
+                float elapsed = 0f;
+                while (elapsed < 0.35f)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    dayTransitionFadeGroup.alpha = 1f - Mathf.Clamp01(elapsed / 0.35f);
+                    yield return null;
+                }
             }
         }
+        finally { FinishDayRefresh(); }
+    }
 
-        currentDay++;
-        SproutDay(currentDay);
+    private void FinishDayRefresh()
+    {
+        isRefreshingDay = false;
+        if (dayTransitionFadeGroup != null) { dayTransitionFadeGroup.alpha = 0f; dayTransitionFadeGroup.blocksRaycasts = false; }
+        if (btnNextDay != null) btnNextDay.interactable = true;
+        if (btnReturnToCombat != null) btnReturnToCombat.interactable = true;
+    }
 
-        if (dayTransitionFadeGroup != null)
-        {
-            float elapsed = 0f;
-            while (elapsed < 0.35f)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                dayTransitionFadeGroup.alpha = 1f - Mathf.Clamp01(elapsed / 0.35f);
-                yield return null;
-            }
-            dayTransitionFadeGroup.alpha = 0f;
-        }
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+        FinishDayRefresh();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     /// <summary>
@@ -373,54 +317,45 @@ public class CollectSceneController : MonoBehaviour
     /// </summary>
     public void SproutDay(int day)
     {
+        PlayerSessionData.EnsureInitialized();
+        if (day != currentDay) return;
+        if (PlayerSessionData.greenhouse.nodes.Count == 0)
+        {
+            PlayerSessionData.SetGreenhouseState(GenerateDay(currentDay));
+            PlayerSessionData.SaveBackpackToStorage();
+        }
         HideHoverTooltip();
-        todayHarvestedCount = 0;
-        UpdateHeaderUI();
-
-        // 清除旧的未收集残余
         foreach (var node in activeNodes)
-        {
-            if (node != null && !node.isHarvested)
-            {
-                Destroy(node.gameObject);
-            }
-        }
+            if (node != null) { node.gameObject.SetActive(false); Destroy(node.gameObject); }
         activeNodes.Clear();
-
-        // 获取全部配置材料
-        List<BiomechanicalMaterial> allMaterials = BiomechanicalMaterialDatabase.GetAllMaterials();
-        if (allMaterials == null || allMaterials.Count == 0)
+        nodeStates.Clear();
+        foreach (var state in PlayerSessionData.greenhouse.nodes)
         {
-            Debug.LogWarning("[CollectScene] 未能读取到材料列表！");
-            return;
+            if (state.harvested) continue;
+            var material = BiomechanicalMaterialDatabase.GetById(state.materialId);
+            if (material == null) continue;
+            CreateItemNode(material, state.position);
+            nodeStates.Add(activeNodes[activeNodes.Count - 1], state);
         }
+        UpdateHeaderUI();
+    }
 
-        // 随机挑选 7 ~ 10 个锚点进行萌发生长
-        int spawnCount = UnityEngine.Random.Range(7, 11);
-        List<int> availableIndices = new List<int>();
-        for (int i = 0; i < SpawnAnchors.Length; i++) availableIndices.Add(i);
-
-        // 洗牌算法
-        for (int i = 0; i < availableIndices.Count; i++)
+    private GreenhouseDayState GenerateDay(int day)
+    {
+        var state = new GreenhouseDayState { day = day };
+        var materials = BiomechanicalMaterialDatabase.GetAllMaterials();
+        if (materials == null || materials.Count == 0) return state;
+        var anchors = new List<int>();
+        for (int index = 0; index < SpawnAnchors.Length; index++) anchors.Add(index);
+        int count = Mathf.Min(UnityEngine.Random.Range(7, 11), anchors.Count);
+        for (int index = 0; index < count; index++)
         {
-            int r = UnityEngine.Random.Range(i, availableIndices.Count);
-            int temp = availableIndices[i];
-            availableIndices[i] = availableIndices[r];
-            availableIndices[r] = temp;
+            int selected = UnityEngine.Random.Range(0, anchors.Count);
+            var material = PickRandomMaterial(materials);
+            state.nodes.Add(new GreenhouseNodeState { materialId = material.id, position = SpawnAnchors[anchors[selected]] });
+            anchors.RemoveAt(selected);
         }
-
-        for (int i = 0; i < spawnCount && i < availableIndices.Count; i++)
-        {
-            int anchorIdx = availableIndices[i];
-            Vector2 pos = SpawnAnchors[anchorIdx];
-
-            // 随机选取材料（70% 概率辅料 1x1，30% 概率核心骨架 2x2）
-            BiomechanicalMaterial selectedMat = PickRandomMaterial(allMaterials);
-            if (selectedMat != null)
-            {
-                CreateItemNode(selectedMat, pos);
-            }
-        }
+        return state;
     }
 
     private BiomechanicalMaterial PickRandomMaterial(List<BiomechanicalMaterial> list)
@@ -457,12 +392,17 @@ public class CollectSceneController : MonoBehaviour
     /// </summary>
     private bool OnItemHarvestAttempt(HarvestItemNode node)
     {
-        if (node == null || node.materialData == null) return false;
+        if (node == null || node.materialData == null || node.isHarvested || isRefreshingDay || GameplaySceneTransition.IsBusy) return false;
+        if (!nodeStates.TryGetValue(node, out var state) || state.harvested || !PlayerSessionData.greenhouse.nodes.Contains(state)) return false;
+        state.harvested = true;
+        PlayerSessionData.greenhouse.harvestedCount++;
 
         // 尝试按序分配进入背壳背包槽位
         bool success = PlayerSessionData.TryAddMaterialToShellBackpack(node.materialData, out int targetSlotId, out string failReason);
         if (!success)
         {
+            state.harvested = false;
+            PlayerSessionData.greenhouse.harvestedCount--;
             // 背包空间不足：播放低沉拒收提示音
             if (audioSource != null && refusalClip != null)
             {
@@ -486,7 +426,8 @@ public class CollectSceneController : MonoBehaviour
             audioSource.PlayOneShot(popClip);
         }
 
-        todayHarvestedCount++;
+        node.isHarvested = true;
+        UpdateHeaderUI();
 
         // 记录历史采摘流水
         PlayerSessionData.gatheredBiomechanicalMaterials.Add(node.materialData);
@@ -633,7 +574,7 @@ public class CollectSceneController : MonoBehaviour
                 3 => "【珊瑚萌发期】",
                 _ => "【潮润渗流期】"
             };
-            daySubText.text = $"生体培育周期 · {phase}";
+            daySubText.text = $"生体培育周期 · {phase} · 今日采集 {todayHarvestedCount}";
         }
 
         int occupied = PlayerSessionData.GetOccupiedSlotCount();
