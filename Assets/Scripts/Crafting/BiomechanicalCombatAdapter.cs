@@ -78,7 +78,9 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
     void Start()
     {
         // 开局在地图北侧边缘部署异界采集之门
+        PlayerSessionData.EnsureInitialized();
         EnsurePortalDoorAtEdge();
+        gameObject.AddComponent<GameRunController>().Initialize(this);
 
         if (autoSpawnShowcaseOnStart)
         {

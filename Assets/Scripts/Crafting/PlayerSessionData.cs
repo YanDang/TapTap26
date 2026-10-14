@@ -37,7 +37,7 @@ public static class PlayerSessionData
     // 当前是否正处于工坊开启状态（用于无缝叠加模式）
     public static bool isCraftingOpen = false;
 
-    public static bool IsCombatInputBlocked => GameplaySceneTransition.IsBusy || isCraftingOpen
+    public static bool IsCombatInputBlocked => runProgress.finished || GameplaySceneTransition.IsBusy || isCraftingOpen
         || UnityEngine.SceneManagement.SceneManager.GetSceneByName("Mix").isLoaded
         || UnityEngine.SceneManagement.SceneManager.GetSceneByName("Collect").isLoaded;
 
@@ -84,6 +84,7 @@ public static class PlayerSessionData
     {
         if (reservedProducts.Count > 0) return;
         craftedProducts.Clear();
+        SaveBackpackToStorage();
         PlayerPrefs.DeleteKey(PrefKey_CraftedProducts);
         PlayerPrefs.Save();
         NotifyCraftedProductsChanged();
@@ -157,11 +158,19 @@ public static class PlayerSessionData
         {
             Debug.LogError($"[PlayerSessionData] 保存家具仓库失败: {ex}");
         }
+        SaveBackpackToStorage();
         NotifyCraftedProductsChanged();   // [gamejam 移植] 仓库有变化：通知战斗场景刷新物品栏
+    }
+
+    private static void EnsureProductIdentities()
+    {
+        foreach (var product in craftedProducts)
+            if (product != null && string.IsNullOrEmpty(product.productionId)) product.productionId = Guid.NewGuid().ToString("N");
     }
 
     public static void LoadCraftedProductsFromStorage()
     {
+        if (hasUnifiedInventory) { EnsureProductIdentities(); return; }
         try
         {
             craftedProducts.Clear();
@@ -174,6 +183,7 @@ public static class PlayerSessionData
                     if (wrapper != null && wrapper.products != null)
                     {
                         craftedProducts = wrapper.products;
+                        EnsureProductIdentities();
                         foreach (var product in craftedProducts)
                             if (product != null) product.tacticalEffect = CraftedProductStats.Describe(product);
                     }
@@ -190,9 +200,95 @@ public static class PlayerSessionData
     // 背壳背包跨场景共享数据 (Shell Backpack Shared Slots)
     // =========================================================================
     public static ShellType currentShellType = ShellType.ConchShell;
+    public static RunProgressData runProgress = new RunProgressData();
+    private static bool hasUnifiedInventory;
     public static GreenhouseDayState greenhouse = new GreenhouseDayState();
     public static List<GreenhouseDoorState> greenhouseDoors = new List<GreenhouseDoorState>();
     public static string activeGreenhouseDoorId;
+    private static float nextRestAllowedTime;
+
+    public static bool CanRestUntilNextDay(PlayerController player, out string reason)
+    {
+        reason = "";
+        if (runProgress.finished) { reason = "本局已结算"; return false; }
+        if (!Application.isPlaying || player == null || !player.IsAlive)
+            reason = "存活时才能休息";
+        else if (IsCombatInputBlocked)
+            reason = "请先返回战场";
+        else if (reservedProducts.Count > 0 || FurnitureObject.AllFurniture.Exists(furniture => furniture != null && furniture.Deploying))
+            reason = "请等待家具部署完成";
+        else if (BiomechanicalAuraBase.IsCombatPaused || player.Placing)
+            reason = "请先退出建造模式";
+        else if (player.Unavailable || player.IsCharging || player.IsSmashing || player.IsInvulnerable)
+            reason = "请先结束当前动作";
+        else if (Time.unscaledTime < nextRestAllowedTime)
+            reason = "正在休息…";
+        else
+        {
+            foreach (var door in UnityEngine.Object.FindObjectsOfType<GatherDoorAuraBehavior>())
+            {
+                if (door.state == GatherDoorAuraBehavior.DoorState.Summoning)
+                {
+                    reason = "门守卫正在出场，请先完成试炼";
+                    return false;
+                }
+            }
+            foreach (var enemy in EnemyController.AllEnemies)
+            {
+                if (enemy != null && (enemy.IsAlive || enemy.IsRespawning))
+                {
+                    reason = "请先清除战场敌人";
+                    break;
+                }
+            }
+        }
+        return string.IsNullOrEmpty(reason);
+    }
+
+    public static bool TryRestUntilNextDay(PlayerController player, out string message)
+    {
+        if (!CanRestUntilNextDay(player, out message)) return false;
+        EnsureInitialized();
+        if (greenhouse.day == int.MaxValue)
+        {
+            message = "已达到最大游戏日";
+            return false;
+        }
+        nextRestAllowedTime = Time.unscaledTime + 1f;
+        if (greenhouse.day >= GameRunProgress.FinalDay)
+        {
+            GameRunProgress.Finish();
+            message = "七日旅程结束";
+            return true;
+        }
+        runProgress.energy = GameRunProgress.MaximumEnergy;
+        greenhouse = new GreenhouseDayState { day = greenhouse.day + 1 };
+        activeGreenhouseDoorId = null;
+        SaveBackpackToStorage();
+        message = $"已到第 {greenhouse.day} 天 · 请重新挑战门守卫";
+        return true;
+    }
+
+    public static void StartNewRun()
+    {
+        GameRunProgress.WorldReady = false;
+        runProgress = new RunProgressData();
+        greenhouse = new GreenhouseDayState();
+        greenhouseDoors = new List<GreenhouseDoorState>();
+        activeGreenhouseDoorId = null;
+        shellSlotItems = new BiomechanicalMaterial[32];
+        currentShellType = ShellType.ConchShell;
+        craftedProducts.Clear();
+        reservedProducts.Clear();
+        gatheredBiomechanicalMaterials.Clear();
+        currentEquippedWeapon = null;
+        playerMaterials = null;
+        isCraftingOpen = false;
+        nextRestAllowedTime = 0f;
+        EnemyController.isAIPaused = false;
+        SaveCraftedProductsToStorage();
+        GameJam.TimeManager.I.EndSlowMo();
+    }
 
     public static bool IsDoorUsedToday(string doorId)
     {
@@ -256,6 +352,9 @@ public static class PlayerSessionData
         public GreenhouseDayState greenhouse;
         public List<GreenhouseDoorState> greenhouseDoors;
         public string activeGreenhouseDoorId;
+        public RunProgressData runProgress;
+        public int inventoryVersion;
+        public List<CraftedProduct> products;
         public List<SavedSlotEntry> entries = new List<SavedSlotEntry>();
     }
 
@@ -306,11 +405,15 @@ public static class PlayerSessionData
     {
         try
         {
+            GameRunProgress.CaptureWorld();
             SavedBackpackData data = new SavedBackpackData();
             data.shellType = (int)currentShellType;
             data.greenhouse = greenhouse;
             data.greenhouseDoors = greenhouseDoors;
             data.activeGreenhouseDoorId = activeGreenhouseDoorId;
+            data.runProgress = runProgress;
+            data.inventoryVersion = 1;
+            data.products = new List<CraftedProduct>(craftedProducts);
 
             for (int i = 0; i < shellSlotItems.Length; i++)
             {
@@ -339,6 +442,8 @@ public static class PlayerSessionData
 
     public static void LoadBackpackFromStorage()
     {
+        runProgress = new RunProgressData();
+        hasUnifiedInventory = false;
         greenhouse = new GreenhouseDayState();
         greenhouseDoors = new List<GreenhouseDoorState>();
         activeGreenhouseDoorId = null;
@@ -361,10 +466,14 @@ public static class PlayerSessionData
             SavedBackpackData data = JsonUtility.FromJson<SavedBackpackData>(json);
             if (data == null) return;
 
+            runProgress = data.runProgress ?? new RunProgressData();
+            GameRunProgress.NormalizeLoadedData();
+            hasUnifiedInventory = data.inventoryVersion >= 1 && data.products != null;
+            if (hasUnifiedInventory) craftedProducts = data.products;
             currentShellType = (ShellType)data.shellType;
             greenhouse = data.greenhouse ?? new GreenhouseDayState();
             if (greenhouse.nodes == null) greenhouse.nodes = new List<GreenhouseNodeState>();
-            greenhouse.day = Mathf.Max(1, greenhouse.day);
+            greenhouse.day = Mathf.Clamp(greenhouse.day, 1, GameRunProgress.FinalDay);
             greenhouseDoors = data.greenhouseDoors ?? new List<GreenhouseDoorState>();
             greenhouseDoors.RemoveAll(door => door == null || string.IsNullOrEmpty(door.doorId));
             activeGreenhouseDoorId = data.activeGreenhouseDoorId;

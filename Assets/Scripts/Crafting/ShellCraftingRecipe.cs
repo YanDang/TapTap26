@@ -11,6 +11,7 @@ namespace BiomechanicalCrafting
     [Serializable]
     public class CraftedProduct
     {
+        public string productionId;
         public string id = "prod_default";
         public string productName = "未命名生体构件";
         public string category = "家具设施"; // 电网设施, 增生防线, 活性杂交废料

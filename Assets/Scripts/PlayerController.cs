@@ -446,6 +446,7 @@ public class PlayerController : MonoBehaviour
 
     public void DoParry(EnemyController attacker)
     {
+        if (attacker == null || !attacker.IsAlive || attacker.IsEmerging) return;
         _parryReady = Time.unscaledTime + parryCooldown;
         parrySuccess++;
         isGuarding = false;
@@ -706,7 +707,7 @@ public class PlayerController : MonoBehaviour
 
     public void ExecuteEnemy(EnemyController enemy)
     {
-        if (enemy == null || !enemy.IsAlive) return;
+        if (enemy == null || !enemy.IsAlive || enemy.IsEmerging || enemy.aiState == EnemyController.EnemyAIState.Executing) return;
         StartCoroutine(ExecuteRoutine(enemy));
     }
 
@@ -1277,6 +1278,7 @@ public class PlayerController : MonoBehaviour
 
     public void LeftClick()
     {
+        _leftHeld = false;
         if (Unavailable || isRolling || isSmashing) return;
 
         // 1. 时钟倒计时 QTE
@@ -1443,6 +1445,35 @@ public class PlayerController : MonoBehaviour
         c?.Invoke();
     }
 
+    public void ConsumeDoorInteraction()
+    {
+        CancelLeftHold();
+        isLeftPointerDown = false;
+        isPointerDown = false;
+        isGuarding = false;
+        guardWindowTimer = 0f;
+    }
+
+    private bool TryInteractWithDoorAtScreenPosition(Vector2 screenPosition)
+    {
+        if (cam == null) return false;
+        Vector3 worldPosition = cam.ScreenToWorldPoint(screenPosition);
+        worldPosition.z = 0f;
+        foreach (var hit in Physics2D.OverlapPointAll(worldPosition))
+        {
+            var door = hit.GetComponentInParent<GatherDoorAuraBehavior>();
+            if (door == null || door.parentFurniture == null ||
+                door.parentFurniture.currentState != FurnitureObject.FurnitureState.Placed) continue;
+            ConsumeDoorInteraction();
+            if (Vector2.Distance(transform.position, door.transform.position) <= door.interactionRadius + 0.8f)
+                door.OnPlayerInteract(this);
+            else
+                MoveToWorldPoint(door.transform.position - Vector3.up * 1.2f);
+            return true;
+        }
+        return false;
+    }
+
     private void HandleMouseInput()
     {
         // 1. 鼠标右键 (Button 1)：专用于战斗锁定敌人与闪避/移动脱战
@@ -1493,6 +1524,7 @@ public class PlayerController : MonoBehaviour
                 isLeftPointerDown = false;
                 return;
             }
+            if (TryInteractWithDoorAtScreenPosition(Input.mousePosition)) return;
             leftPointerDownPos = Input.mousePosition;
             leftPointerDownTime = Time.time;
             isLeftPointerDown = true;
@@ -1680,6 +1712,7 @@ public class PlayerController : MonoBehaviour
 
     private void StartPointer(Vector2 screenPos)
     {
+        if (TryInteractWithDoorAtScreenPosition(screenPos)) return;
         pointerDownPos = screenPos;
         pointerDownTime = Time.time;
         isPointerDown = true;
@@ -1698,6 +1731,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void EvaluatePointerRelease(Vector2 releasePos)
     {
+        if (!_leftHeld) return;
         float duration = Time.time - pointerDownTime;
         Vector2 delta = releasePos - pointerDownPos;
         float distance = delta.magnitude;
@@ -1730,7 +1764,9 @@ public class PlayerController : MonoBehaviour
                 return;
             }
 
+            int previousParrySuccess = parrySuccess;
             LeftRelease();
+            if (parrySuccess != previousParrySuccess || isAttackingAnim) return;
 
             // 2. 判断是否为【轻触点击】(Tap)
             if (distance < clickMaxDistance && duration <= clickMaxDuration)
@@ -1932,13 +1968,9 @@ public class PlayerController : MonoBehaviour
     {
         if (isRolling || !canMove || isAttackingAnim || isCharging || isSmashing || isGuarding || Unavailable) return;
 
-        // 优先检查附近是否有处决就绪 (Pending) 的怪物
         var pendingEnemy = EnemyController.FindPending();
         if (pendingEnemy != null && Vector2.Distance(transform.position, pendingEnemy.transform.position) <= attackRange * 1.5f)
-        {
-            ExecuteEnemy(pendingEnemy);
             return;
-        }
 
         // 1. 优先检查当前锁定目标是否在近战攻击距离内
         EnemyController targetToAttack = null;
@@ -1963,7 +1995,9 @@ public class PlayerController : MonoBehaviour
         }
 
         // 3. 目标在攻击范围内且攻击冷却完毕，自动出招挥砍！
-        if (targetToAttack != null && attackCooldownTimer <= 0f)
+        if (targetToAttack != null && !targetToAttack.IsEmerging &&
+            targetToAttack.aiState != EnemyController.EnemyAIState.Pending &&
+            targetToAttack.aiState != EnemyController.EnemyAIState.Executing && attackCooldownTimer <= 0f)
         {
             attackCooldownTimer = CurrentAttackInterval;
             StartCoroutine(PerformAttackRoutine());
@@ -2484,7 +2518,7 @@ public class PlayerController : MonoBehaviour
         {
             if (DamageTextManager.Instance != null)
             {
-                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "精力不足!", Color.yellow, 0.08f);
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "战斗耐力不足!", Color.yellow, 0.08f);
             }
             return false;
         }

@@ -128,18 +128,12 @@ namespace BiomechanicalCrafting.Editor
             centerBtnsRT.anchorMin = new Vector2(0.5f, 0.5f);
             centerBtnsRT.anchorMax = new Vector2(0.5f, 0.5f);
             centerBtnsRT.pivot = new Vector2(0.5f, 0.5f);
-            centerBtnsRT.anchoredPosition = new Vector2(-40, 0);
+            centerBtnsRT.anchoredPosition = Vector2.zero;
             centerBtnsRT.sizeDelta = new Vector2(500, 60);
-
-            // 【迎来新的一天 / 破晓萌发】按钮
-            Button btnNextDay = CreateButton(centerButtonsGO.transform, "BtnNextDay", "☀ 迎来新的一天 (破晓萌发)", new Vector2(245, 52), new Color(0.18f, 0.32f, 0.45f, 0.95f), new Color(0.98f, 0.92f, 0.75f), 16);
-            RectTransform btnNextDayRT = btnNextDay.GetComponent<RectTransform>();
-            btnNextDayRT.anchoredPosition = new Vector2(-130, 0);
-            controller.btnNextDay = btnNextDay;
 
             Button btnReturnCombat = CreateButton(centerButtonsGO.transform, "BtnReturnCombat", "返回战场", new Vector2(230, 52), new Color(0.16f, 0.42f, 0.32f, 0.95f), new Color(0.85f, 0.98f, 0.85f), 16);
             RectTransform btnReturnCombatRT = btnReturnCombat.GetComponent<RectTransform>();
-            btnReturnCombatRT.anchoredPosition = new Vector2(125, 0);
+            btnReturnCombatRT.anchoredPosition = Vector2.zero;
             controller.btnReturnToCombat = btnReturnCombat;
 
             // 7.3 右侧：采集收纳篮统计 (Basket Counter)
@@ -185,16 +179,6 @@ namespace BiomechanicalCrafting.Editor
             GameObject floatTextGO = CreateUIObject("FloatingTextContainer", canvasGO.transform);
             StretchFull(floatTextGO.GetComponent<RectTransform>());
             controller.floatingTextContainer = floatTextGO.transform;
-
-            // 10. 日夜轮转全屏淡出遮罩 (DayTransitionFade)
-            GameObject fadeGO = CreateUIObject("DayTransitionFade", canvasGO.transform);
-            StretchFull(fadeGO.GetComponent<RectTransform>());
-            Image fadeImg = fadeGO.AddComponent<Image>();
-            fadeImg.color = new Color(0.04f, 0.03f, 0.02f, 1f);
-            fadeImg.raycastTarget = false;
-            CanvasGroup fadeCG = fadeGO.AddComponent<CanvasGroup>();
-            fadeCG.alpha = 0f;
-            controller.dayTransitionFadeGroup = fadeCG;
 
             // 11. 底部提示栏 (Bottom Tip Banner)
             GameObject tipGO = CreateUIObject("BottomTip", canvasGO.transform);

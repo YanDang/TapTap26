@@ -1268,6 +1268,12 @@ namespace BiomechanicalCrafting
             if (craftResultModal == null) return;
 
             craftResultModal.SetActive(true);
+            if (craftConfirmBtn != null)
+            {
+                craftConfirmBtn.interactable = !GameRunProgress.Data.finished && GameRunProgress.Data.energy >= GameRunProgress.CraftCost;
+                var confirmText = craftConfirmBtn.GetComponentInChildren<Text>();
+                if (confirmText != null) confirmText.text = craftConfirmBtn.interactable ? "合成入库 · 精力 -1" : "精力不足（需要 1 点）";
+            }
 
             if (craftResultName != null) craftResultName.text = prod.productName;
             if (craftResultQualityBadge != null)
@@ -1345,6 +1351,11 @@ namespace BiomechanicalCrafting
         public void ConfirmCraftProduct()
         {
             if (GameplaySceneTransition.IsBusy || pendingProduct == null) return;
+            if (!GameRunProgress.TryCraft(pendingProduct, slotItems, pendingConsumedSlotIndices, out var reason))
+            {
+                if (craftResultEffect != null) craftResultEffect.text = reason;
+                return;
+            }
             // 确认收纳成品：清空消耗掉的宫格（包括 2x2 与 1x1）！
             foreach (int slotIdx in pendingConsumedSlotIndices)
             {
@@ -1360,10 +1371,6 @@ namespace BiomechanicalCrafting
                 }
             }
 
-            if (pendingProduct != null)
-            {
-                PlayerSessionData.AddCraftedProduct(pendingProduct);   // [gamejam 移植] 刷新交给 OnCraftedProductsChanged 事件
-            }
 
             if (craftResultModal != null) craftResultModal.SetActive(false);
             SyncSlotsToPlayerSessionData();

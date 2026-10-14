@@ -181,7 +181,7 @@ ParryWindowOpen 依赖 aiState == Attack 和私有 stateTimer。外部只给 Bos
 
 现有消费者包括：水塔 Wet／减速／感电，电鳗发电机伤害与麻痹，金属陷阱击退／麻痹，培养箱 Pacify，阀门 ForceTauntTarget，以及水刃、气囊爆炸、珊瑚反伤等。
 
-当前没有通用 Boss 抗性／递减控制接口。若设计要求“Boss 不被驯化、减少击退、麻痹转破防”，应在共享 EnemyController 的对应入口添加可配置策略，默认维持普通怪行为；不要让所有家具分别判断 Boss 名称，不要在 BossBrain 每帧清空控制状态来抢执行顺序。外部 Boss AI 还必须能读取并遵守麻痹／硬直等控制结果；当前 paralysisTimer 是私有的，没有公开 IsParalyzed 查询，建议新增明确查询或统一控制更新钩子。
+当前没有通用 Boss 抗性／递减控制接口。若设计要求“Boss 不被驯化、减少击退、麻痹转破防”，应在共享 EnemyController 的对应入口添加可配置策略，默认维持普通怪行为；不要让所有家具分别判断 Boss 名称，不要在 BossBrain 每帧清空控制状态来抢执行顺序。外部 Boss AI 还必须能读取并遵守麻痹／硬直等控制结果；2026-10-14 扳机鱼接入时已新增 EnemyController.IsParalyzed 只读查询，可与 IsStaggered 一起使用；内部 paralysisTimer 仍为私有字段。
 
 Boss 攻击家具：
 

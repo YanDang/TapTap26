@@ -25,6 +25,11 @@ namespace GameJam
         private Text _combatTxt;
         private Text _dodgeLabel;
         private Text _parryLabel;
+        private Button _restButton;
+        private Text _dayText;
+        private Text _restStatus;
+        private Text _restButtonText;
+        private float _restMessageUntil;
 
         public static HUD Build()
         {
@@ -92,6 +97,29 @@ namespace GameJam
             _combatTxt = Label(transform, "", 26, TextAnchor.UpperLeft, Vector2.zero, new Vector2(300, 40));
             Anchor(_combatTxt.rectTransform, new Vector2(266, -64));
             _combatTxt.color = new Color(1f, 0.45f, 0.4f);
+
+            var restPanel = NewRect("RestPanel", transform);
+            restPanel.anchorMin = restPanel.anchorMax = restPanel.pivot = new Vector2(1, 1);
+            restPanel.anchoredPosition = new Vector2(-28, -28);
+            restPanel.sizeDelta = new Vector2(340, 160);
+            _dayText = Label(restPanel, "", 24, TextAnchor.MiddleCenter, new Vector2(0, 60), new Vector2(340, 36));
+            var restRect = NewRect("BtnRestUntilNextDay", restPanel);
+            restRect.sizeDelta = new Vector2(300, 54);
+            var background = restRect.gameObject.AddComponent<Image>();
+            background.color = new Color(0.12f, 0.30f, 0.27f, 0.95f);
+            _restButton = restRect.gameObject.AddComponent<Button>();
+            _restButton.targetGraphic = background;
+            _restButton.onClick.AddListener(RestUntilNextDay);
+            _restButtonText = Label(restRect, "休息到下一天", 24, TextAnchor.MiddleCenter, Vector2.zero, restRect.sizeDelta);
+            _restStatus = Label(restPanel, "", 18, TextAnchor.MiddleCenter, new Vector2(0, -55), new Vector2(340, 48));
+        }
+
+        private void RestUntilNextDay()
+        {
+            var player = PlayerController.Instance ?? FindObjectOfType<PlayerController>();
+            PlayerSessionData.TryRestUntilNextDay(player, out var message);
+            _restStatus.text = message;
+            _restMessageUntil = Time.unscaledTime + 3f;
         }
 
         // ---------------------------------------------------------------- helpers
@@ -168,6 +196,17 @@ namespace GameJam
             {
                 SetVisible(false);
                 return;
+            }
+
+            if (_restButton != null)
+            {
+                _dayText.text = $"第 {PlayerSessionData.greenhouse.day} / 7 天";
+                _restButtonText.text = PlayerSessionData.greenhouse.day >= GameRunProgress.FinalDay ? "结束旅程 · 结算" : "休息到下一天";
+                _restButton.interactable = PlayerSessionData.CanRestUntilNextDay(p, out var reason);
+                if (Time.unscaledTime >= _restMessageUntil)
+                    _restStatus.text = _restButton.interactable
+                        ? (PlayerSessionData.greenhouse.day >= GameRunProgress.FinalDay ? "按当前有效家具数量结算" : "休息后需重新挑战采集门守卫")
+                        : reason;
             }
 
             bool inCombat = p.InCombat;

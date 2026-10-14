@@ -17,7 +17,6 @@ public class CollectSceneController : MonoBehaviour
     [Header("UI Header")]
     public Text dayTitleText;
     public Text daySubText;
-    public Button btnNextDay;
     public Button btnReturnToCombat;
     public RectTransform basketContainer;
     public Text basketCountText;
@@ -26,7 +25,6 @@ public class CollectSceneController : MonoBehaviour
     [Header("Sprouting & Nodes")]
     public Transform nodeSpawnContainer;
     public GameObject nodePrefab;
-    public CanvasGroup dayTransitionFadeGroup;
 
     [Header("Floating Text")]
     public Transform floatingTextContainer;
@@ -76,7 +74,6 @@ public class CollectSceneController : MonoBehaviour
         new Vector2(810, -300)   // 16: 右下角高压生体圆柱管
     };
 
-    private bool isRefreshingDay;
 
     void Awake()
     {
@@ -216,17 +213,6 @@ public class CollectSceneController : MonoBehaviour
 
     private void InitButtons()
     {
-        if (btnNextDay == null)
-        {
-            var n = GameObject.Find("BtnNextDay")?.GetComponent<Button>();
-            if (n != null) btnNextDay = n;
-        }
-        if (btnNextDay != null)
-        {
-            btnNextDay.onClick.RemoveAllListeners();
-            btnNextDay.onClick.AddListener(OnNextDayClicked);
-        }
-
         if (btnReturnToCombat == null)
         {
             btnReturnToCombat = GameObject.Find("BtnReturnCombat")?.GetComponent<Button>();
@@ -243,68 +229,12 @@ public class CollectSceneController : MonoBehaviour
     /// </summary>
     public void ReturnToCombatScene()
     {
-        if (isRefreshingDay) return;
         GameplaySceneTransition.TryReturn(gameObject.scene, () => PlayerSessionData.SaveBackpackSlots(PlayerSessionData.shellSlotItems));
-    }
-
-    /// <summary>
-    /// 推进至下一天
-    /// </summary>
-    public void OnNextDayClicked()
-    {
-        if (isRefreshingDay || GameplaySceneTransition.IsBusy) return;
-        isRefreshingDay = true;
-        if (btnNextDay != null) btnNextDay.interactable = false;
-        if (btnReturnToCombat != null) btnReturnToCombat.interactable = false;
-        StartCoroutine(NextDayRoutine());
-    }
-
-    private IEnumerator NextDayRoutine()
-    {
-        try
-        {
-            yield return null;
-            if (dayTransitionFadeGroup != null)
-            {
-                dayTransitionFadeGroup.blocksRaycasts = true;
-                float elapsed = 0f;
-                while (elapsed < 0.25f)
-                {
-                    elapsed += Time.unscaledDeltaTime;
-                    dayTransitionFadeGroup.alpha = Mathf.Clamp01(elapsed / 0.25f);
-                    yield return null;
-                }
-            }
-            PlayerSessionData.SetGreenhouseState(GenerateDay(currentDay + 1));
-            PlayerSessionData.CommitDoorVisit();
-            PlayerSessionData.SaveBackpackToStorage();
-            SproutDay(currentDay);
-            if (dayTransitionFadeGroup != null)
-            {
-                float elapsed = 0f;
-                while (elapsed < 0.35f)
-                {
-                    elapsed += Time.unscaledDeltaTime;
-                    dayTransitionFadeGroup.alpha = 1f - Mathf.Clamp01(elapsed / 0.35f);
-                    yield return null;
-                }
-            }
-        }
-        finally { FinishDayRefresh(); }
-    }
-
-    private void FinishDayRefresh()
-    {
-        isRefreshingDay = false;
-        if (dayTransitionFadeGroup != null) { dayTransitionFadeGroup.alpha = 0f; dayTransitionFadeGroup.blocksRaycasts = false; }
-        if (btnNextDay != null) btnNextDay.interactable = true;
-        if (btnReturnToCombat != null) btnReturnToCombat.interactable = true;
     }
 
     private void OnDisable()
     {
         StopAllCoroutines();
-        FinishDayRefresh();
     }
 
     private void OnDestroy()
@@ -347,7 +277,7 @@ public class CollectSceneController : MonoBehaviour
         if (materials == null || materials.Count == 0) return state;
         var anchors = new List<int>();
         for (int index = 0; index < SpawnAnchors.Length; index++) anchors.Add(index);
-        int count = Mathf.Min(UnityEngine.Random.Range(7, 11), anchors.Count);
+        int count = Mathf.Min(UnityEngine.Random.Range(3, 6), anchors.Count);
         for (int index = 0; index < count; index++)
         {
             int selected = UnityEngine.Random.Range(0, anchors.Count);
@@ -392,7 +322,7 @@ public class CollectSceneController : MonoBehaviour
     /// </summary>
     private bool OnItemHarvestAttempt(HarvestItemNode node)
     {
-        if (node == null || node.materialData == null || node.isHarvested || isRefreshingDay || GameplaySceneTransition.IsBusy) return false;
+        if (node == null || node.materialData == null || node.isHarvested || GameplaySceneTransition.IsBusy) return false;
         if (!nodeStates.TryGetValue(node, out var state) || state.harvested || !PlayerSessionData.greenhouse.nodes.Contains(state)) return false;
         state.harvested = true;
         PlayerSessionData.greenhouse.harvestedCount++;

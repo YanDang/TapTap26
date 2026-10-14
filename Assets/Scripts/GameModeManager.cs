@@ -106,7 +106,7 @@ public class GameModeManager : MonoBehaviour
                 {
                     DamageTextManager.Instance.ShowText(
                         playerController.transform.position + Vector3.up * 0.8f,
-                        $"⚠️ 精力不足，无法开启建造！(需 {playerController.buildModeStaminaCost:0} 精力)",
+                        $"⚠️ 战斗耐力不足，无法开启建造！(需 {playerController.buildModeStaminaCost:0} 耐力)",
                         new Color(1f, 0.85f, 0.2f),
                         0.11f
                     );

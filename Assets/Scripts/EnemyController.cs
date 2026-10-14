@@ -127,11 +127,40 @@ public class EnemyController : MonoBehaviour
         return ec;
     }
 
+    public static EnemyController CreateTriggerfishInstance(Vector3 position, string enemyName = "Enemy_Triggerfish")
+    {
+        var prefab = Resources.Load<GameObject>("Enemies/Enemy_Triggerfish");
+        if (prefab == null || prefab.GetComponent<EnemyController>() == null)
+        {
+            Debug.LogWarning("[EnemyController] Missing triggerfish prefab; spawning a squid instead.");
+            return CreateEnemyInstance(position, enemyName);
+        }
+        var instance = Instantiate(prefab, position, Quaternion.identity);
+        instance.name = enemyName;
+        var enemy = instance.GetComponent<EnemyController>();
+        enemy.spawnPosition = position;
+        enemy.autoRespawn = false;
+        enemy.aiState = EnemyAIState.Chase;
+        return enemy;
+    }
+
+    private float emergenceRemaining;
+    public bool IsEmerging => emergenceRemaining > 0f;
+
+    public void BeginEmergence(float duration)
+    {
+        emergenceRemaining = Mathf.Max(0f, duration);
+        aiState = EnemyAIState.Chase;
+        stateTimer = 0f;
+        attackCooldownTimer = Mathf.Max(attackCooldown, 0.5f);
+        SetMoveAnimation(false);
+    }
+
     public bool ParryWindowOpen
     {
         get
         {
-            if (aiState != EnemyAIState.Attack) return false;
+            if (IsEmerging || aiState != EnemyAIState.Attack) return false;
             float end = (currentClock != null && currentClock.Open) ? currentClock.duration * 0.9f : windowEnd;
             return stateTimer >= windowStart && stateTimer <= end;
         }
@@ -197,7 +226,7 @@ public class EnemyController : MonoBehaviour
     public float pacifyImmuneUntil = 0f;
     public FurnitureObject pacifierFurniture = null;
     public bool Pacified => aiState == EnemyAIState.Pacified;
-    public bool CanBePacified => IsAlive && (aiState == EnemyAIState.Patrol || aiState == EnemyAIState.Alert || aiState == EnemyAIState.Chase || aiState == EnemyAIState.Recover) && Grabber != this && Time.time >= pacifyImmuneUntil;
+    public bool CanBePacified => IsAlive && !IsEmerging && (aiState == EnemyAIState.Patrol || aiState == EnemyAIState.Alert || aiState == EnemyAIState.Chase || aiState == EnemyAIState.Recover) && Grabber != this && Time.time >= pacifyImmuneUntil;
 
     [Header("Furniture Targeting (家具目标与游击脱战 - 对齐 gamejam-integration)")]
     public float furnitureSearchRange = 9f;
@@ -253,6 +282,7 @@ public class EnemyController : MonoBehaviour
 
     public bool IsAlive => currentHp > 0 && !isDead;
     public bool IsStaggered => isStaggered;
+    public bool IsParalyzed => paralysisTimer > 0f;
     public bool IsAttacking => aiState == EnemyAIState.Attack || aiState == EnemyAIState.GrabWindup || aiState == EnemyAIState.Grabbing;
 
     private bool isDead = false;
@@ -596,6 +626,7 @@ public class EnemyController : MonoBehaviour
     /// </summary>
     public void Knockback(Vector3 dir, float distance)
     {
+        if (IsEmerging) return;
         dir.z = 0f;
         knockVel = dir.normalized * distance * 8f;
     }
@@ -698,6 +729,20 @@ public class EnemyController : MonoBehaviour
         if (isAIPaused || PlayerSessionData.isCraftingOpen)
         {
             SetMoveAnimation(false);
+            return;
+        }
+
+        if (IsEmerging)
+        {
+            emergenceRemaining = Mathf.Max(0f, emergenceRemaining - Time.deltaTime);
+            SetMoveAnimation(false);
+            SetVisualAlpha(IsEmerging ? 0.45f + 0.2f * Mathf.Sin(Time.time * 12f) : 1f);
+            if (!IsEmerging)
+            {
+                stateTimer = 0f;
+                aiState = EnemyAIState.Chase;
+                attackCooldownTimer = Mathf.Max(attackCooldown, 0.5f);
+            }
             return;
         }
 
@@ -1521,6 +1566,7 @@ public class EnemyController : MonoBehaviour
 
     public void Parried()
     {
+        if (IsEmerging || !IsAlive) return;
         if (currentClock != null) { currentClock.Close(); currentClock = null; }
         aiState = EnemyAIState.Pending;
         stateTimer = 0f;
@@ -1537,6 +1583,7 @@ public class EnemyController : MonoBehaviour
 
     public void BeginExecuted()
     {
+        if (IsEmerging || !IsAlive) return;
         if (currentClock != null) { currentClock.Close(); currentClock = null; }
         aiState = EnemyAIState.Executing;
         CancelGrab();
@@ -1547,6 +1594,7 @@ public class EnemyController : MonoBehaviour
 
     public void KillByExecution(Vector3 dir)
     {
+        if (IsEmerging || !IsAlive) return;
         currentHp = 0f;
         Flash(Color.white, 0.3f);
         ApplyKnockback(dir, 0.8f, 0.25f);
@@ -1619,7 +1667,7 @@ public class EnemyController : MonoBehaviour
 
     public void TakeDamage(float damage, float guardBreakDamage, Vector3 attackerPos)
     {
-        if (isDead || aiState == EnemyAIState.Executing) return;
+        if (isDead || IsEmerging || aiState == EnemyAIState.Executing) return;
 
         Flash(Color.white, 0.12f);
         Knockback((transform.position - attackerPos).normalized, 0.18f);
@@ -1692,6 +1740,7 @@ public class EnemyController : MonoBehaviour
 
     public void TriggerStagger()
     {
+        if (IsEmerging) return;
         if (currentClock != null) { currentClock.Close(); currentClock = null; }
         isStaggered = true;
         staggerTimer = staggerDuration;
@@ -1921,6 +1970,7 @@ public class EnemyController : MonoBehaviour
     /// </summary>
     public void ApplyKnockback(Vector3 dir, float force, float duration = 0.35f)
     {
+        if (IsEmerging) return;
         if (isDead) return;
         StartCoroutine(KnockbackRoutine(dir.normalized, force, duration));
     }
@@ -1959,6 +2009,7 @@ public class EnemyController : MonoBehaviour
     /// </summary>
     public void ApplySlow(float slowPercent, float duration)
     {
+        if (IsEmerging) return;
         float factor = Mathf.Clamp01(1f - slowPercent / 100f);
         slowMultiplier = Mathf.Min(slowMultiplier, factor);
         slowTimer = Mathf.Max(slowTimer, duration);
@@ -1969,6 +2020,7 @@ public class EnemyController : MonoBehaviour
     /// </summary>
     public void ApplyParalysis(float duration)
     {
+        if (IsEmerging) return;
         if (isDead) return;
         paralysisTimer = Mathf.Max(paralysisTimer, duration);
         if (DamageTextManager.Instance != null)
@@ -1982,6 +2034,7 @@ public class EnemyController : MonoBehaviour
     /// </summary>
     public void ApplyPacify(float duration, EnemyController targetOther = null)
     {
+        if (IsEmerging) return;
         if (isDead) return;
         isPacified = true;
         pacifiedTimer = duration;

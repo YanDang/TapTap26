@@ -11,8 +11,8 @@ using GameJam;
 ///   1. 部署放置 (Closed)：
 ///      * 处于关闭待开启状态，头顶浮动黄色交互提示标签 "[ 🚪 点击或按 F 开启门扉 ]"；
 ///   2. 打开门扉 (Fighting)：
-///      * 玩家点击或交互打开后，从门扉位置随机涌现 1~3 只异界怪兽 (Enemy_Squid)；
-///      * 怪物立即锁定玩家并追击，且 autoRespawn 设为 false (消灭后不重复复活)；
+///      * 开门后先预警，再从附近可通行的安全位置随机涌现 1~3 只守卫；
+///      * 守卫完成出场保护后追击，且 autoRespawn 设为 false (消灭后不重复复活)；
 ///      * 门扉状态转为交战锁定，未消灭前无法进入；
 ///   3. 敌群肃清 (Cleared)：
 ///      * 当所有涌现的怪物均被击败后，空间裂隙震荡平息，通道稳定绽放青碧色传送光晕；
@@ -27,15 +27,23 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         Closed,    // 初始关闭状态，等待开启
         Fighting,  // 怪物已涌现，交战中
         Cleared,
-        Spent
+        Spent,
+        Summoning
     }
 
     [Header("Door Status")]
     public DoorState state = DoorState.Closed;
 
     public float interactionRadius = 2.2f;
+    public float summonWarningDuration = 0.8f;
+    public float emergenceDuration = 0.7f;
+    public float minimumSpawnDistance = 0.85f;
+    public float maximumDoorSpawnRadius = 2.2f;
+    private float summonRemaining;
+    private PlayerController summoningPlayer;
 
     private string doorId;
+    private int trialDay = -1;
     public string DoorId => doorId ?? (doorId = gameObject.scene.name + ":" +
         transform.position.x.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + ":" +
         transform.position.y.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + ":" +
@@ -44,6 +52,15 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     private void RefreshDailyState()
     {
         bool used = PlayerSessionData.IsDoorUsedToday(DoorId);
+        int currentDay = PlayerSessionData.greenhouse.day;
+        bool dayChanged = trialDay != currentDay;
+        if (dayChanged)
+        {
+            trialDay = currentDay;
+            spawnedEnemies.Clear();
+            totalTrialSpawned = 0;
+            state = GameRunProgress.IsTrialCleared(DoorId) ? DoorState.Cleared : DoorState.Closed;
+        }
         if (used && state != DoorState.Spent)
         {
             state = DoorState.Spent;
@@ -51,7 +68,11 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         }
         else if (!used && state == DoorState.Spent)
         {
-            state = DoorState.Cleared;
+            state = DoorState.Closed;
+            UpdatePromptText();
+        }
+        else if (dayChanged)
+        {
             UpdatePromptText();
         }
     }
@@ -128,14 +149,19 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
 
         switch (state)
         {
+            case DoorState.Summoning:
+                promptTextMesh.text = "裂隙正在开启 · 守卫即将出现，请准备战斗";
+                promptTextMesh.color = ColorFighting;
+                break;
+
             case DoorState.Spent:
-                promptTextMesh.text = "门已关闭 · 今日已使用，次日可再次进入";
+                promptTextMesh.text = "门已关闭 · 今日已使用，次日需重新挑战";
                 promptTextMesh.color = Color.gray;
                 if (rangeRingRenderer != null) rangeRingRenderer.color = Color.gray;
                 break;
 
             case DoorState.Closed:
-                promptTextMesh.text = "🚪 点击或按 [F] 开启裂隙门";
+                promptTextMesh.text = "🚪 点击或按 [F] 开门 · 消耗 2 点每日精力";
                 promptTextMesh.color = ColorClosed;
                 if (rangeRingRenderer != null)
                 {
@@ -179,6 +205,21 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         if (rangeRing != null && !rangeRing.activeSelf) rangeRing.SetActive(true);
         if (promptGo != null && !promptGo.activeSelf) promptGo.SetActive(true);
 
+        if (state == DoorState.Summoning && !PlayerSessionData.IsCombatInputBlocked && !IsCombatPaused)
+        {
+            if (summoningPlayer == null || !summoningPlayer.IsAlive)
+            {
+                state = DoorState.Closed;
+                GameRunProgress.RefundDoor(DoorId);
+                UpdatePromptText();
+            }
+            else
+            {
+                summonRemaining -= Time.deltaTime;
+                if (summonRemaining <= 0f) SpawnTrialEnemies(summoningPlayer);
+            }
+        }
+
         float t = Time.time;
 
         // 柔和生体舒缩微动效
@@ -197,7 +238,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         // 光环呼吸微脉冲
         if (rangeRingRenderer != null)
         {
-            Color curCol = state == DoorState.Spent ? Color.gray : (state == DoorState.Closed ? ColorClosed : (state == DoorState.Fighting ? ColorFighting : ColorCleared));
+            Color curCol = state == DoorState.Spent ? Color.gray : (state == DoorState.Closed ? ColorClosed : ((state == DoorState.Fighting || state == DoorState.Summoning) ? ColorFighting : ColorCleared));
             float alpha = 0.25f + 0.15f * Mathf.Sin(t * (state == DoorState.Fighting ? 4f : 2f));
             rangeRingRenderer.color = new Color(curCol.r, curCol.g, curCol.b, alpha);
         }
@@ -265,7 +306,8 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         RefreshDailyState();
         if (state == DoorState.Spent) return;
         if (player == null) player = PlayerController.Instance ?? FindObjectOfType<PlayerController>();
-        if (player == null || !player.IsAlive) return;
+        if (player == null || !player.IsAlive || IsCombatPaused) return;
+        player.ConsumeDoorInteraction();
 
         switch (state)
         {
@@ -301,52 +343,100 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     /// <summary>
     /// 打开门扉：从该位置随机涌现 1~3 只怪物！
     /// </summary>
+    private void OnDisable()
+    {
+        if (Application.isPlaying && GameRunProgress.WorldReady && state == DoorState.Summoning)
+            GameRunProgress.RefundDoor(DoorId);
+    }
+
     private void OpenDoor(PlayerController player)
     {
         if (state != DoorState.Closed) return;
-
-        int spawnCount = Random.Range(1, 4); // 随机 1~3 只
+        if (!GameRunProgress.TryReserveDoor(DoorId, out var reason))
+        {
+            if (DamageTextManager.Instance != null)
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up, reason, Color.yellow, 0.13f);
+            return;
+        }
         spawnedEnemies.Clear();
         totalTrialSpawned = 0;
+        summoningPlayer = player;
+        summonRemaining = Mathf.Max(0.1f, summonWarningDuration);
+        state = DoorState.Summoning;
+        Sfx.Play("sfx_table_land", 1f, true);
+        UpdatePromptText();
+    }
 
-        Vector3 basePos = transform.position;
-
-        for (int i = 0; i < spawnCount; i++)
+    private List<Vector3> FindSafeSpawnPositions(PlayerController player, int count)
+    {
+        var positions = new List<Vector3>();
+        var pathfinder = IsometricPathfinder.Instance;
+        if (pathfinder == null || pathfinder.groundTilemap == null) return positions;
+        var origin = pathfinder.WorldToCell(transform.position);
+        var candidates = new List<Vector3>();
+        float safeDistance = Mathf.Max(0.85f, minimumSpawnDistance);
+        for (int offsetX = -12; offsetX <= 12; offsetX++)
         {
-            Vector3 offset = new Vector3(
-                Random.Range(-1.3f, 1.3f),
-                Random.Range(-1.2f, -0.3f), // 稍向下偏移，确保完全在地图内
-                0f
-            );
-            Vector3 spawnPos = basePos + offset;
-
-            EnemyController ec = EnemyController.CreateEnemyInstance(spawnPos, $"Portal_Enemy_{i + 1}");
-            if (ec != null)
+            for (int offsetY = -12; offsetY <= 12; offsetY++)
             {
-                ec.spawnPosition = spawnPos;
-                ec.autoRespawn = false; // 严禁打败后自动复活，确保通关可判定
-                ec.currentHp = ec.maxHp;
-                ec.aiState = EnemyController.EnemyAIState.Chase; // 立即扑向玩家发起围攻
-                spawnedEnemies.Add(ec);
-                totalTrialSpawned++;
+                var cell = origin + new Vector3Int(offsetX, offsetY, 0);
+                if (!pathfinder.IsWalkable(cell)) continue;
+                var position = pathfinder.CellToWorld(cell);
+                position.z = transform.position.z;
+                float doorDistance = Vector2.Distance(position, transform.position);
+                if (doorDistance < 0.65f || doorDistance > maximumDoorSpawnRadius ||
+                    Vector2.Distance(position, player.transform.position) < safeDistance) continue;
+                bool occupied = false;
+                foreach (var enemy in EnemyController.AllEnemies)
+                {
+                    if (enemy != null && enemy.IsAlive && Vector2.Distance(position, enemy.transform.position) < 1.2f)
+                    {
+                        occupied = true;
+                        break;
+                    }
+                }
+                if (!occupied) candidates.Add(position);
             }
         }
-
-        state = DoorState.Fighting;
-
-        Sfx.Play("sfx_table_land", 1f, true);
-        Vfx.Spawn("VFX_ParrySpark", basePos + Vector3.up * 0.8f, 0, 1.5f, true);
-
-        if (DamageTextManager.Instance != null)
+        candidates.Sort((first, second) => Vector2.Distance(first, transform.position).CompareTo(Vector2.Distance(second, transform.position)));
+        while (candidates.Count > 0 && positions.Count < count)
         {
-            DamageTextManager.Instance.ShowText(
-                basePos + Vector3.up * 1.5f,
-                $"🌀 异界裂隙开启! 涌现了 {spawnCount} 只怪兽!",
-                new Color(1f, 0.45f, 0.2f),
-                0.16f
-            );
+            var position = candidates[0];
+            positions.Add(position);
+            candidates.RemoveAll(candidate => Vector2.Distance(candidate, position) < 1.05f);
         }
+        return positions;
+    }
 
+    private void SpawnTrialEnemies(PlayerController player)
+    {
+        int spawnCount = Random.Range(1, 4);
+        var positions = FindSafeSpawnPositions(player, spawnCount);
+        if (positions.Count < spawnCount)
+        {
+            GameRunProgress.RefundDoor(DoorId);
+            state = DoorState.Closed;
+            UpdatePromptText();
+            if (DamageTextManager.Instance != null)
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up, "空间不足，请让开门周围区域后重试", Color.yellow, 0.13f);
+            return;
+        }
+        foreach (var position in positions)
+        {
+            int index = totalTrialSpawned;
+            var enemy = index % 2 == 0
+                ? EnemyController.CreateTriggerfishInstance(position, $"Portal_Triggerfish_{index + 1}")
+                : EnemyController.CreateEnemyInstance(position, $"Portal_Squid_{index + 1}");
+            if (enemy == null) continue;
+            enemy.spawnPosition = position;
+            enemy.autoRespawn = false;
+            enemy.BeginEmergence(Mathf.Max(0.1f, emergenceDuration));
+            spawnedEnemies.Add(enemy);
+            totalTrialSpawned++;
+        }
+        state = totalTrialSpawned > 0 ? DoorState.Fighting : DoorState.Closed;
+        if (totalTrialSpawned > 0) GameRunProgress.CommitDoor(DoorId);
+        else GameRunProgress.RefundDoor(DoorId);
         UpdatePromptText();
     }
 
@@ -356,6 +446,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     private void OnAllMonstersDefeated()
     {
         state = DoorState.Cleared;
+        GameRunProgress.MarkDoorCleared(DoorId);
 
         Sfx.Play("sfx_parry", 1f, true);
         Vfx.Spawn("VFX_ParrySpark", transform.position + Vector3.up * 0.8f, 0, 1.8f, true);
@@ -392,21 +483,4 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         if (!GameplaySceneTransition.TryOpen("Collect", player, rollback)) rollback();
     }
 
-    void OnMouseDown()
-    {
-        // 允许直接鼠标点击门扉触发交互
-        var p = PlayerController.Instance ?? FindObjectOfType<PlayerController>();
-        if (p != null)
-        {
-            float dist = Vector2.Distance(transform.position, p.transform.position);
-            if (dist <= interactionRadius + 0.8f)
-            {
-                OnPlayerInteract(p);
-            }
-            else
-            {
-                p.MoveToWorldPoint(transform.position - new Vector3(0f, 1.2f, 0f));
-            }
-        }
-    }
 }
