@@ -336,6 +336,27 @@ public static class PlayerSessionData
     private const string PrefKey_ShellBackpack = "TAP_SHELL_BACKPACK_DATA";
     private static bool isInitialized = false;
 
+    public static bool HasStoredProgress => PlayerPrefs.HasKey(PrefKey_ShellBackpack) || PlayerPrefs.HasKey(PrefKey_CraftedProducts);
+
+    public static bool TryGetSavedJourneyInfo(out int day, out bool finished)
+    {
+        day = 1;
+        finished = false;
+        if (!PlayerPrefs.HasKey(PrefKey_ShellBackpack)) return false;
+        try
+        {
+            var data = JsonUtility.FromJson<SavedBackpackData>(PlayerPrefs.GetString(PrefKey_ShellBackpack));
+            if (data == null || data.entries == null || !Enum.IsDefined(typeof(ShellType), data.shellType)) return false;
+            day = Mathf.Clamp(data.greenhouse != null ? data.greenhouse.day : 1, 1, GameRunProgress.FinalDay);
+            finished = data.runProgress != null && data.runProgress.finished;
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     [Serializable]
     public class SavedSlotEntry
     {

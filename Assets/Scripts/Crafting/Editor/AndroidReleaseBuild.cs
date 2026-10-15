@@ -37,11 +37,11 @@ public sealed class AndroidReleaseBuild : IPreprocessBuildWithReport
             throw new BuildFailedException("Android 构建必须启用 IL2CPP 和 ARM64。");
 
         var scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).ToArray();
-        string[] requiredScenes = { "BiomechanicalCombatScene", "Mix", "Collect" };
+        string[] requiredScenes = { "StartMenu", "BiomechanicalCombatScene", "Mix", "Collect" };
         if (scenes.Length == 0 || Path.GetFileNameWithoutExtension(scenes[0].path) != requiredScenes[0] ||
             requiredScenes.Any(required => !scenes.Any(scene => Path.GetFileNameWithoutExtension(scene.path) == required)) ||
             scenes.Any(scene => !File.Exists(scene.path)))
-            throw new BuildFailedException("构建场景必须以 BiomechanicalCombatScene 开始，并包含 Mix 和 Collect。");
+            throw new BuildFailedException("构建场景必须以 StartMenu 开始，并包含 BiomechanicalCombatScene、Mix 和 Collect。");
 
         if (!release) return;
         string identifier = PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android);

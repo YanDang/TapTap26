@@ -14,10 +14,13 @@
 3. Player Settings → Other Settings：填写正式 Package Name、Version、Bundle Version Code。已有应用必须沿用原包名及签名，并递增 Version Code。
 4. Publishing Settings：配置并备份正式 keystore、alias，填写密码。密钥及密码不要提交到仓库；本项目已忽略 *.keystore / *.jks。
 5. 检查应用名称、图标；按实际上传渠道要求核对 Target API、包格式、权限和隐私材料。自动 Target API 不代表已经满足平台审核要求。
-6. Build Settings 场景顺序为 BiomechanicalCombatScene、Mix、Collect，三个均启用。
+6. Build Settings 已启用的场景顺序为 StartMenu、BiomechanicalCombatScene、Mix、Collect，四个均启用。发布包从开始界面进入游戏。
 7. 使用菜单 **Build → Android → Build Release APK**；渠道要求 AAB 时选择 **Build Release AAB**。入口会检查场景、IL2CPP/ARM64、包名及签名，并强制使用非 Development 构建选项。
 
 ## 上传前真机验收
+
+- 冷启动进入开始界面；无存档时“开始旅程”，有存档时“继续旅程”显示天数，已结算时“查看结局”。“重新开始”必须二次确认，取消不会清空存档。
+- 开始界面：操作说明、音量增减/静音、退出确认、安卓返回键与加载进度正常；加载中连续点击不会重复进入。
 
 - 16:9、20:9 和平板比例，刘海及手势导航设备：界面无关键内容裁切，左右旋转正常。
 - 战斗：点击移动、攻击/防御、滑动翻滚、双指缩放；缩放松手不会移动或翻滚。
