@@ -295,9 +295,12 @@ public class BuildController : MonoBehaviour
     private bool IsPointerOverUI(int fingerId)
     {
         Vector2 screenPos = Input.mousePosition;
-        if (fingerId >= 0 && Input.touchCount > fingerId)
+        for (int touchIndex = 0; fingerId >= 0 && touchIndex < Input.touchCount; touchIndex++)
         {
-            screenPos = Input.GetTouch(fingerId).position;
+            Touch touch = Input.GetTouch(touchIndex);
+            if (touch.fingerId != fingerId) continue;
+            screenPos = touch.position;
+            break;
         }
 
         if (BuildDockUI.Instance != null && BuildDockUI.Instance.IsPointerOverDrawer(screenPos))

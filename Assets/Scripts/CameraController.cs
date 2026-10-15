@@ -64,6 +64,7 @@ public class CameraController : MonoBehaviour
     private bool isTouchDragging = false;
     private float lastPinchDistance = 0f;
     private bool isPinching = false;
+    private bool isTouchBlockedByUI;
 
     public static CameraController Instance { get; private set; }
     private Coroutine shakeCoroutine;
@@ -119,7 +120,7 @@ public class CameraController : MonoBehaviour
         if (followPlayer && targetToFollow != null)
         {
             float biasY = 0f;
-            if (enableMobilePortraitBias && cam != null)
+            if (enableMobilePortraitBias && cam != null && Screen.height > Screen.width)
             {
                 // 竖屏适配：将摄像机向下偏置，使角色位于屏幕上方 2/3 (即 1 - bottomUIDockRatio) 视野区域的中心
                 float orthoSize = float.IsNaN(cam.orthographicSize) ? 5f : cam.orthographicSize;
@@ -138,6 +139,9 @@ public class CameraController : MonoBehaviour
         }
         else
         {
+            isPinching = false;
+            isTouchDragging = false;
+            isTouchBlockedByUI = false;
             HandleMouseInput();
         }
 
@@ -152,6 +156,13 @@ public class CameraController : MonoBehaviour
             isTouchDragging = false;
             Touch t0 = Input.GetTouch(0);
             Touch t1 = Input.GetTouch(1);
+
+            if (isTouchBlockedByUI || IsTouchOverUI(t0) || IsTouchOverUI(t1))
+            {
+                isTouchBlockedByUI = true;
+                isPinching = false;
+                return;
+            }
 
             float currentDistance = Vector2.Distance(t0.position, t1.position);
 
@@ -190,12 +201,15 @@ public class CameraController : MonoBehaviour
             // 防 UI 穿透
             if (touch.phase == TouchPhase.Began)
             {
-                if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+                isTouchBlockedByUI = IsTouchOverUI(touch);
+                if (isTouchBlockedByUI)
                 {
                     isTouchDragging = false;
                     return;
                 }
             }
+
+            if (isTouchBlockedByUI) return;
 
             // 重新锚定基准点，防跳变
             if (!isTouchDragging || touch.phase == TouchPhase.Began)
@@ -225,6 +239,12 @@ public class CameraController : MonoBehaviour
         {
             isTouchDragging = false;
         }
+    }
+
+    private bool IsTouchOverUI(Touch touch)
+    {
+        return (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId)) ||
+               (BuildDockUI.Instance != null && BuildDockUI.Instance.IsPointerOverDrawer(touch.position));
     }
 
     private void HandleMouseInput()

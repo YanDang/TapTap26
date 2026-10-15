@@ -1188,6 +1188,13 @@ public class PlayerController : MonoBehaviour
         // 手机触控：多点与单点触控友好处理
         if (Input.touchCount > 0)
         {
+            if (Input.touchCount > 1)
+            {
+                isPointerDown = false;
+                pointerFingerId = -1;
+                return;
+            }
+
             for (int i = 0; i < Input.touchCount; i++)
             {
                 Touch touch = Input.GetTouch(i);
