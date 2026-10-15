@@ -30,6 +30,8 @@ namespace GameJam
         private Text _restStatus;
         private Text _restButtonText;
         private float _restMessageUntil;
+        private Button _craftingButton;
+        private CombatSceneCraftingEntrance _craftingEntrance;
 
         public static HUD Build()
         {
@@ -112,6 +114,24 @@ namespace GameJam
             _restButton.onClick.AddListener(RestUntilNextDay);
             _restButtonText = Label(restRect, "休息到下一天", 24, TextAnchor.MiddleCenter, Vector2.zero, restRect.sizeDelta);
             _restStatus = Label(restPanel, "", 18, TextAnchor.MiddleCenter, new Vector2(0, -55), new Vector2(340, 48));
+
+            _craftingEntrance = FindObjectOfType<CombatSceneCraftingEntrance>();
+            var craftingRect = NewRect("BtnOpenCrafting", transform);
+            Anchor(craftingRect, new Vector2(28, -205));
+            craftingRect.sizeDelta = new Vector2(240, 88);
+            var craftingBackground = craftingRect.gameObject.AddComponent<Image>();
+            craftingBackground.color = new Color(0.12f, 0.30f, 0.27f, 0.95f);
+            _craftingButton = craftingRect.gameObject.AddComponent<Button>();
+            _craftingButton.targetGraphic = craftingBackground;
+            _craftingButton.interactable = _craftingEntrance != null && _craftingEntrance.CanEnterCrafting;
+            _craftingButton.onClick.AddListener(OpenCrafting);
+            Label(craftingRect, "背包 / 合成", 28, TextAnchor.MiddleCenter, Vector2.zero, craftingRect.sizeDelta);
+        }
+
+        private void OpenCrafting()
+        {
+            if (_craftingEntrance == null) _craftingEntrance = FindObjectOfType<CombatSceneCraftingEntrance>();
+            if (_craftingEntrance != null) _craftingEntrance.EnterCraftingScene();
         }
 
         private void RestUntilNextDay()
@@ -196,6 +216,12 @@ namespace GameJam
             {
                 SetVisible(false);
                 return;
+            }
+
+            if (_craftingButton != null)
+            {
+                if (_craftingEntrance == null) _craftingEntrance = FindObjectOfType<CombatSceneCraftingEntrance>();
+                _craftingButton.interactable = _craftingEntrance != null && _craftingEntrance.CanEnterCrafting;
             }
 
             if (_restButton != null)

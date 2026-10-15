@@ -8,6 +8,16 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
 
     private PlayerController player;
 
+    public bool CanEnterCrafting
+    {
+        get
+        {
+            if (player == null) player = FindObjectOfType<PlayerController>();
+            return isActiveAndEnabled && player != null && player.IsAlive &&
+                   !PlayerSessionData.IsCombatInputBlocked && Application.CanStreamedLevelBeLoaded(craftingSceneName);
+        }
+    }
+
     void Start()
     {
         player = FindObjectOfType<PlayerController>();
@@ -44,7 +54,7 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
 
     public void EnterCraftingScene()
     {
-        if (player == null) player = FindObjectOfType<PlayerController>();
+        if (!CanEnterCrafting) return;
         GameplaySceneTransition.TryOpen(craftingSceneName, player);
     }
 }
