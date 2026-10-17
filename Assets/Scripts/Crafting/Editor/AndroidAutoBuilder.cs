@@ -81,6 +81,9 @@ public static class AndroidAutoBuilder
                 Debug.LogWarning("[AndroidAutoBuilder] HermitStudio.keystore not found at: " + keystorePath);
             }
 
+            // 2.5 Configure Game Logo / App Icon & Cover
+            ConfigureGameIconAndCover();
+
             // 3. Build Settings
             EditorUserBuildSettings.buildAppBundle = false;
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
@@ -128,6 +131,89 @@ public static class AndroidAutoBuilder
         finally
         {
             isBuilding = false;
+        }
+    }
+
+    public static void ConfigureGameIconAndCover()
+    {
+        string iconPath = "Assets/Art/game_icon_512.png";
+        if (!File.Exists(iconPath))
+        {
+            Debug.LogWarning("[AndroidAutoBuilder] Game icon not found at: " + iconPath);
+            return;
+        }
+
+        try
+        {
+            AssetDatabase.ImportAsset(iconPath, ImportAssetOptions.ForceUpdate);
+            TextureImporter importer = AssetImporter.GetAtPath(iconPath) as TextureImporter;
+            if (importer != null)
+            {
+                bool modified = false;
+                if (importer.textureType != TextureImporterType.Default)
+                {
+                    importer.textureType = TextureImporterType.Default;
+                    modified = true;
+                }
+                if (!importer.isReadable)
+                {
+                    importer.isReadable = true;
+                    modified = true;
+                }
+                if (importer.mipmapEnabled)
+                {
+                    importer.mipmapEnabled = false;
+                    modified = true;
+                }
+                if (importer.npotScale != TextureImporterNPOTScale.None)
+                {
+                    importer.npotScale = TextureImporterNPOTScale.None;
+                    modified = true;
+                }
+                if (importer.alphaIsTransparency != false)
+                {
+                    importer.alphaIsTransparency = false;
+                    modified = true;
+                }
+                if (modified)
+                {
+                    importer.SaveAndReimport();
+                }
+            }
+
+            Texture2D iconTex = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
+            if (iconTex != null)
+            {
+                // 1. 设置默认全局图标与 Android 主图标（Unity 会基于 512x512 自动生成全部平台各规格图标）
+                PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Unknown, new Texture2D[] { iconTex });
+                PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Android, new Texture2D[] { iconTex });
+
+                // 2. 配置启动封面 / Splash Screen
+                try
+                {
+                    Sprite logoSprite = Sprite.Create(
+                        iconTex,
+                        new Rect(0, 0, iconTex.width, iconTex.height),
+                        new Vector2(0.5f, 0.5f)
+                    );
+
+                    if (logoSprite != null)
+                    {
+                        PlayerSettings.SplashScreenLogo logo = PlayerSettings.SplashScreenLogo.Create(2.0f, logoSprite);
+                        PlayerSettings.SplashScreen.logos = new PlayerSettings.SplashScreenLogo[] { logo };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[AndroidAutoBuilder] Splash screen notice: " + ex.Message);
+                }
+
+                Debug.Log("[AndroidAutoBuilder] Game logo & icon 512x512 configured successfully.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("[AndroidAutoBuilder] Error configuring game icon: " + ex);
         }
     }
 }
