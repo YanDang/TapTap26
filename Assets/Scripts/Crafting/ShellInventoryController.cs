@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -196,8 +196,9 @@ namespace BiomechanicalCrafting
         {
             PlayerSessionData.EnsureInitialized();
             InitUIEvents();
-            currentShellType = PlayerSessionData.currentShellType;
+            currentShellType = ShellType.ConchShell;
             SwitchShell(currentShellType);
+            HideExtraShellButtons();
 
             // 结合采集系统：合成系统初始为空，或从全局持久化数据无缝加载
             LoadFromPlayerSessionData();
@@ -230,8 +231,8 @@ namespace BiomechanicalCrafting
                 if (Input.GetKeyDown(KeyCode.C)) ClearAllSlots();
             }
             if (Input.GetKeyDown(KeyCode.Alpha1)) SwitchShell(ShellType.ConchShell);
-            if (Input.GetKeyDown(KeyCode.Alpha2)) SwitchShell(ShellType.ClamShell);
-            if (Input.GetKeyDown(KeyCode.Alpha3)) SwitchShell(ShellType.RustedCanShell);
+            // if (Input.GetKeyDown(KeyCode.Alpha2)) SwitchShell(ShellType.ClamShell);
+            // if (Input.GetKeyDown(KeyCode.Alpha3)) SwitchShell(ShellType.RustedCanShell);
 
             // 满载警报静态稳定呈现（去除高频缩放闪烁，提升视觉舒适度）
             if (fullWarningBanner != null && fullWarningBanner.activeSelf)
@@ -419,13 +420,28 @@ namespace BiomechanicalCrafting
 
         private void UpdateShellCapacityLabels()
         {
-            var buttons = new[] { switchConchBtn, switchClamBtn, switchCanBtn };
-            for (int index = 0; index < buttons.Length; index++)
+            if (switchConchBtn != null)
             {
-                if (buttons[index] == null) continue;
-                var label = buttons[index].GetComponentInChildren<Text>();
-                var config = ShellConfig.CreateConfig((ShellType)index);
+                var label = switchConchBtn.GetComponentInChildren<Text>();
+                var config = ShellConfig.CreateConfig(ShellType.ConchShell);
                 if (label != null) label.text = config.shellName + " (" + config.TotalSlotCount + "格)";
+            }
+            HideExtraShellButtons();
+        }
+
+        private void HideExtraShellButtons()
+        {
+            if (switchClamBtn != null) switchClamBtn.gameObject.SetActive(false);
+            if (switchCanBtn != null) switchCanBtn.gameObject.SetActive(false);
+            if (switchConchBtn != null)
+            {
+                var rt = switchConchBtn.GetComponent<RectTransform>();
+                if (rt != null) rt.anchoredPosition = Vector2.zero;
+                if (switchConchBtn.transform.parent != null)
+                {
+                    var parentRt = switchConchBtn.transform.parent.GetComponent<RectTransform>();
+                    if (parentRt != null) parentRt.sizeDelta = new Vector2(160, 56);
+                }
             }
         }
 
@@ -2004,11 +2020,8 @@ namespace BiomechanicalCrafting
         private void UpdateShellButtonHighlights()
         {
             Color activeColor = new Color(0.98f, 0.82f, 0.18f, 0.9f);
-            Color normalColor = new Color(0.2f, 0.28f, 0.38f, 0.7f);
-
-            if (switchConchBtn != null) switchConchBtn.image.color = currentShellType == ShellType.ConchShell ? activeColor : normalColor;
-            if (switchClamBtn != null) switchClamBtn.image.color = currentShellType == ShellType.ClamShell ? activeColor : normalColor;
-            if (switchCanBtn != null) switchCanBtn.image.color = currentShellType == ShellType.RustedCanShell ? activeColor : normalColor;
+            if (switchConchBtn != null) switchConchBtn.image.color = activeColor;
+            HideExtraShellButtons();
         }
 
         private void ConfigureDevelopmentTools()

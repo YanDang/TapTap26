@@ -18,6 +18,12 @@ namespace BiomechanicalCrafting
         public float exposureSeconds = 2.5f;
         public float healAmount = 35f;
 
+        // 采集门动态推演属性（绑定一笔画投入材料数与元素总和：投入材料越多，怪物越多，材料也越多）
+        public int minGatherCount => damage > 0 ? damage : 3;
+        public int maxGatherCount => force > 0 ? Mathf.RoundToInt(force) : 5;
+        public int extraMonsters => percent;
+        public int monsterReduction => -percent;
+
         public static float QualityMultiplier(int nodeCount)
         {
             return nodeCount <= 3 ? 1f : nodeCount == 4 ? 1.15f : 1.28f;
@@ -77,6 +83,24 @@ namespace BiomechanicalCrafting
                     stats.radius = Mathf.Clamp(3.5f + (pressure + electricity) / 48f * quality, 3.5f, 8f);
                     stats.duration = Mathf.Clamp(Mathf.RoundToInt((4f + pressure / 25f) * quality), 4, 10);
                     break;
+                case "furn_gather_door":
+                    // 给的材料越多，出现的怪物越多，温室材料萌发也越多！
+                    // 初始基准（nodeCount <= 2）：0额外守卫，3~5材料
+                    int extraMaterials = Mathf.Max(0, product.nodeCount - 2);
+                    int extraMonsters = extraMaterials;
+                    int bonusYield = extraMaterials * 3;
+                    if (extraMaterials > 0)
+                    {
+                        bonusYield += Mathf.RoundToInt((growth + water) / 50f);
+                        if (pressure + electricity > 120) extraMonsters += 1;
+                    }
+                    int minG = extraMaterials == 0 ? 3 : Mathf.Clamp(3 + bonusYield, 3, 13);
+                    int maxG = extraMaterials == 0 ? 5 : Mathf.Clamp(5 + bonusYield + extraMaterials, 5, 16);
+
+                    stats.damage = minG;                             // minGatherCount
+                    stats.force = maxG;                              // maxGatherCount
+                    stats.percent = Mathf.Clamp(extraMonsters, 0, 4); // extraMonsters
+                    break;
                 case "scrap_symbiotic_sludge":
                 case "scrap_hybrid_residue":
                     stats.durability = Mathf.Clamp(Mathf.RoundToInt((90 + growth * 1.25f) * quality), 90, 320);
@@ -99,7 +123,9 @@ namespace BiomechanicalCrafting
                 case "furn_water_tower": effect = $"【潮润浸染】喷淋半径 {stats.radius:F1}m；减速 {stats.percent}% 并导电。"; break;
                 case "furn_bio_incubator": effect = $"【生体共鸣诱驯】范围 {stats.radius:F1}m；累计接触 {stats.exposureSeconds:0.#} 秒后安抚 {stats.duration:0.#} 秒。"; break;
                 case "furn_hydro_cannon": effect = $"【高压水刃】射程 {stats.radius:F1}m；水刃伤害 {stats.damage}；冲击推力 {stats.force:0}。"; break;
-                case "furn_gather_door": return "【裂隙试炼】激活门扉并击败守卫后，可通过此门进入采集温室。门不可拆除或摧毁。";
+                case "furn_gather_door":
+                    string extraInfo = stats.extraMonsters > 0 ? $"守卫涌现 +{stats.extraMonsters} 只；" : "标准守卫；";
+                    return $"【空间裂隙温室】投入材料 {product.nodeCount} 份；{extraInfo}温室萌发 {stats.minGatherCount}~{stats.maxGatherCount} 份材料。门不可拆除或摧毁。";
                 case "scrap_spasm_metal": effect = $"【弹簧陷阱】伤害 {stats.damage}；弹射力度 {stats.force:F1}；麻痹 {stats.duration:F1} 秒。"; break;
                 case "scrap_mud_coral": effect = $"【导电陷阱】半径 {stats.radius:F1}m；电击伤害 {stats.damage}，减速 40%。"; break;
                 case "scrap_gas_cyst": effect = $"【受触自爆】半径 {stats.radius:F1}m；爆炸伤害 {stats.damage}。"; break;

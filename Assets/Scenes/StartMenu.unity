@@ -164,9 +164,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 921958ab79514d708290769f060d456e, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  gameTitle: 生体机械
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gameTitle: "\u87BA\u58F3\u6D77\u5E95\u6E38\u8BB0"
   gameplayScene: BiomechanicalCombatScene
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

@@ -8575,12 +8575,12 @@ MonoBehaviour:
   buildTilemap: {fileID: 0}
   pathfinder: {fileID: 972876812}
   maxHp: 100
-  currentHp: 80
+  currentHp: 100
   baseMoveSpeed: 4
   groundHeightOffset: 0.5
   canMove: 1
-  attackDamage: 25
-  guardBreakPower: 35
+  attackDamage: 8
+  guardBreakPower: 12
   attackInterval: 0.75
   heldFurniture: {fileID: 0}
   slashArcSprite: {fileID: 21300000, guid: 90c2cf246ac64395af79e62c8228b0d5, type: 3}

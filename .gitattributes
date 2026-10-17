@@ -1,0 +1,45 @@
+# ==========================================
+# Unity Standard .gitattributes for GitHub
+# ==========================================
+
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Unity YAML files (强制 LF 换行，防止跨平台检出产生虚假修改)
+*.unity text eol=lf merge=unityyamlmerge
+*.prefab text eol=lf merge=unityyamlmerge
+*.asset text eol=lf merge=unityyamlmerge
+*.meta text eol=lf merge=unityyamlmerge
+*.mat text eol=lf merge=unityyamlmerge
+*.anim text eol=lf merge=unityyamlmerge
+*.controller text eol=lf merge=unityyamlmerge
+*.overrideController text eol=lf merge=unityyamlmerge
+*.physicMaterial text eol=lf merge=unityyamlmerge
+*.physicsMaterial2D text eol=lf merge=unityyamlmerge
+*.guiskin text eol=lf merge=unityyamlmerge
+*.fontsettings text eol=lf merge=unityyamlmerge
+
+# 脚本与文档
+*.cs text diff=csharp eol=lf
+*.cginc text eol=lf
+*.shader text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.xml text eol=lf
+
+# 纯二进制文件（防止被 Git 误识别为文本进行行尾转换）
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.tga binary
+*.psd binary
+*.aseprite binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.ttf binary
+*.otf binary
+*.fbx binary
+*.obj binary
+*.dll binary

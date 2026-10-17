@@ -81,6 +81,34 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     public readonly List<EnemyController> spawnedEnemies = new List<EnemyController>();
     public int totalTrialSpawned = 0;
 
+    public static readonly List<GatherDoorAuraBehavior> AllDoors = new List<GatherDoorAuraBehavior>();
+
+    private void OnEnable()
+    {
+        if (!AllDoors.Contains(this)) AllDoors.Add(this);
+    }
+
+    private void OnDestroy()
+    {
+        AllDoors.Remove(this);
+    }
+
+    private Vector2 DoorCenter => (Vector2)transform.position + new Vector2(0f, 0.5f);
+
+    /// <summary>
+    /// 判断玩家是否在当前门的一格身位内（约 1.6 米范围内），用于控制头顶文字显示
+    /// </summary>
+    public bool IsPlayerNear(PlayerController player, out float dist)
+    {
+        dist = float.MaxValue;
+        if (player == null || !player.IsAlive) return false;
+
+        Vector2 playerCenter = (Vector2)player.transform.position + new Vector2(0f, 0.3f);
+        dist = Vector2.Distance(DoorCenter, playerCenter);
+
+        return dist <= 1.6f;
+    }
+
     // 头顶 3D Billboard 状态与操作提示文本
     private GameObject promptGo;
     private TextMesh promptTextMesh;
@@ -141,6 +169,8 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
             mr.material = font.material;
             mr.sortingOrder = 220; // 悬浮在角色与建筑之上
         }
+
+        promptGo.SetActive(false); // 默认隐藏，靠近时才显现
     }
 
     private void UpdatePromptText()
@@ -161,7 +191,21 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
                 break;
 
             case DoorState.Closed:
-                promptTextMesh.text = "🚪 点击或按 [F] 开门 · 消耗 2 点每日精力";
+                int estMonsters = GetTrialSpawnCountForDoor(PlayerSessionData.greenhouse.day);
+                int minYield = 3;
+                int maxYield = 5;
+                string extraTag = "";
+                if (productData != null)
+                {
+                    var s = CraftedProductStats.Calculate(productData);
+                    minYield = s.minGatherCount;
+                    maxYield = s.maxGatherCount;
+                    if (s.extraMonsters > 0)
+                    {
+                        extraTag = $"[过载+{s.extraMonsters}怪] ";
+                    }
+                }
+                promptTextMesh.text = $"🚪 点击开门 · 守卫:{estMonsters}只 · 萌发:{minYield}~{maxYield} · {extraTag}耗2精力";
                 promptTextMesh.color = ColorClosed;
                 if (rangeRingRenderer != null)
                 {
@@ -203,7 +247,52 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         }
 
         if (rangeRing != null && !rangeRing.activeSelf) rangeRing.SetActive(true);
-        if (promptGo != null && !promptGo.activeSelf) promptGo.SetActive(true);
+
+        // 仅当玩家靠近门（距离约一格以内）时才显示文字；且两门相邻时仅最近的门显示，避免重叠挤占视野
+        var p = PlayerController.Instance ?? FindObjectOfType<PlayerController>();
+        bool isFocusedDoor = false;
+        if (p != null && p.IsAlive)
+        {
+            if (IsPlayerNear(p, out float myDist))
+            {
+                bool isClosest = true;
+                for (int i = 0; i < AllDoors.Count; i++)
+                {
+                    var other = AllDoors[i];
+                    if (other == null || other == this || !other.gameObject.activeInHierarchy) continue;
+                    if (other.parentFurniture == null || other.parentFurniture.currentState != FurnitureObject.FurnitureState.Placed) continue;
+
+                    if (other.IsPlayerNear(p, out float otherDist))
+                    {
+                        if (otherDist < myDist || (Mathf.Approximately(otherDist, myDist) && other.GetInstanceID() < GetInstanceID()))
+                        {
+                            isClosest = false;
+                            break;
+                        }
+                    }
+                }
+                isFocusedDoor = isClosest;
+            }
+        }
+
+        if (promptGo != null)
+        {
+            if (isFocusedDoor)
+            {
+                if (!promptGo.activeSelf)
+                {
+                    UpdatePromptText();
+                    promptGo.SetActive(true);
+                }
+            }
+            else
+            {
+                if (promptGo.activeSelf)
+                {
+                    promptGo.SetActive(false);
+                }
+            }
+        }
 
         if (state == DoorState.Summoning && !PlayerSessionData.IsCombatInputBlocked && !IsCombatPaused)
         {
@@ -260,17 +349,12 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
             }
         }
 
-        // 键盘快捷按键检测：当主角靠近门扉 <= 2.2m 时，按下 F 键直接交互
-        var p = PlayerController.Instance ?? FindObjectOfType<PlayerController>();
-        if (p != null)
+        // 键盘快捷按键检测：当主角对准并贴近当前门扉时，按下 F 键直接交互
+        if (p != null && isFocusedDoor)
         {
-            float dist = Vector2.Distance(transform.position, p.transform.position);
-            if (dist <= interactionRadius)
+            if (Input.GetKeyDown(KeyCode.F))
             {
-                if (Input.GetKeyDown(KeyCode.F))
-                {
-                    OnPlayerInteract(p);
-                }
+                OnPlayerInteract(p);
             }
         }
     }
@@ -278,7 +362,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     void LateUpdate()
     {
         // 确保头顶提示朝向摄像机
-        if (promptGo != null && Camera.main != null)
+        if (promptGo != null && promptGo.activeSelf && Camera.main != null)
         {
             promptGo.transform.rotation = Camera.main.transform.rotation;
         }
@@ -345,6 +429,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     /// </summary>
     private void OnDisable()
     {
+        AllDoors.Remove(this);
         if (Application.isPlaying && GameRunProgress.WorldReady && state == DoorState.Summoning)
             GameRunProgress.RefundDoor(DoorId);
     }
@@ -408,9 +493,40 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         return positions;
     }
 
+    public static int GetBaseTrialSpawnCount(int day)
+    {
+        switch (day)
+        {
+            case 1: return Random.Range(1, 3); // 1~2 只 (新手熟悉环境)
+            case 2: return 2;                  // 2 只
+            case 3: return Random.Range(2, 4); // 2~3 只
+            case 4: return 3;                  // 3 只
+            case 5: return Random.Range(3, 5); // 3~4 只
+            case 6: return 4;                  // 4 只
+            case 7: return Random.Range(4, 6); // 4~5 只 (七日终局决战)
+            default:
+                int count = 2 + Mathf.FloorToInt(day * 0.5f);
+                return Mathf.Clamp(count, 1, 6);
+        }
+    }
+
+    public int GetTrialSpawnCountForDoor(int day)
+    {
+        int count = GetBaseTrialSpawnCount(day);
+        if (productData != null)
+        {
+            var stats = CraftedProductStats.Calculate(productData);
+            count += stats.extraMonsters; // 投入材料越多，出现的守卫越多！
+        }
+        return count;
+    }
+
+    public static int GetTrialSpawnCount(int day) => GetBaseTrialSpawnCount(day);
+
     private void SpawnTrialEnemies(PlayerController player)
     {
-        int spawnCount = Random.Range(1, 4);
+        int day = PlayerSessionData.greenhouse.day;
+        int spawnCount = GetTrialSpawnCountForDoor(day);
         var positions = FindSafeSpawnPositions(player, spawnCount);
         if (positions.Count < spawnCount)
         {
@@ -421,21 +537,62 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
                 DamageTextManager.Instance.ShowText(transform.position + Vector3.up, "空间不足，请让开门周围区域后重试", Color.yellow, 0.13f);
             return;
         }
-        foreach (var position in positions)
+
+        // 精英生成概率判断 (随天数递增)
+        int eliteCount = 0;
+        if (day >= 6) eliteCount = (day >= 7 && Random.value < 0.5f) ? 2 : 1;
+        else if (day >= 4) eliteCount = Random.value < 0.65f ? 1 : 0;
+        else if (day >= 3) eliteCount = Random.value < 0.35f ? 1 : 0;
+
+        for (int i = 0; i < positions.Count; i++)
         {
+            var position = positions[i];
             int index = totalTrialSpawned;
-            var enemy = index % 2 == 0
-                ? EnemyController.CreateTriggerfishInstance(position, $"Portal_Triggerfish_{index + 1}")
-                : EnemyController.CreateEnemyInstance(position, $"Portal_Squid_{index + 1}");
+            bool isElite = i < eliteCount;
+
+            // 怪物类型配比：第 1 天乌贼为主，第 2 天起扳机鱼逐步增多
+            bool spawnTriggerfish = day > 1 && (index % 2 == 0 || (day >= 4 && Random.value < 0.5f));
+            string typeName = spawnTriggerfish ? "Portal_Triggerfish" : "Portal_Squid";
+            string prefix = isElite ? "【异化】" : "";
+            string displayName = $"{prefix}{typeName}_{index + 1}";
+
+            var enemy = spawnTriggerfish
+                ? EnemyController.CreateTriggerfishInstance(position, displayName)
+                : EnemyController.CreateEnemyInstance(position, displayName);
+
             if (enemy == null) continue;
             enemy.spawnPosition = position;
             enemy.autoRespawn = false;
+
+            // 应用天数难度强化与精英异化
+            enemy.ApplyDayDifficulty(day, isElite);
+
             enemy.BeginEmergence(Mathf.Max(0.1f, emergenceDuration));
             spawnedEnemies.Add(enemy);
             totalTrialSpawned++;
         }
+
         state = totalTrialSpawned > 0 ? DoorState.Fighting : DoorState.Closed;
-        if (totalTrialSpawned > 0) GameRunProgress.CommitDoor(DoorId);
+        if (totalTrialSpawned > 0)
+        {
+            GameRunProgress.CommitDoor(DoorId);
+            if (DamageTextManager.Instance != null)
+            {
+                string dangerTitle = PlayerSessionData.GetDangerLevelLabel(day);
+                string extraNote = "";
+                if (productData != null)
+                {
+                    var s = CraftedProductStats.Calculate(productData);
+                    if (s.extraMonsters > 0) extraNote = $" (构装过载 +{s.extraMonsters}守卫)";
+                }
+                DamageTextManager.Instance.ShowText(
+                    transform.position + Vector3.up * 1.5f,
+                    $"⚔️ 第 {day} 天门扉守卫涌现！({dangerTitle} · 数量: {spawnedEnemies.Count}{extraNote})",
+                    new Color(1f, 0.45f, 0.2f),
+                    0.16f
+                );
+            }
+        }
         else GameRunProgress.RefundDoor(DoorId);
         UpdatePromptText();
     }
@@ -474,11 +631,14 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         if (state != DoorState.Cleared) return;
         var previousGreenhouse = PlayerSessionData.greenhouse;
         string previousDoorId = PlayerSessionData.activeGreenhouseDoorId;
-        if (!PlayerSessionData.TryBeginDoorVisit(DoorId)) return;
+        var previousProduct = PlayerSessionData.activeDoorProduct;
+        if (!PlayerSessionData.TryBeginDoorVisit(DoorId, productData)) return;
+        PlayerSessionData.activeDoorProduct = productData;
         System.Action rollback = () =>
         {
             PlayerSessionData.greenhouse = previousGreenhouse;
             PlayerSessionData.activeGreenhouseDoorId = previousDoorId;
+            PlayerSessionData.activeDoorProduct = previousProduct;
         };
         if (!GameplaySceneTransition.TryOpen("Collect", player, rollback)) rollback();
     }

@@ -115,6 +115,12 @@ public class BiomechanicalCombatAdapter : MonoBehaviour
 
         if (doorGo != null)
         {
+            var furn = doorGo.GetComponent<FurnitureObject>();
+            if (furn != null && furn.originalProduct != null)
+            {
+                furn.originalProduct.nodeCount = 2;
+                furn.originalProduct.productName = "初始·异界裂隙之门";
+            }
             Debug.Log("<color=#38bdf8>[BiomechanicalCombatAdapter] 异界采集之门已成功部署于地图北侧边缘 (0, 5, 0)！</color>");
         }
     }

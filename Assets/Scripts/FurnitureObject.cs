@@ -48,7 +48,7 @@ public class FurnitureObject : MonoBehaviour
     [Tooltip("踢击冲撞削韧破防 (恶魔满韧性为 100)")]
     public float kickGuardBreak = 120f;
     [Tooltip("踢击命中怪物消耗耐久")]
-    public float kickDurabilityLoss = 35f;
+    public float kickDurabilityLoss = 20f;
 
     [Header("Held Weapon Stats (手持武器参数)")]
     [Tooltip("手持重砸单次伤害")]
@@ -58,7 +58,7 @@ public class FurnitureObject : MonoBehaviour
     [Tooltip("手持重砸单次削韧")]
     public float heldGuardBreak = 150f;
     [Tooltip("每次重砸命中消耗耐久")]
-    public float heldDurabilityLossPerHit = 25f;
+    public float heldDurabilityLossPerHit = 15f;
     [Tooltip("手持移速惩罚比例 (20%)")]
     public float moveSpeedPenalty = 0.20f;
 
@@ -400,20 +400,33 @@ public class FurnitureObject : MonoBehaviour
                         DamageTextManager.Instance.ShowText(enemy.transform.position + Vector3.up * 0.6f, "KICK SMASH!", new Color(1f, 0.4f, 0.1f), 0.12f);
                     }
 
-                    // 机制落地（需求5）：家具用于冲撞攻击后立即碎裂销毁，引发破片爆炸！
-                    TriggerShatterBurst();
-                    yield break;
+                    // 扣除冲撞耐久消耗（耐用设计：不再一撞就碎，而是消耗耐久，耐久归零时才碎裂爆发）
+                    TakeHit(kickDurabilityLoss, enemy);
+
+                    if (currentDurability <= 0f)
+                    {
+                        yield break;
+                    }
+                    else
+                    {
+                        // 撞击受阻停止滑行，稳稳停在当前网格
+                        SettleIntoGrid();
+                        yield break;
+                    }
                 }
             }
 
             yield return null;
         }
 
-        // 若为抛掷投掷出的家具，落地直接碎裂爆发！
+        // 若为抛掷投掷出的家具
         if (isThrown)
         {
-            TriggerShatterBurst();
-            yield break;
+            TakeHit(kickDurabilityLoss * 1.5f);
+            if (currentDurability <= 0f)
+            {
+                yield break;
+            }
         }
 
         // 滑行结束，归位回放置状态并对齐网格
@@ -568,7 +581,8 @@ public class FurnitureObject : MonoBehaviour
         onHitTaken?.Invoke(damage, attacker);
         if (DamageTextManager.Instance != null)
         {
-            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.4f, $"-{damage:0} 耐久", new Color(0.9f, 0.9f, 0.9f), 0.08f);
+            string duraInfo = $"-{damage:0}耐久 ({Mathf.Max(0, currentDurability):0}/{maxDurability:0})";
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.45f, duraInfo, new Color(0.95f, 0.82f, 0.35f), 0.10f);
         }
 
         if (currentDurability <= 0f)

@@ -36,15 +36,15 @@ public class PlayerController : MonoBehaviour
     [Header("Health & Movement (生命与移动属性)")]
     public float maxHp = 100f;
     public float currentHp = 100f;
-    public bool IsAlive => currentHp > 0f;
-    public bool Dead => currentHp <= 0f;
+    public bool IsAlive => currentHp > 0f && !isDefeatedRoutineRunning;
+    public bool Dead => currentHp <= 0f || isDefeatedRoutineRunning;
     public float baseMoveSpeed = 4.0f;
     public float groundHeightOffset = 0.5f;
     public bool canMove = true;
 
     [Header("Combat Stats (核心战斗属性 - 纯数值，无需武器系统)")]
-    public float attackDamage = 25f;
-    public float guardBreakPower = 35f;
+    public float attackDamage = 8f;
+    public float guardBreakPower = 12f;
     public float attackInterval = 0.75f;
 
     [Header("Weapon Compatibility (工坊数据兼容)")]
@@ -180,7 +180,7 @@ public class PlayerController : MonoBehaviour
     public bool enableClickToMove = true;
 
     // 状态
-    public bool Unavailable => isGrabbed || isThrown;
+    public bool Unavailable => isGrabbed || isThrown || isDefeatedRoutineRunning || currentHp <= 0f;
     public bool IsGrabbed => isGrabbed;
     public bool IsThrown => isThrown;
     public bool IsInvulnerable => isRolling || isInvulnerable || Unavailable;
@@ -220,6 +220,7 @@ public class PlayerController : MonoBehaviour
     private float pointerDownTime;
     private bool isPointerDown = false;
     private int pointerFingerId = -1;
+    private float touchHoldTimer = 0f;
 
     // 电脑鼠标操作状态 (右键移动，左键家具与战术目标交互)
     private float rightClickHoldTimer = 0f;
@@ -261,6 +262,34 @@ public class PlayerController : MonoBehaviour
         {
             DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, $"+{amount:0} HP", Color.green, 0.11f);
         }
+    }
+
+    /// <summary>
+    /// 进入下一天时完全恢复生命与精力（安眠修整）
+    /// </summary>
+    public void RestFullRecovery()
+    {
+        float healed = maxHp - currentHp;
+        currentHp = maxHp;
+        currentStamina = maxStamina;
+
+        if (hero != null && hero.Face != null)
+        {
+            hero.Face.TriggerHappy();
+        }
+
+        if (DamageTextManager.Instance != null)
+        {
+            if (healed > 0.5f)
+            {
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 1.0f, $"💚 休憩安眠，生命恢复 +{healed:0} (完全回满)！", new Color(0.2f, 1f, 0.4f), 0.16f);
+            }
+            else
+            {
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 1.0f, "✨ 精神饱满，状态最佳！", new Color(0.3f, 0.9f, 1f), 0.14f);
+            }
+        }
+        CameraRig.I?.Shake(0.2f, 0.15f);
     }
 
     /// <summary>
@@ -476,7 +505,7 @@ public class PlayerController : MonoBehaviour
 
         if (DamageTextManager.Instance != null)
         {
-            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.7f, "⚡ 完美弹刀! (PARRY)", new Color(1f, 0.9f, 0.2f), 0.15f);
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.7f, "⚡ 完美弹反!", new Color(1f, 0.9f, 0.2f), 0.08f);
         }
     }
 
@@ -882,9 +911,9 @@ public class PlayerController : MonoBehaviour
     {
         float radius = 1.4f + 0.9f * lv;
         Vector3 center = transform.position + dir * 0.8f;
-        float damageMult = 1.5f + lv * 1.7f;
+        float damageMult = 1.1f + lv * 0.8f;
         float dmg = CurrentAttackDamage * damageMult;
-        float gb = CurrentGuardBreakPower * (2.0f + lv * 1.5f);
+        float gb = CurrentGuardBreakPower * (1.3f + lv * 0.8f);
 
         // 1. AOE 重砸敌人并击退削韧
         var enemies = EnemyController.AllEnemies;
@@ -919,7 +948,7 @@ public class PlayerController : MonoBehaviour
 
         if (DamageTextManager.Instance != null)
         {
-            DamageTextManager.Instance.ShowText(center + Vector3.up * 0.8f, $"💥 震地重砸! (SMASH x{damageMult:0.0})", new Color(1f, 0.45f, 0.1f), 0.14f);
+            DamageTextManager.Instance.ShowText(center + Vector3.up * 0.8f, $"💥 震地重砸 x{damageMult:0.0}!", new Color(1f, 0.45f, 0.1f), 0.08f);
         }
     }
 
@@ -1119,7 +1148,7 @@ public class PlayerController : MonoBehaviour
         UpdateMovement();
         UpdateMarkerAnimation();
 
-        // 空格键触发贝壳格挡，J 键手动普通攻击
+        // 键盘按键映射：空格格挡，J 键攻击，Shift 翻滚闪避，F 键踢推附近家具
         if (Input.GetKeyDown(KeyCode.Space))
         {
             TriggerShellGuard();
@@ -1127,6 +1156,14 @@ public class PlayerController : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.J))
         {
             TriggerManualAttack();
+        }
+        else if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            TriggerDodgeRoll();
+        }
+        else if (Input.GetKeyDown(KeyCode.F))
+        {
+            KickNearbyFurniture();
         }
 
         if (isGuarding)
@@ -1185,49 +1222,67 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 手机触控：多点与单点触控友好处理
+        // 手机触控：多点与单点触控友好处理（支持一手摇杆/拖曳走位，另一手点击动作按键）
         if (Input.touchCount > 0)
         {
-            if (Input.touchCount > 1)
-            {
-                isPointerDown = false;
-                pointerFingerId = -1;
-                return;
-            }
-
+            bool trackedFingerActive = false;
             for (int i = 0; i < Input.touchCount; i++)
             {
                 Touch touch = Input.GetTouch(i);
 
-                if (touch.phase == TouchPhase.Began)
+                if (isPointerDown && touch.fingerId == pointerFingerId)
+                {
+                    trackedFingerActive = true;
+                    if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
+                    {
+                        touchHoldTimer += Time.deltaTime;
+                        // 若按住超过 0.12s 且产生持续拖曳位移，实时更新寻路目的地实现跟手平滑走位
+                        if (touchHoldTimer >= 0.12f)
+                        {
+                            Vector2 delta = touch.position - pointerDownPos;
+                            if (delta.sqrMagnitude > 300f || touchHoldTimer > 0.25f)
+                            {
+                                if (cam != null && PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.TapToMove)
+                                {
+                                    Vector3 worldPos = cam.ScreenToWorldPoint(touch.position);
+                                    worldPos.z = 0f;
+                                    MoveToWorldPoint(worldPos);
+                                }
+                            }
+                        }
+                    }
+                    else if (touch.phase == TouchPhase.Ended)
+                    {
+                        EvaluatePointerRelease(touch.position);
+                        isPointerDown = false;
+                        pointerFingerId = -1;
+                        touchHoldTimer = 0f;
+                    }
+                    else if (touch.phase == TouchPhase.Canceled)
+                    {
+                        isPointerDown = false;
+                        pointerFingerId = -1;
+                        touchHoldTimer = 0f;
+                    }
+                }
+                else if (!isPointerDown && touch.phase == TouchPhase.Began)
                 {
                     // 触摸如果落在 UI 上或落在底部控制底座区，忽略该手指作为地面交互
                     if (IsPointerOverUI(touch.fingerId) || IsInBottomDockArea(touch.position))
                         continue;
 
-                    if (!isPointerDown)
-                    {
-                        pointerFingerId = touch.fingerId;
-                        StartPointer(touch.position);
-                    }
+                    pointerFingerId = touch.fingerId;
+                    touchHoldTimer = 0f;
+                    StartPointer(touch.position);
+                    trackedFingerActive = true;
                 }
-                else if (touch.phase == TouchPhase.Ended)
-                {
-                    if (isPointerDown && touch.fingerId == pointerFingerId)
-                    {
-                        EvaluatePointerRelease(touch.position);
-                        isPointerDown = false;
-                        pointerFingerId = -1;
-                    }
-                }
-                else if (touch.phase == TouchPhase.Canceled)
-                {
-                    if (touch.fingerId == pointerFingerId)
-                    {
-                        isPointerDown = false;
-                        pointerFingerId = -1;
-                    }
-                }
+            }
+
+            if (isPointerDown && !trackedFingerActive)
+            {
+                isPointerDown = false;
+                pointerFingerId = -1;
+                touchHoldTimer = 0f;
             }
         }
         else
@@ -1253,6 +1308,7 @@ public class PlayerController : MonoBehaviour
 
     public void RightClickGround(Vector3 p)
     {
+        if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick) return;
         if (Unavailable || isRolling) return;
         if (InCombat)
         {
@@ -1474,7 +1530,7 @@ public class PlayerController : MonoBehaviour
             ConsumeDoorInteraction();
             if (Vector2.Distance(transform.position, door.transform.position) <= door.interactionRadius + 0.8f)
                 door.OnPlayerInteract(this);
-            else
+            else if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.TapToMove)
                 MoveToWorldPoint(door.transform.position - Vector3.up * 1.2f);
             return true;
         }
@@ -1507,6 +1563,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetMouseButton(1))
         {
+            if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick) return;
             if (!IsPointerOverUI(-1) && !IsInBottomDockArea(Input.mousePosition))
             {
                 rightClickHoldTimer += Time.deltaTime;
@@ -1571,6 +1628,10 @@ public class PlayerController : MonoBehaviour
         // 鼠标快速短滑 (Swipe)：第一优先级推动家具，第二优先级闪避翻滚
         if (distance >= minSwipeDistance && duration <= maxSwipeDuration && speed >= 120f)
         {
+            // 在摇杆控制模式下，划动推家具与划动翻滚均已由右侧动作盘接管，屏幕划动予以屏蔽
+            if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick)
+                return;
+
             Vector2 swipeDir = delta.normalized;
 
             // 1. 第一优先级：滑动推动身边的家具（优先级高于主角闪避翻滚）
@@ -1597,6 +1658,9 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public bool TrySwipePushFurniture(Vector2 startScreenPos, Vector2 releaseScreenPos, Vector2 swipeDir)
     {
+        if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick)
+            return false;
+
         if (cam == null) return false;
 
         Vector3 startWorldPos = cam.ScreenToWorldPoint(startScreenPos);
@@ -1704,7 +1768,7 @@ public class PlayerController : MonoBehaviour
                 {
                     door.OnPlayerInteract(this);
                 }
-                else
+                else if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.TapToMove)
                 {
                     MoveToWorldPoint(door.transform.position - new Vector3(0f, 1.2f, 0f));
                 }
@@ -1723,22 +1787,18 @@ public class PlayerController : MonoBehaviour
         pointerDownPos = screenPos;
         pointerDownTime = Time.time;
         isPointerDown = true;
-        LeftClick();
     }
 
     /// <summary>
-    /// 评估手势松开：
+    /// 评估移动端手势松开：
     /// 1. 划动家具 -> 踢出家具冲撞敌人；
     /// 2. 划动地面 -> 快速短滑翻滚躲避；
-    /// 3. 轻触敌人 -> 锁定集火攻击；
-    /// 4. 蓄力松开 -> 触发前扑重砸；
-    /// 5. 短按松开 -> 完美弹刀 / 缩壳防御；
-    /// 6. 轻触远处地面 -> A* 寻路避障走位。
-    /// 完全无需额外屏幕按钮！
+    /// 3. 轻触敌人 -> 锁定并手动近战攻击；
+    /// 4. 轻触门扉 -> 开启异界门挑战；
+    /// 5. 轻触地面 -> 移动至目标点（彻底杜绝误触发格挡缩壳与误蓄力）；
     /// </summary>
     private void EvaluatePointerRelease(Vector2 releasePos)
     {
-        if (!_leftHeld) return;
         float duration = Time.time - pointerDownTime;
         Vector2 delta = releasePos - pointerDownPos;
         float distance = delta.magnitude;
@@ -1747,7 +1807,10 @@ public class PlayerController : MonoBehaviour
         // 1. 判断是否为【快速短滑】(Swipe)：第一优先级推家具，第二优先级闪避翻滚
         if (distance >= minSwipeDistance && duration <= maxSwipeDuration && speed >= 120f)
         {
-            CancelLeftHold();
+            // 摇杆控制模式下彻底屏蔽屏幕划动推家具与划动翻滚，避免误触
+            if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick)
+                return;
+
             Vector2 swipeDir = delta.normalized;
 
             // 1. 第一优先级：滑动推动身边的家具（优先级高于主角闪避翻滚）
@@ -1759,22 +1822,12 @@ public class PlayerController : MonoBehaviour
             // 2. 第二优先级：未命中任何可推家具时，主角执行闪避翻滚
             if (rollCooldownTimer <= 0f)
             {
-                StartCoroutine(PerformDodgeRollRoutine(swipeDir));
+                TriggerDodgeRoll(swipeDir);
                 return;
             }
         }
         else
         {
-            if (isCharging)
-            {
-                ReleaseCharge();
-                return;
-            }
-
-            int previousParrySuccess = parrySuccess;
-            LeftRelease();
-            if (parrySuccess != previousParrySuccess || isAttackingAnim) return;
-
             // 2. 判断是否为【轻触点击】(Tap)
             if (distance < clickMaxDistance && duration <= clickMaxDuration)
             {
@@ -1828,7 +1881,7 @@ public class PlayerController : MonoBehaviour
                 {
                     door.OnPlayerInteract(this);
                 }
-                else
+                else if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.TapToMove)
                 {
                     MoveToWorldPoint(door.transform.position - new Vector3(0f, 1.2f, 0f));
                 }
@@ -1837,15 +1890,22 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 3. 点击普通地面：在开启 enableClickToMove 时智能寻路前往指定地点！
-        MoveToWorldPoint(worldPos);
+        // 3. 点击普通地面：在点击寻路模式 (TapToMove) 下智能寻路前往指定地点！
+        if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.TapToMove)
+        {
+            MoveToWorldPoint(worldPos);
+        }
     }
 
     /// <summary>
-    /// 世界坐标寻路移动接口
+    /// 世界坐标寻路移动接口（仅在点击模式生效；摇杆模式下严格屏蔽以防屏幕任意点击打断摇杆走位）
     /// </summary>
     public void MoveToWorldPoint(Vector3 worldPos)
     {
+        // 摇杆控制模式下彻底屏蔽触屏寻路移动，杜绝任何误触打断走位
+        if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick)
+            return;
+
         if (!enableClickToMove || grid == null) return;
         Vector3 groundRayPos = new Vector3(worldPos.x, worldPos.y - groundHeightOffset, 0f);
         Vector3Int targetCell = grid.WorldToCell(groundRayPos);
@@ -1871,12 +1931,15 @@ public class PlayerController : MonoBehaviour
 
         if (DamageTextManager.Instance != null)
         {
-            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "💣 投掷飞砸! (THROWN)", new Color(1f, 0.35f, 0.15f), 0.13f);
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "💣 投掷飞砸!", new Color(1f, 0.35f, 0.15f), 0.08f);
         }
     }
 
     private void MoveToCell(Vector3Int targetCell)
     {
+        if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick)
+            return;
+
         Vector3 playerRayPos = new Vector3(transform.position.x, transform.position.y - groundHeightOffset, 0f);
         Vector3Int startCell = grid.WorldToCell(playerRayPos);
 
@@ -2354,7 +2417,7 @@ public class PlayerController : MonoBehaviour
                 var e = enemies[i];
                 if (e != null && e.IsAlive && Vector2.Distance(punchTarget, e.transform.position) <= 2.2f)
                 {
-                    e.TakeDamage(CurrentAttackDamage * 2.0f, CurrentGuardBreakPower * 2.0f, transform.position);
+                    e.TakeDamage(CurrentAttackDamage * 1.25f, CurrentGuardBreakPower * 1.2f, transform.position);
                 }
             }
 
@@ -2655,7 +2718,7 @@ public class PlayerController : MonoBehaviour
             Vfx.Spawn("VFX_ParrySpark", transform.position + Vector3.up * 0.6f, 0, 1.0f, true);
             if (DamageTextManager.Instance != null)
             {
-                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "🛡️ 格挡抵消! (BLOCKED)", Color.cyan, 0.12f);
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.6f, "🛡️ 格挡抵消!", Color.cyan, 0.08f);
             }
             return;
         }
@@ -2774,16 +2837,27 @@ public class PlayerController : MonoBehaviour
 
         if (DamageTextManager.Instance != null)
         {
-            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "💀 倒地力竭...", Color.red, 0.16f);
+            EnemyController.NotifyPlayerDefeated();
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 0.8f, "💀 倒地力竭... 怪物转火围攻家具！", Color.red, 0.16f);
         }
 
-        yield return new WaitForSeconds(2.0f);
+        // 死亡惩罚延时：5 秒复苏倒计时，期间怪物持续转火围攻家具
+        for (int sec = 5; sec >= 1; sec--)
+        {
+            if (DamageTextManager.Instance != null)
+            {
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 1.1f, $"⏳ 复活倒计时: {sec}s", new Color(1f, 0.6f, 0.2f), 0.12f);
+            }
+            EnemyController.RedirectAllToFurniture();
+            yield return new WaitForSeconds(1.0f);
+        }
 
         currentHp = maxHp;
         currentStamina = maxStamina;
         isThrown = false;
         isRolling = false;
         isDefeatedRoutineRunning = false;
+        EnemyController.NotifyPlayerRevived();
 
         if (hero != null)
         {

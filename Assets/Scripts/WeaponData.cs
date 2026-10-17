@@ -15,7 +15,7 @@ public class WeaponData
 
     [Header("Combat Stats")]
     [Tooltip("单次斩击伤害")]
-    public float damage = 25f;
+    public float damage = 8f;
     [Tooltip("当前耐久度")]
     public float currentDurability = 360f;
     [Tooltip("最大耐久度")]
@@ -23,7 +23,7 @@ public class WeaponData
     [Tooltip("攻击间隔节奏 (秒)")]
     public float attackInterval = 0.75f;
     [Tooltip("削韧破防力 (Guard Break Power)")]
-    public float guardBreakPower = 30f;
+    public float guardBreakPower = 12f;
     [Tooltip("单次挥舞耐力消耗")]
     public float staminaCost = 18f;
 
@@ -46,9 +46,9 @@ public class WeaponData
         {
             instanceId = "wpn_default_sword",
             weaponName = "铁制佩剑",
-            damage = 25f,
+            damage = 8f,
             attackInterval = 0.75f,
-            guardBreakPower = 30f,
+            guardBreakPower = 12f,
             currentDurability = 300f,
             maxDurability = 300f,
             staminaCost = 18f,

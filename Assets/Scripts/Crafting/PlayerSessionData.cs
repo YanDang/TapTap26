@@ -37,12 +37,37 @@ public static class PlayerSessionData
     // 当前是否正处于工坊开启状态（用于无缝叠加模式）
     public static bool isCraftingOpen = false;
 
+    // 移动端移动操作模式：点击寻路移动 / 虚拟摇杆移动
+    public enum MobileControlMode
+    {
+        TapToMove = 0,
+        Joystick = 1
+    }
+
+    public const string PREF_MOBILE_CONTROL_MODE = "Hermit_MobileControlMode";
+    public static event Action<MobileControlMode> OnControlModeChanged;
+
+    public static MobileControlMode CurrentMobileControlMode
+    {
+        get => (MobileControlMode)PlayerPrefs.GetInt(PREF_MOBILE_CONTROL_MODE, (int)MobileControlMode.TapToMove);
+        set
+        {
+            PlayerPrefs.SetInt(PREF_MOBILE_CONTROL_MODE, (int)value);
+            PlayerPrefs.Save();
+            OnControlModeChanged?.Invoke(value);
+        }
+    }
+
     public static bool IsCombatInputBlocked => runProgress.finished || GameplaySceneTransition.IsBusy || isCraftingOpen
         || UnityEngine.SceneManagement.SceneManager.GetSceneByName("Mix").isLoaded
         || UnityEngine.SceneManagement.SceneManager.GetSceneByName("Collect").isLoaded;
 
     // 玩家在温室采集到的生体机械材料库历史记录
     public static List<BiomechanicalMaterial> gatheredBiomechanicalMaterials = new List<BiomechanicalMaterial>();
+
+    // 当前进行交互/进入温室的采集门产品数据 (用于计算温室萌发数量与守卫压制)
+    public static readonly Dictionary<string, CraftedProduct> doorProducts = new Dictionary<string, CraftedProduct>();
+    public static CraftedProduct activeDoorProduct = null;
 
     // =========================================================================
     // 玩家已合成生体家具与废料构装仓库 (Crafted Furniture & Scrap Inventory)
@@ -207,6 +232,21 @@ public static class PlayerSessionData
     public static string activeGreenhouseDoorId;
     private static float nextRestAllowedTime;
 
+    public static string GetDangerLevelLabel(int day)
+    {
+        return day switch
+        {
+            1 => "低危 · 潮声微澜",
+            2 => "普通 · 生态躁动",
+            3 => "警戒 · 潮汐暗流",
+            4 => "高危 · 异化侵袭",
+            5 => "极危 · 狂暴生态",
+            6 => "凶险 · 猩红深渊",
+            7 => "决战 · 门扉终末",
+            _ => $"Lv.{day} 极度凶险"
+        };
+    }
+
     public static bool CanRestUntilNextDay(PlayerController player, out string reason)
     {
         reason = "";
@@ -265,7 +305,24 @@ public static class PlayerSessionData
         greenhouse = new GreenhouseDayState { day = greenhouse.day + 1 };
         activeGreenhouseDoorId = null;
         SaveBackpackToStorage();
-        message = $"已到第 {greenhouse.day} 天 · 请重新挑战门守卫";
+        // 主角进入下一天全面回血与精力修整
+        if (player == null) player = PlayerController.Instance ?? UnityEngine.Object.FindObjectOfType<PlayerController>();
+        if (player != null && player.IsAlive)
+        {
+            player.RestFullRecovery();
+        }
+
+        int newDay = greenhouse.day;
+        string dangerTitle = GetDangerLevelLabel(newDay);
+        float hpBonus = (newDay - 1) * 20f;
+        float dmgBonus = (newDay - 1) * 15f;
+
+        message = $"已到第 {newDay} 天 · 危险度:【{dangerTitle}】· 生命已补满";
+
+        if (DamageTextManager.Instance != null && player != null)
+        {
+            DamageTextManager.Instance.ShowText(player.transform.position + Vector3.up * 1.4f, $"⚠️ 第 {newDay} 天环境异化！守卫强化: HP+{hpBonus:0}% 攻击+{dmgBonus:0}%", new Color(1f, 0.45f, 0.2f), 0.15f);
+        }
         return true;
     }
 
@@ -276,6 +333,8 @@ public static class PlayerSessionData
         greenhouse = new GreenhouseDayState();
         greenhouseDoors = new List<GreenhouseDoorState>();
         activeGreenhouseDoorId = null;
+        activeDoorProduct = null;
+        doorProducts.Clear();
         shellSlotItems = new BiomechanicalMaterial[32];
         currentShellType = ShellType.ConchShell;
         craftedProducts.Clear();
@@ -286,6 +345,8 @@ public static class PlayerSessionData
         isCraftingOpen = false;
         nextRestAllowedTime = 0f;
         EnemyController.isAIPaused = false;
+        GrantStarterMaterials();
+        SaveBackpackToStorage();
         SaveCraftedProductsToStorage();
         GameJam.TimeManager.I.EndSlowMo();
     }
@@ -296,7 +357,7 @@ public static class PlayerSessionData
         return greenhouseDoors.Exists(door => door.doorId == doorId && door.lastUsedDay == greenhouse.day);
     }
 
-    public static bool TryBeginDoorVisit(string doorId)
+    public static bool TryBeginDoorVisit(string doorId, CraftedProduct product = null)
     {
         EnsureInitialized();
         if (string.IsNullOrEmpty(doorId) || IsDoorUsedToday(doorId)) return false;
@@ -306,6 +367,19 @@ public static class PlayerSessionData
         {
             door = new GreenhouseDoorState { doorId = doorId };
             greenhouseDoors.Add(door);
+        }
+        if (product != null)
+        {
+            doorProducts[doorId] = product;
+            activeDoorProduct = product;
+        }
+        else if (doorProducts.TryGetValue(doorId, out var existingProduct))
+        {
+            activeDoorProduct = existingProduct;
+        }
+        else
+        {
+            activeDoorProduct = null;
         }
         if (door.greenhouse == null || door.greenhouse.day != day)
             door.greenhouse = new GreenhouseDayState { day = day };
@@ -409,7 +483,11 @@ public static class PlayerSessionData
     {
         EnsureInitialized();
         reason = "";
-        if (!Enum.IsDefined(typeof(ShellType), shellType)) { reason = "未知背壳"; return false; }
+        if (shellType != ShellType.ConchShell)
+        {
+            reason = "当前仅支持初生海螺壳背包";
+            return false;
+        }
         if (shellType == currentShellType) return true;
         if (!ShellBackpackLayout.TryRepack(shellSlotItems, ShellConfig.CreateConfig(shellType), out var migrated))
         {
@@ -477,7 +555,10 @@ public static class PlayerSessionData
 
             if (!PlayerPrefs.HasKey(PrefKey_ShellBackpack))
             {
-                // 首次进入游戏，背包初始全空！
+                // 首次进入游戏，给予新手初始生体材料包，助平稳起步
+                currentShellType = ShellType.ConchShell;
+                GrantStarterMaterials();
+                SaveBackpackToStorage();
                 return;
             }
 
@@ -491,7 +572,7 @@ public static class PlayerSessionData
             GameRunProgress.NormalizeLoadedData();
             hasUnifiedInventory = data.inventoryVersion >= 1 && data.products != null;
             if (hasUnifiedInventory) craftedProducts = data.products;
-            currentShellType = (ShellType)data.shellType;
+            currentShellType = ShellType.ConchShell;
             greenhouse = data.greenhouse ?? new GreenhouseDayState();
             if (greenhouse.nodes == null) greenhouse.nodes = new List<GreenhouseNodeState>();
             greenhouse.day = Mathf.Clamp(greenhouse.day, 1, GameRunProgress.FinalDay);
@@ -671,5 +752,28 @@ public static class PlayerSessionData
             playerMaterials = MaterialItem.CreateDefaultMaterialLibrary();
         }
         return playerMaterials;
+    }
+
+    /// <summary>
+    /// 开局赠送新手基础生体材料包（1个大骨架核心 + 3个关键辅料，可立即合成防线墙或水刃炮）
+    /// </summary>
+    public static void GrantStarterMaterials()
+    {
+        string[] starterIds = new string[]
+        {
+            "mat_wood_coral_plate",     // 2x2 增生珊瑚骨板 (木/增生核心)
+            "mat_wood_hollow_coral",    // 1x1 多孔空心珊瑚 (木/增生辅料，与骨板可合成珊瑚活体掩体墙)
+            "mat_water_keratin_nozzle", // 1x1 喷淋角质喷头 (水/潮润辅料)
+            "mat_gas_valve_pipe"        // 1x1 承压排气阀管 (气/压力辅料，与喷头可合成高压自愈喷水炮)
+        };
+
+        foreach (var id in starterIds)
+        {
+            var mat = BiomechanicalMaterialDatabase.GetById(id);
+            if (mat != null)
+            {
+                TryAddMaterialToShellBackpack(mat, out _, out _);
+            }
+        }
     }
 }

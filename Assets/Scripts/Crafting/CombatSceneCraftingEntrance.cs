@@ -43,13 +43,6 @@ public class CombatSceneCraftingEntrance : MonoBehaviour
             EnterCraftingScene();
             return;
         }
-
-        if (Input.GetKeyDown(KeyCode.F) && player != null && player.IsAlive)
-        {
-            var furniture = FurnitureObject.GetNearestPlaced(player.transform.position, 1.95f);
-            var door = furniture != null ? furniture.GetComponent<GatherDoorAuraBehavior>() : null;
-            if (door != null) door.OnPlayerInteract(player);
-        }
     }
 
     public void EnterCraftingScene()

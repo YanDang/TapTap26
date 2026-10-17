@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -147,18 +147,20 @@ returnRT.anchoredPosition = new Vector2(460, 0);
         shellGroupRT.anchorMax = new Vector2(1, 0.5f);
         shellGroupRT.pivot = new Vector2(1, 0.5f);
         shellGroupRT.anchoredPosition = new Vector2(-30, 0);
-        shellGroupRT.sizeDelta = new Vector2(480, 56);
+        shellGroupRT.sizeDelta = new Vector2(160, 56);
 
         Button switchConch = CreateButton(shellGroupGO.transform, "SwitchConch", $"海螺壳 ({ShellConfig.CreateConfig(ShellType.ConchShell).TotalSlotCount}格)", new Vector2(150, 46), new Color(0.98f, 0.82f, 0.18f, 0.9f), Color.black, 14);
-        switchConch.GetComponent<RectTransform>().anchoredPosition = new Vector2(-330, 0);
+        switchConch.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
         controller.switchConchBtn = switchConch;
 
         Button switchClam = CreateButton(shellGroupGO.transform, "SwitchClam", $"扇贝壳 ({ShellConfig.CreateConfig(ShellType.ClamShell).TotalSlotCount}格)", new Vector2(150, 46), new Color(0.2f, 0.3f, 0.4f, 0.7f), Color.white, 14);
         switchClam.GetComponent<RectTransform>().anchoredPosition = new Vector2(-165, 0);
+        switchClam.gameObject.SetActive(false);
         controller.switchClamBtn = switchClam;
 
         Button switchCan = CreateButton(shellGroupGO.transform, "SwitchCan", $"铁皮罐 ({ShellConfig.CreateConfig(ShellType.RustedCanShell).TotalSlotCount}格)", new Vector2(150, 46), new Color(0.2f, 0.3f, 0.4f, 0.7f), Color.white, 14);
         switchCan.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+        switchCan.gameObject.SetActive(false);
         controller.switchCanBtn = switchCan;
 
         // =========================================================================

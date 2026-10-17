@@ -144,6 +144,57 @@ public class EnemyController : MonoBehaviour
         return enemy;
     }
 
+    [Header("Day Difficulty & Mutation (天数难度递增与精英异化)")]
+    public int enemyDayLevel = 1;
+    public bool isElite = false;
+
+    /// <summary>
+    /// 根据当前天数动态强化敌人属性（生命、攻击、攻速、移速均随天数递增）
+    /// 并可赋予精英异化词缀（体型变大、粉紫光泽、更强威胁）
+    /// </summary>
+    public void ApplyDayDifficulty(int day, bool makeElite = false)
+    {
+        day = Mathf.Max(1, day);
+        enemyDayLevel = day;
+        isElite = makeElite;
+
+        float dayFactor = day - 1;
+        float hpMult = 1.0f + dayFactor * 0.20f;       // 基础 HP 每天 +20%
+        float dmgMult = 1.0f + dayFactor * 0.15f;      // 攻击力每天 +15%
+        float spdMult = 1.0f + dayFactor * 0.05f;      // 移速每天 +5%
+        float cdReduce = dayFactor * 0.10f;            // 攻击间隔每天缩短 0.10s
+
+        if (makeElite)
+        {
+            hpMult *= 1.35f;
+            dmgMult *= 1.25f;
+            spdMult *= 1.10f;
+            cdReduce += 0.15f;
+        }
+
+        maxHp = Mathf.Round(maxHp * hpMult);
+        currentHp = maxHp;
+        attackDamage = Mathf.Round(attackDamage * dmgMult);
+        moveSpeed = Mathf.Min(2.1f, moveSpeed * spdMult);
+        attackCooldown = Mathf.Max(1.35f, attackCooldown - cdReduce);
+        grabDamage = Mathf.Round(grabDamage * dmgMult);
+        grabChance = Mathf.Min(0.70f, grabChance + dayFactor * 0.04f);
+
+        if (makeElite)
+        {
+            if (visualRoot != null)
+            {
+                visualRoot.localScale *= 1.22f;
+            }
+            originalColor = new Color(1f, 0.78f, 0.95f);
+            ApplyFlash(0.35f, new Color(1f, 0.2f, 0.8f));
+            if (DamageTextManager.Instance != null)
+            {
+                DamageTextManager.Instance.ShowText(transform.position + Vector3.up * 1.5f, "⚡ 【高危异化精英】出现!", new Color(1f, 0.25f, 0.85f), 0.16f);
+            }
+        }
+    }
+
     private float emergenceRemaining;
     public bool IsEmerging => emergenceRemaining > 0f;
 
@@ -206,6 +257,48 @@ public class EnemyController : MonoBehaviour
     public bool IsRespawning => isDead && autoRespawn;
 
     public static readonly List<EnemyController> AllEnemies = new List<EnemyController>();
+
+    public static void NotifyPlayerDefeated()
+    {
+        RedirectAllToFurniture();
+    }
+
+    public static void NotifyPlayerRevived()
+    {
+        for (int i = 0; i < AllEnemies.Count; i++)
+        {
+            var e = AllEnemies[i];
+            if (e != null && e.IsAlive)
+            {
+                e.wasChasingPlayer = true;
+            }
+        }
+    }
+
+    public static void RedirectAllToFurniture()
+    {
+        for (int i = 0; i < AllEnemies.Count; i++)
+        {
+            var e = AllEnemies[i];
+            if (e != null && e.IsAlive && e.aiState != EnemyAIState.Executing && e.aiState != EnemyAIState.Pacified)
+            {
+                if (e.targetPlayer != null && e.targetPlayer.IsGrabbed && EnemyController.Grabber == e)
+                {
+                    e.targetPlayer.ThrowFrom(e);
+                }
+                var furn = FurnitureObject.NearestTargetable(e.transform.position, 60f);
+                if (furn != null)
+                {
+                    e.furnitureTarget = furn;
+                    e.wasChasingPlayer = false;
+                    if (e.aiState == EnemyAIState.Patrol || e.aiState == EnemyAIState.Alert)
+                    {
+                        e.aiState = EnemyAIState.Chase;
+                    }
+                }
+            }
+        }
+    }
 
     [Header("Biomechanical Status Effects (生体状态效果)")]
     [HideInInspector] public float slowMultiplier = 1f;
@@ -931,6 +1024,20 @@ public class EnemyController : MonoBehaviour
         {
             furnitureTarget = taunt.parentFurniture;
             return true;
+        }
+
+        // 玩家处于倒地死亡或复苏等待中，仇恨强制锁定并全图围攻生态家具！
+        if (targetPlayer != null && !targetPlayer.IsAlive)
+        {
+            wasChasingPlayer = false;
+            if (furnitureTarget == null || !furnitureTarget.Targetable)
+            {
+                furnitureTarget = FurnitureObject.NearestTargetable(transform.position, 60f);
+            }
+            if (furnitureTarget != null)
+            {
+                return true;
+            }
         }
 
         // 玩家在警戒范围内，仇恨优先锁定玩家（除非有尖叫阀门强制嘲讽）

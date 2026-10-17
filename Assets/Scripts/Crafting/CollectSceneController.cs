@@ -277,7 +277,18 @@ public class CollectSceneController : MonoBehaviour
         if (materials == null || materials.Count == 0) return state;
         var anchors = new List<int>();
         for (int index = 0; index < SpawnAnchors.Length; index++) anchors.Add(index);
-        int count = Mathf.Min(UnityEngine.Random.Range(3, 6), anchors.Count);
+
+        // 根据开启当前温室的裂隙门材料推演属性动态决定材料萌发数量范围 (给的材料越多，材料也会越多)
+        int minCount = 3;
+        int maxCount = 5;
+        if (PlayerSessionData.activeDoorProduct != null)
+        {
+            var stats = CraftedProductStats.Calculate(PlayerSessionData.activeDoorProduct);
+            if (stats.minGatherCount > 0) minCount = stats.minGatherCount;
+            if (stats.maxGatherCount > 0) maxCount = stats.maxGatherCount;
+        }
+
+        int count = Mathf.Clamp(UnityEngine.Random.Range(minCount, maxCount + 1), 1, anchors.Count);
         for (int index = 0; index < count; index++)
         {
             int selected = UnityEngine.Random.Range(0, anchors.Count);
