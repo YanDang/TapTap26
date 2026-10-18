@@ -211,6 +211,7 @@ public class EnemyController : MonoBehaviour
     {
         get
         {
+            if (ExternalAI != null) return IsAlive && !IsEmerging && ExternalParryWindow != null && ExternalParryWindow(this);
             if (IsEmerging || aiState != EnemyAIState.Attack) return false;
             float end = (currentClock != null && currentClock.Open) ? currentClock.duration * 0.9f : windowEnd;
             return stateTimer >= windowStart && stateTimer <= end;
@@ -280,7 +281,7 @@ public class EnemyController : MonoBehaviour
         for (int i = 0; i < AllEnemies.Count; i++)
         {
             var e = AllEnemies[i];
-            if (e != null && e.IsAlive && e.aiState != EnemyAIState.Executing && e.aiState != EnemyAIState.Pacified)
+            if (e != null && e.ExternalAI == null && e.IsAlive && e.aiState != EnemyAIState.Executing && e.aiState != EnemyAIState.Pacified)
             {
                 if (e.targetPlayer != null && e.targetPlayer.IsGrabbed && EnemyController.Grabber == e)
                 {
@@ -312,14 +313,14 @@ public class EnemyController : MonoBehaviour
 
     [Header("Wet & Electric Status (水塔淋湿与感电 - 对齐 gamejam-integration)")]
     private float wetUntil = -1f;
-    public void Wet(float duration) { wetUntil = Mathf.Max(wetUntil, Time.time + duration); }
+    public void Wet(float duration) { float strength=1; if (FilterControl(EnemyControlKind.Wet, ref strength, ref duration)) wetUntil = Mathf.Max(wetUntil, Time.time + duration); }
     public bool IsWet => Time.time < wetUntil;
 
     [Header("Pacify (培养箱安抚机制 - 对齐 gamejam-integration)")]
     public float pacifyImmuneUntil = 0f;
     public FurnitureObject pacifierFurniture = null;
     public bool Pacified => aiState == EnemyAIState.Pacified;
-    public bool CanBePacified => IsAlive && !IsEmerging && (aiState == EnemyAIState.Patrol || aiState == EnemyAIState.Alert || aiState == EnemyAIState.Chase || aiState == EnemyAIState.Recover) && Grabber != this && Time.time >= pacifyImmuneUntil;
+    public bool CanBePacified => AllowsControl(EnemyControlKind.Pacify) && IsAlive && !IsEmerging && (aiState == EnemyAIState.Patrol || aiState == EnemyAIState.Alert || aiState == EnemyAIState.Chase || aiState == EnemyAIState.Recover) && Grabber != this && Time.time >= pacifyImmuneUntil;
 
     [Header("Furniture Targeting (家具目标与游击脱战 - 对齐 gamejam-integration)")]
     public float furnitureSearchRange = 9f;
@@ -333,6 +334,7 @@ public class EnemyController : MonoBehaviour
 
     public void ForceTauntTarget(FurnitureObject target)
     {
+        if (!AllowsControl(EnemyControlKind.Taunt)) return;
         if (isDead || aiState == EnemyAIState.Executing || aiState == EnemyAIState.Grabbing || aiState == EnemyAIState.Pacified) return;
         furnitureTarget = target;
         wasChasingPlayer = false;
@@ -345,6 +347,8 @@ public class EnemyController : MonoBehaviour
     public void Pacify(float seconds, FurnitureObject by)
     {
         if (!CanBePacified) return;
+        float strength=1;
+        if (!FilterControl(EnemyControlKind.Pacify, ref strength, ref seconds)) return;
         if (currentClock != null) { currentClock.Close(); currentClock = null; }
         if (squid != null) squid.Interrupt();
         aiState = EnemyAIState.Pacified;
@@ -557,7 +561,7 @@ public class EnemyController : MonoBehaviour
     {
         isDead = false;
         isStaggered = false;
-        if (aiState != EnemyAIState.Chase)
+        if (ExternalAI == null && aiState != EnemyAIState.Chase)
         {
             aiState = EnemyAIState.Patrol;
         }
@@ -717,9 +721,26 @@ public class EnemyController : MonoBehaviour
     /// <summary>
     /// 物理击退平滑阻尼
     /// </summary>
+    public EnemyCombatPolicy CombatPolicy;
+    public System.Action<EnemyController, float> ExternalAI;
+    public System.Func<EnemyController, bool> ExternalParryWindow;
+    public event System.Action<EnemyController> Died;
+    public static bool CombatWorldPaused => PlayerSessionData.IsCombatInputBlocked || BiomechanicalAuraBase.IsCombatPaused || TimeManager.Hitstop;
+    public bool CanExecute => IsAlive && !IsEmerging && (CombatPolicy == null || CombatPolicy.CanExecute(this));
+    public bool FilterControl(EnemyControlKind kind, ref float strength, ref float duration)
+        => CombatPolicy == null || CombatPolicy.Control(this, kind, ref strength, ref duration);
+    bool AllowsControl(EnemyControlKind kind)
+    { float strength=1, duration=0; return FilterControl(kind, ref strength, ref duration); }
+    public void Displace(Vector3 direction, float distance)
+    {
+        float duration=0;
+        if (FilterControl(EnemyControlKind.Knockback, ref distance, ref duration)) transform.position += direction * distance;
+    }
     public void Knockback(Vector3 dir, float distance)
     {
         if (IsEmerging) return;
+        float duration=0;
+        if (!FilterControl(EnemyControlKind.Knockback, ref distance, ref duration)) return;
         dir.z = 0f;
         knockVel = dir.normalized * distance * 8f;
     }
@@ -819,7 +840,7 @@ public class EnemyController : MonoBehaviour
         if (isDead) return;
 
         // 建造模式或合成工坊/温室开启下全局时停冻结，给玩家静谧布防空间
-        if (isAIPaused || PlayerSessionData.isCraftingOpen)
+        if (isAIPaused || PlayerSessionData.isCraftingOpen || (ExternalAI != null && CombatWorldPaused))
         {
             SetMoveAnimation(false);
             return;
@@ -878,7 +899,7 @@ public class EnemyController : MonoBehaviour
             }
             else
             {
-                UpdatePacifiedAI();
+                if (ExternalAI == null) UpdatePacifiedAI();
                 return;
             }
         }
@@ -897,6 +918,7 @@ public class EnemyController : MonoBehaviour
 
         if (attackCooldownTimer > 0f)
             attackCooldownTimer -= Time.deltaTime;
+        if (ExternalAI != null) { ExternalAI(this, Time.deltaTime); return; }
         if (giveUpTextCooldown > 0f)
             giveUpTextCooldown -= Time.deltaTime;
 
@@ -1020,7 +1042,7 @@ public class EnemyController : MonoBehaviour
         }
 
         var taunt = ScreamingValveAuraBehavior.GetTauntingValveNear(transform.position);
-        if (taunt != null && taunt.parentFurniture != null && taunt.parentFurniture.Targetable)
+        if (AllowsControl(EnemyControlKind.Taunt) && taunt != null && taunt.parentFurniture != null && taunt.parentFurniture.Targetable)
         {
             furnitureTarget = taunt.parentFurniture;
             return true;
@@ -1445,6 +1467,7 @@ public class EnemyController : MonoBehaviour
                     }
                     else if (targetPlayer.IsInvulnerable)
                     {
+                        targetPlayer.NotifyDodgeAvoided();
                         if (DamageTextManager.Instance != null)
                         {
                             DamageTextManager.Instance.ShowText(targetPlayer.transform.position + Vector3.up * 0.4f, "DODGE!", new Color(0.2f, 1f, 0.8f), 0.11f);
@@ -1452,7 +1475,7 @@ public class EnemyController : MonoBehaviour
                     }
                     else
                     {
-                        targetPlayer.TakeDamage(attackDamage);
+                        targetPlayer.TakeDamage(attackDamage, this, true);
                         Sfx.Play("sfx_hit");
                         CameraRig.I?.Shake(0.12f, 0.15f);
                     }
@@ -1674,6 +1697,7 @@ public class EnemyController : MonoBehaviour
     public void Parried()
     {
         if (IsEmerging || !IsAlive) return;
+        if (CombatPolicy != null) { CombatPolicy.Parried(this); return; }
         if (currentClock != null) { currentClock.Close(); currentClock = null; }
         aiState = EnemyAIState.Pending;
         stateTimer = 0f;
@@ -1690,7 +1714,7 @@ public class EnemyController : MonoBehaviour
 
     public void BeginExecuted()
     {
-        if (IsEmerging || !IsAlive) return;
+        if (!CanExecute) return;
         if (currentClock != null) { currentClock.Close(); currentClock = null; }
         aiState = EnemyAIState.Executing;
         CancelGrab();
@@ -1701,15 +1725,22 @@ public class EnemyController : MonoBehaviour
 
     public void KillByExecution(Vector3 dir)
     {
-        if (IsEmerging || !IsAlive) return;
-        currentHp = 0f;
+        if (!CanExecute) { CancelExecution(); return; }
+        float damage=CombatPolicy == null ? currentHp : CombatPolicy.ExecutionDamage(this);
+        if (float.IsNaN(damage) || float.IsInfinity(damage) || damage < 0) { CancelExecution(); return; }
+        currentHp = Mathf.Max(0, currentHp-damage);
         Flash(Color.white, 0.3f);
         ApplyKnockback(dir, 0.8f, 0.25f);
-        Die();
+        UpdateHealthBar();
+        if (currentHp <= 0) Die(); else CancelExecution();
     }
+
+    public void CancelExecution()
+    { if (aiState == EnemyAIState.Executing) aiState = EnemyAIState.Chase; }
 
     public void YieldToGrab()
     {
+        if (ExternalAI != null) return;
         if (aiState == EnemyAIState.Attack || aiState == EnemyAIState.GrabWindup)
         {
             if (currentClock != null) { currentClock.Close(); currentClock = null; }
@@ -1775,6 +1806,8 @@ public class EnemyController : MonoBehaviour
     public void TakeDamage(float damage, float guardBreakDamage, Vector3 attackerPos)
     {
         if (isDead || IsEmerging || aiState == EnemyAIState.Executing) return;
+        if (CombatPolicy != null && !CombatPolicy.ReceiveDamage(this, ref damage, ref guardBreakDamage)) return;
+        if (damage < 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return;
 
         Flash(Color.white, 0.12f);
         Knockback((transform.position - attackerPos).normalized, 0.18f);
@@ -1788,7 +1821,7 @@ public class EnemyController : MonoBehaviour
         }
 
         // 如果在处决就绪状态下，保持 Pending 不变，方便处决
-        if (aiState != EnemyAIState.Pending && aiState != EnemyAIState.Grabbing)
+        if ((CombatPolicy == null || CombatPolicy.InterruptOnHit) && aiState != EnemyAIState.Pending && aiState != EnemyAIState.Grabbing)
         {
             if (aiState == EnemyAIState.Attack && currentClock != null)
             {
@@ -1812,7 +1845,7 @@ public class EnemyController : MonoBehaviour
         }
 
         float finalDmg = damage;
-        bool isCrit = isStaggered || aiState == EnemyAIState.Pending;
+        bool isCrit = (CombatPolicy == null || CombatPolicy.VulnerabilityBonus) && (isStaggered || aiState == EnemyAIState.Pending);
         if (isCrit) finalDmg *= 1.5f;
 
         currentHp -= finalDmg;
@@ -1848,6 +1881,7 @@ public class EnemyController : MonoBehaviour
     public void TriggerStagger()
     {
         if (IsEmerging) return;
+        if (!AllowsControl(EnemyControlKind.Stagger)) return;
         if (currentClock != null) { currentClock.Close(); currentClock = null; }
         isStaggered = true;
         staggerTimer = staggerDuration;
@@ -1932,6 +1966,8 @@ public class EnemyController : MonoBehaviour
         }
 
         StartCoroutine(DeathAndRespawnRoutine());
+        if (Died != null) foreach (System.Action<EnemyController> listener in Died.GetInvocationList())
+        { try { listener(this); } catch (System.Exception ex) { Debug.LogException(ex); } }
     }
 
     private IEnumerator DeathAndRespawnRoutine()
@@ -2079,6 +2115,7 @@ public class EnemyController : MonoBehaviour
     {
         if (IsEmerging) return;
         if (isDead) return;
+        if (!FilterControl(EnemyControlKind.Knockback, ref force, ref duration)) return;
         StartCoroutine(KnockbackRoutine(dir.normalized, force, duration));
     }
 
@@ -2117,6 +2154,7 @@ public class EnemyController : MonoBehaviour
     public void ApplySlow(float slowPercent, float duration)
     {
         if (IsEmerging) return;
+        if (!FilterControl(EnemyControlKind.Slow, ref slowPercent, ref duration)) return;
         float factor = Mathf.Clamp01(1f - slowPercent / 100f);
         slowMultiplier = Mathf.Min(slowMultiplier, factor);
         slowTimer = Mathf.Max(slowTimer, duration);
@@ -2129,6 +2167,8 @@ public class EnemyController : MonoBehaviour
     {
         if (IsEmerging) return;
         if (isDead) return;
+        float strength=1;
+        if (!FilterControl(EnemyControlKind.Paralysis, ref strength, ref duration)) return;
         paralysisTimer = Mathf.Max(paralysisTimer, duration);
         if (DamageTextManager.Instance != null)
         {
@@ -2143,6 +2183,8 @@ public class EnemyController : MonoBehaviour
     {
         if (IsEmerging) return;
         if (isDead) return;
+        float strength=1;
+        if (!FilterControl(EnemyControlKind.Defect, ref strength, ref duration)) return;
         isPacified = true;
         pacifiedTimer = duration;
         pacifiedTargetEnemy = targetOther;

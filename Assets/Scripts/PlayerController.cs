@@ -736,12 +736,15 @@ public class PlayerController : MonoBehaviour
 
     public void ExecuteEnemy(EnemyController enemy)
     {
-        if (enemy == null || !enemy.IsAlive || enemy.IsEmerging || enemy.aiState == EnemyController.EnemyAIState.Executing) return;
-        StartCoroutine(ExecuteRoutine(enemy));
+        if (executionTarget != null || enemy == null || !enemy.CanExecute || enemy.aiState == EnemyController.EnemyAIState.Executing) return;
+        executionRoutine=StartCoroutine(ExecuteRoutine(enemy));
     }
 
     private IEnumerator ExecuteRoutine(EnemyController enemy)
     {
+        if (enemy == null || !enemy.CanExecute) yield break;
+        executionTarget=enemy;
+        try {
         isAttackingAnim = true;
         StopMovement();
         enemy.BeginExecuted();
@@ -773,11 +776,14 @@ public class PlayerController : MonoBehaviour
         }
 
         // 处决大刀光特效
+        if (enemy == null || !enemy.CanExecute) yield break;
         Vfx.Spawn("VFX_ExecuteSlash", enemy.transform.position + Vector3.up * 0.5f, dashDir.x >= 0 ? 0 : 180f, 1.4f, true);
         CameraRig.I?.Shake(0.35f, 0.3f);
 
         // 斩杀敌人
+        float beforeExecution=enemy.currentHp;
         enemy.KillByExecution(dashDir);
+        NotifyDamageDealt(enemy, beforeExecution);
         if (hero != null && hero.Face != null && Random.value < 0.6f) hero.Face.TriggerHappy();
 
         yield return new WaitForSeconds(0.35f);
@@ -793,6 +799,11 @@ public class PlayerController : MonoBehaviour
         else
         {
             ExitCombat();
+        }
+        } finally {
+            if (enemy != null) enemy.CancelExecution();
+            executionTarget=null;
+            isAttackingAnim=false;
         }
     }
 
@@ -925,9 +936,9 @@ public class PlayerController : MonoBehaviour
                 float dist = Vector2.Distance(center, e.transform.position);
                 if (dist <= radius)
                 {
-                    e.TakeDamage(dmg, gb, transform.position);
+                    DealDamage(e, dmg, gb);
                     Vector3 knockDir = (e.transform.position - transform.position).normalized;
-                    e.transform.position += knockDir * (0.35f + 0.45f * lv);
+                    e.Displace(knockDir, 0.35f + 0.45f * lv);
                 }
             }
         }
@@ -998,6 +1009,11 @@ public class PlayerController : MonoBehaviour
 
     void OnDisable()
     {
+        EndDodge();
+        if (executionRoutine != null) { StopCoroutine(executionRoutine); executionRoutine=null; }
+        if (executionTarget != null) executionTarget.CancelExecution();
+        executionTarget=null;
+        isAttackingAnim=false;
         CancelPlace();
         if (hurtCoroutine != null)
         {
@@ -1086,6 +1102,7 @@ public class PlayerController : MonoBehaviour
             rollSafetyTimer += Time.unscaledDeltaTime;
             if (rollSafetyTimer > 1.8f)
             {
+                EndDodge();
                 isRolling = false;
                 isInvulnerable = false;
                 rollSafetyTimer = 0f;
@@ -2253,7 +2270,7 @@ public class PlayerController : MonoBehaviour
             if (hitDist <= attackRange * 1.35f)
             {
                 // 造成伤害并削弱破防值
-                currentTarget.TakeDamage(dmg, guardBreak, transform.position);
+                DealDamage(currentTarget, dmg, guardBreak);
 
                 // 命中敌人恢复 8 点精力
                 currentStamina = Mathf.Min(maxStamina, currentStamina + 8f);
@@ -2333,6 +2350,10 @@ public class PlayerController : MonoBehaviour
         Vector3 rollDir = new Vector3(swipeDir.x, swipeDir.y, 0f).normalized;
 
         isRolling = true;
+        dodgeActive=true;
+        dodgeStartedAt=Time.unscaledTime;
+        LastDodgeWasPerfect=false;
+        Emit(DodgeStarted);
         isInvulnerable = true;
         rollCooldownTimer = rollCooldown;
 
@@ -2417,7 +2438,7 @@ public class PlayerController : MonoBehaviour
                 var e = enemies[i];
                 if (e != null && e.IsAlive && Vector2.Distance(punchTarget, e.transform.position) <= 2.2f)
                 {
-                    e.TakeDamage(CurrentAttackDamage * 1.25f, CurrentGuardBreakPower * 1.2f, transform.position);
+                    DealDamage(e, CurrentAttackDamage * 1.25f, CurrentGuardBreakPower * 1.2f);
                 }
             }
 
@@ -2432,6 +2453,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        EndDodge();
         isRolling = false;
         isInvulnerable = false;
     }
@@ -2698,13 +2720,25 @@ public class PlayerController : MonoBehaviour
     }
 
     public void TakeDamage(float damage)
+    { TakeDamageCore(damage, null, true, true); }
+
+    public PlayerDamageResult TakeDamage(float damage, EnemyController attacker, bool canBlock)
     {
-        if (IsInvulnerable) return;
+        if (!IsAlive || damage <= 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return PlayerDamageResult.Ignored;
+        if (IsInvulnerable) { NotifyDodgeAvoided(); return PlayerDamageResult.Dodged; }
+        bool blocked=isGuarding && canBlock;
+        TakeDamageCore(damage, attacker, canBlock, false);
+        return blocked ? PlayerDamageResult.Blocked : PlayerDamageResult.Damaged;
+    }
+
+    private void TakeDamageCore(float damage, EnemyController attacker, bool canBlock, bool legacy)
+    {
+        if (IsInvulnerable) { NotifyDodgeAvoided(); return; }
         CancelPlace();
 
-        if (isGuarding)
+        if (isGuarding && canBlock)
         {
-            var parryEnemy = FindParryableEnemy() ?? NearestEnemy(attackRange + 0.8f);
+            var parryEnemy = legacy ? (FindParryableEnemy() ?? NearestEnemy(attackRange + 0.8f)) : attacker;
             if (parryEnemy != null)
             {
                 DoParry(parryEnemy);
@@ -2748,6 +2782,41 @@ public class PlayerController : MonoBehaviour
             StopCoroutine(hurtCoroutine);
         }
         hurtCoroutine = StartCoroutine(PlayerHurtRoutine());
+    }
+
+    EnemyController executionTarget;
+    Coroutine executionRoutine;
+    public event System.Action DodgeStarted, DodgeEnded, PerfectDodge;
+    public event System.Action<EnemyController,float> DamageDealt;
+    public int PerfectDodgeCount { get; private set; }
+    public bool LastDodgeWasPerfect { get; private set; }
+    bool dodgeActive;
+    float dodgeStartedAt;
+    static void Emit(System.Action callbacks)
+    {
+        if (callbacks == null) return;
+        foreach (System.Action listener in callbacks.GetInvocationList())
+            try { listener(); } catch (System.Exception ex) { Debug.LogException(ex); }
+    }
+    void EndDodge() { if (!dodgeActive) return; dodgeActive=false; Emit(DodgeEnded); }
+    public void NotifyDodgeAvoided()
+    {
+        if (!dodgeActive || !isRolling || LastDodgeWasPerfect || Time.unscaledTime-dodgeStartedAt > 0.25f) return;
+        LastDodgeWasPerfect=true; PerfectDodgeCount++; Emit(PerfectDodge);
+    }
+    public void DealDamage(EnemyController enemy, float damage, float guardDamage)
+    {
+        if (enemy == null) return;
+        float before=enemy.currentHp;
+        enemy.TakeDamage(damage, guardDamage, transform.position);
+        NotifyDamageDealt(enemy,before);
+    }
+    void NotifyDamageDealt(EnemyController enemy, float before)
+    {
+        float actual=Mathf.Max(0,before-enemy.currentHp);
+        if (actual <= 0 || DamageDealt == null) return;
+        foreach (System.Action<EnemyController,float> listener in DamageDealt.GetInvocationList())
+            try { listener(enemy,actual); } catch (System.Exception ex) { Debug.LogException(ex); }
     }
 
     private IEnumerator PlayerHurtRoutine()
@@ -2855,6 +2924,7 @@ public class PlayerController : MonoBehaviour
         currentHp = maxHp;
         currentStamina = maxStamina;
         isThrown = false;
+        EndDodge();
         isRolling = false;
         isDefeatedRoutineRunning = false;
         EnemyController.NotifyPlayerRevived();

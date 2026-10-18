@@ -86,7 +86,140 @@ public sealed class TapSelfTest : MonoBehaviour
         float dodgeDeadline=Time.realtimeSinceStartup+5f;
         while(p.IsInvulnerable && Time.realtimeSinceStartup<dodgeDeadline) yield return null;
         Check(!p.IsInvulnerable,"dodge plus existing counter-punch ends without stuck invulnerability");
+        yield return CombatTests(p);
         PrefsRoundTrip();
+    }
+    IEnumerator CombatTests(PlayerController p)
+    {
+        var e=EnemyController.CreateEnemyInstance(p.transform.position+Vector3.right*2,"P1_Regression");
+        yield return null;
+        e.maxHp=e.currentHp=1000; e.currentGuardBreak=1000;
+        var field=typeof(EnemyController).GetField("CombatPolicy");
+        Check(field!=null,"P1 optional combat policy available");
+        if(field==null) { Destroy(e.gameObject); yield break; }
+        e.TakeDamage(10,20,p.transform.position);
+        Check(e.currentHp==990 && e.currentGuardBreak==980,"P1 ordinary damage and guard depletion");
+        e.Parried(); e.TakeDamage(10,0,p.transform.position);
+        Check(e.aiState==EnemyController.EnemyAIState.Pending && e.currentHp==975,"P1 ordinary parry pending and 1.5 vulnerability");
+        e.ApplySlow(40,2); e.ApplyParalysis(1); e.Wet(2);
+        Check(Mathf.Approximately(e.slowMultiplier,0.6f) && e.IsParalyzed && e.IsWet,"P1 ordinary controls retained");
+        int deaths=0; e.Died+=enemy=>{ deaths++; enemy.KillByExecution(Vector3.right); };
+        e.BeginExecuted(); e.KillByExecution(Vector3.right); e.KillByExecution(Vector3.right);
+        Check(!e.IsAlive && deaths==1,"P1 ordinary execution lethal and death reentry exactly once");
+        Destroy(e.gameObject);
+
+        e=EnemyController.CreateEnemyInstance(p.transform.position+Vector3.right*1.5f,"P1_Policy");
+        yield return null;
+        e.maxHp=e.currentHp=1000; e.currentGuardBreak=1000;
+        var policy=new RegressionPolicy(); e.CombatPolicy=policy;
+        int ticks=0; e.ExternalAI=(enemy,dt)=>ticks++;
+        Vector3 origin=e.transform.position;
+        yield return null; yield return null;
+        Check(ticks>0 && e.transform.position==origin && EnemyController.AllEnemies.Contains(e),"P1 external AI sole owner stays registered");
+        EnemyController.isAIPaused=true; int previous=ticks;
+        yield return null; yield return null;
+        Check(ticks==previous,"P1 external AI build pause"); EnemyController.isAIPaused=false;
+        PlayerSessionData.isCraftingOpen=true; previous=ticks;
+        yield return null; yield return null;
+        Check(ticks==previous,"P1 external AI overlay pause"); PlayerSessionData.isCraftingOpen=false;
+        GameJam.TimeManager.I.Refresh();
+        GameJam.TimeManager.I.DoHitstop(0.1f); previous=ticks;
+        yield return null;
+        Check(ticks==previous,"P1 external AI hitstop");
+        yield return new WaitForSecondsRealtime(0.15f);
+        e.ExternalParryWindow=enemy=>true;
+        Check(e.ParryWindowOpen,"P1 external parry window explicit owner");
+        e.ExternalParryWindow=null;
+        Check(!e.ParryWindowOpen,"P1 no stale ordinary parry timer for external AI");
+        e.ApplyParalysis(0.4f); previous=ticks;
+        yield return null;
+        Check(ticks==previous && e.IsParalyzed,"P1 external AI obeys paralysis");
+        yield return new WaitForSeconds(0.3f);
+        Check(!e.IsParalyzed,"P1 paralysis duration policy halved");
+        e.aiState=EnemyController.EnemyAIState.Attack;
+        e.TakeDamage(10,200,p.transform.position);
+        Check(e.currentHp==990 && e.currentGuardBreak==1000 && e.aiState==EnemyController.EnemyAIState.Attack,"P1 armored hit preserves state and filters guard damage");
+        policy.rejectDamage=true; e.TakeDamage(100,0,p.transform.position); policy.rejectDamage=false;
+        Check(e.currentHp==990,"P1 damage veto preserves single HP");
+        e.Knockback(Vector3.right,2); e.ApplyKnockback(Vector3.right,2); e.Displace(Vector3.right,2);
+        yield return null;
+        Check(e.transform.position==origin,"P1 all three knockback paths resisted");
+        e.ApplySlow(90,2); e.ApplyPacify(2); e.Pacify(2,null); e.Wet(2);
+        Check(Mathf.Approximately(e.slowMultiplier,0.7f) && !e.isPacified && !e.Pacified && !e.CanBePacified && e.IsWet,"P1 slow clamp pacify immunity wet retained");
+        e.Parried();
+        p.ExecuteEnemy(e); e.BeginExecuted(); e.KillByExecution(Vector3.right);
+        Check(e.currentHp==990 && e.aiState!=EnemyController.EnemyAIState.Executing && !GetPrivate<bool>(p,"isAttackingAnim"),"P1 rejected execution no player lock or executing state");
+        policy.execute=true; e.BeginExecuted(); policy.execute=false; e.KillByExecution(Vector3.right);
+        Check(e.currentHp==990 && e.aiState!=EnemyController.EnemyAIState.Executing,"P1 settlement rechecks eligibility");
+        policy.execute=true; e.BeginExecuted(); e.KillByExecution(Vector3.right);
+        Check(e.currentHp==890 && e.IsAlive && e.aiState!=EnemyController.EnemyAIState.Executing,"P1 nonlethal execution settles same HP and recovers");
+
+        float executionHp=e.currentHp;
+        p.ExecuteEnemy(e);
+        p.enabled=false; p.enabled=true;
+        yield return new WaitForSeconds(0.6f);
+        Check(e.currentHp==executionHp && !GetPrivate<bool>(p,"isAttackingAnim"),"P1 disabling player cancels in-flight execution settlement");
+
+        float hp=p.currentHp;
+        SetPrivate(p,"isGuarding",true);
+        var result=p.TakeDamage(5,e,false);
+        Check(result==PlayerDamageResult.Damaged && p.currentHp==hp-5,"P1 unblockable damage ignores guard");
+        SetPrivate(p,"isGuarding",true); int parries=policy.parries;
+        result=p.TakeDamage(5,e,true);
+        Check(result==PlayerDamageResult.Blocked && policy.parries==parries+1,"P1 block routes to actual attacker");
+        SetPrivate(p,"isGuarding",true); parries=policy.parries;
+        result=p.TakeDamage(5,null,true);
+        Check(result==PlayerDamageResult.Blocked && policy.parries==parries,"P1 sourceless block never punishes nearby enemy");
+        GameJam.TimeManager.I.EndSlowMo();
+        int hits=0; float total=0;
+        System.Action<EnemyController,float> hit=(enemy,amount)=>{hits++; total+=amount;}; p.DamageDealt+=hit;
+        p.DealDamage(e,10,0); policy.rejectDamage=true; p.DealDamage(e,10,0); policy.rejectDamage=false;
+        Check(hits==1 && total==10,"P1 actual player damage event excludes rejected hits");
+        p.ClearAttackTarget();
+        e.transform.position=p.transform.position+Vector3.right*0.4f;
+        Vector3 smashOrigin=e.transform.position; float beforeSmash=e.currentHp; int beforeHits=hits;
+        typeof(PlayerController).GetMethod("DoSmash",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(p,new object[]{0f,Vector3.right,e});
+        Check(e.currentHp<beforeSmash && hits==beforeHits+1 && e.transform.position==smashOrigin,"P1 real smash damage event and displacement resistance");
+        yield return new WaitForSecondsRealtime(0.2f);
+        p.currentTarget=e; beforeHits=hits;
+        yield return (IEnumerator)typeof(PlayerController).GetMethod("PerformAttackRoutine",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(p,null);
+        Check(hits==beforeHits+1,"P1 real normal attack emits damage event");
+        p.DamageDealt-=hit;
+
+        int begins=0,ends=0,perfect=0;
+        System.Action begin=()=>begins++, end=()=>ends++, perf=()=>perfect++;
+        p.DodgeStarted+=begin; p.DodgeEnded+=end; p.PerfectDodge+=perf;
+        SetPrivate(p,"rollCooldownTimer",0f); SetPrivate(p,"isGuarding",false);
+        Check(p.TriggerDodgeRoll(Vector2.left),"P1 event dodge accepted");
+        p.TakeDamage(1,e,false); p.TakeDamage(1,e,false);
+        Check(begins==1 && perfect==1 && p.LastDodgeWasPerfect,"P1 perfect dodge once per real roll");
+        float deadline=Time.realtimeSinceStartup+5;
+        while(p.IsInvulnerable && Time.realtimeSinceStartup<deadline) yield return null;
+        Check(ends==1,"P1 dodge end exactly once");
+        p.NotifyDodgeAvoided(); Check(perfect==1,"P1 no perfect event outside roll");
+        p.DodgeStarted-=begin; p.DodgeEnded-=end; p.PerfectDodge-=perf;
+        yield return new WaitForEndOfFrame();
+        var shot=ScreenCapture.CaptureScreenshotAsTexture();
+        File.WriteAllBytes(Path.Combine(OutputDirectory,"p1-combat.png"),shot.EncodeToPNG()); Destroy(shot);
+        Destroy(e.gameObject);
+    }
+    static T GetPrivate<T>(object obj,string field) => (T)obj.GetType().GetField(field,System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(obj);
+    static void SetPrivate(object obj,string field,object value) => obj.GetType().GetField(field,System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(obj,value);
+    sealed class RegressionPolicy : EnemyCombatPolicy
+    {
+        public bool rejectDamage,execute; public int parries;
+        public override bool InterruptOnHit => false;
+        public override bool VulnerabilityBonus => false;
+        public override bool ReceiveDamage(EnemyController e,ref float damage,ref float guard) { guard=0; return !rejectDamage; }
+        public override bool CanExecute(EnemyController e) => execute;
+        public override float ExecutionDamage(EnemyController e) => 100;
+        public override void Parried(EnemyController e) { parries++; }
+        public override bool Control(EnemyController e,EnemyControlKind kind,ref float strength,ref float duration)
+        {
+            if(kind==EnemyControlKind.Paralysis) duration*=0.5f;
+            if(kind==EnemyControlKind.Slow) strength=Mathf.Min(30,strength);
+            return kind==EnemyControlKind.Slow || kind==EnemyControlKind.Paralysis || kind==EnemyControlKind.Wet;
+        }
     }
     void PrefsRoundTrip()
     {
