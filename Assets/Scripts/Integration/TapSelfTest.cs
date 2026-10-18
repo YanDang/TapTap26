@@ -25,6 +25,7 @@ public sealed class TapSelfTest : MonoBehaviour
             if(Application.platform!=RuntimePlatform.WindowsPlayer && Application.platform!=RuntimePlatform.WindowsEditor) throw new PlatformNotSupportedException("Raw PlayerPrefs protection currently supports Windows only");
             runner.original=TapPrefsSnapshot.Capture();
             runner.original.WriteJournal(Path.Combine(OutputDirectory,"prefs-before.json"));
+            GameJam.Gear.GearInventory.ResetAll();
             // Deterministic fresh run; the entire original TAP_* namespace is restored after scene teardown.
             PlayerPrefs.DeleteKey("TAP_SHELL_BACKPACK_DATA"); PlayerPrefs.DeleteKey("TAP_CRAFTED_PRODUCTS_DATA_V2"); PlayerPrefs.Save();
         } catch(Exception e) { runner.Check(false,"snapshot: "+e); runner.ending=true; Application.Quit(2); }
@@ -92,6 +93,7 @@ public sealed class TapSelfTest : MonoBehaviour
         float dodgeDeadline=Time.realtimeSinceStartup+5f;
         while(p.IsInvulnerable && Time.realtimeSinceStartup<dodgeDeadline) yield return null;
         Check(!p.IsInvulnerable,"dodge plus existing counter-punch ends without stuck invulnerability");
+        yield return TapGearTests.Run(Check);
         yield return CombatTests(p);
         yield return BossQualityGates.Run(Check);
         yield return BossRegression.Run(Check);

@@ -332,6 +332,13 @@ public class EnemyController : MonoBehaviour
     private bool wasChasingPlayer = false;
     private float giveUpTextCooldown = 0f;
 
+    public Transform GearTaunt { get; private set; }
+    public bool SetGearTaunt(Transform target)
+    {
+        if (target && (!AllowsControl(EnemyControlKind.Taunt) || !IsAlive)) return false;
+        GearTaunt=target; return true;
+    }
+    public float GearImpactRemaining => aiState==EnemyAIState.Attack ? normalImpact-stateTimer : float.PositiveInfinity;
     public void ForceTauntTarget(FurnitureObject target)
     {
         if (!AllowsControl(EnemyControlKind.Taunt)) return;
@@ -919,6 +926,13 @@ public class EnemyController : MonoBehaviour
         if (attackCooldownTimer > 0f)
             attackCooldownTimer -= Time.deltaTime;
         if (ExternalAI != null) { ExternalAI(this, Time.deltaTime); return; }
+        if (GearTaunt && AllowsControl(EnemyControlKind.Taunt) && aiState!=EnemyAIState.Executing && aiState!=EnemyAIState.Grabbing && aiState!=EnemyAIState.Pacified) {
+            if(currentClock!=null){currentClock.Close();currentClock=null;}
+            aiState=EnemyAIState.Chase;
+            Vector3 d=GearTaunt.position-transform.position;
+            if(d.magnitude>attackRange) transform.position=Vector3.MoveTowards(transform.position,GearTaunt.position,moveSpeed*slowMultiplier*Time.deltaTime);
+            SetMoveAnimation(d.magnitude>attackRange); return;
+        }
         if (giveUpTextCooldown > 0f)
             giveUpTextCooldown -= Time.deltaTime;
 

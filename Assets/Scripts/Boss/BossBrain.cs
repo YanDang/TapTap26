@@ -16,6 +16,7 @@ public sealed class BossBrain : MonoBehaviour
     public float Elapsed { get; private set; }
     public bool AutoAttack = true;
     public int NextImpact => nextImpact;
+    public float GearImpactRemaining => nextImpact<impacts.Length?impacts[nextImpact]-Elapsed:float.PositiveInfinity;
     public bool Invulnerable => thresholdActive && (ThresholdIndex==1 || ultimateCut<(ThresholdIndex==0?1:2));
     public event Action<string> MoveStarted;
     public event Action<string,int> Impact;

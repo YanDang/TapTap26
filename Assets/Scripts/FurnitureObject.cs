@@ -484,6 +484,15 @@ public class FurnitureObject : MonoBehaviour
     /// <summary>
     /// 【举起家具 (Pick Up)】：玩家将家具举至头顶，转为重型手持武器
     /// </summary>
+    // Grapple owns only relocation; the existing grid owner unregisters and settles.
+    public bool GrappleTo(Vector3 destination)
+    {
+        if (!Targetable || isImmovable) return false;
+        UnregisterFromGrid();
+        PutDown(destination);
+        return true;
+    }
+
     public void PickUp(PlayerController player)
     {
         if (player == null || isImmovable || isIndestructible || instanceId == "furn_gather_door" || GetComponent<GatherDoorAuraBehavior>() != null) return;

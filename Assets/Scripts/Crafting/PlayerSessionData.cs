@@ -58,7 +58,7 @@ public static class PlayerSessionData
         }
     }
 
-    public static bool IsCombatInputBlocked => runProgress.finished || GameplaySceneTransition.IsBusy || isCraftingOpen
+    public static bool IsCombatInputBlocked => GameJam.Gear.TapGearUI.IsOpen || runProgress.finished || GameplaySceneTransition.IsBusy || isCraftingOpen
         || UnityEngine.SceneManagement.SceneManager.GetSceneByName("Mix").isLoaded
         || UnityEngine.SceneManagement.SceneManager.GetSceneByName("Collect").isLoaded;
 

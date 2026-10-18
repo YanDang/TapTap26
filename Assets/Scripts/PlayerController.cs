@@ -190,7 +190,7 @@ public class PlayerController : MonoBehaviour
     public bool CanBeginUltimate => isActiveAndEnabled && IsAlive && !Unavailable && !isRolling && !isCharging && !isSmashing && !isAttackingAnim && !isGuarding && !Placing && heldFurniture == null && canMove && executionTarget == null;
     public void BeginUltimateLock() { CancelLeftHold(); StopMovement(); UltimateLocked=true; }
     public void EndUltimateLock() { UltimateLocked=false; }
-    public bool CanRoll => rollCooldownTimer <= 0f && !isRolling && !Unavailable;
+    public bool CanRoll => (Gear && Gear.UsesCharges ? Gear.DodgeAvailable : rollCooldownTimer <= 0f) && !isRolling && !Unavailable;
     public float RollCooldownTimer => rollCooldownTimer;
     public float RollCooldown => rollCooldown;
     public float DodgeRemaining => Mathf.Max(0f, rollCooldownTimer);
@@ -254,7 +254,7 @@ public class PlayerController : MonoBehaviour
     {
         get
         {
-            return baseMoveSpeed * moveSpeedMultiplier * BossGroundEffects.PlayerMoveMultiplier(this);
+            return baseMoveSpeed * moveSpeedMultiplier * BossGroundEffects.PlayerMoveMultiplier(this) * (Gear ? Gear.MoveMultiplier : 1f);
         }
     }
 
@@ -311,7 +311,10 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// 获取当前攻击间隔 (秒)
     /// </summary>
-    public float CurrentAttackInterval => attackInterval;
+    public float CurrentAttackInterval => attackInterval / (Gear ? Gear.AttackMultiplier : 1f);
+    public GameJam.Gear.TapGearCombat Gear => GetComponent<GameJam.Gear.TapGearCombat>();
+    public void GearMoveSafe(Vector3 delta) => MoveSafe(delta);
+    public void GearRestoreDodge() { rollCooldownTimer=0; Gear?.RestoreDodge(); }
 
     void Awake()
     {
@@ -484,6 +487,7 @@ public class PlayerController : MonoBehaviour
         if (UltimateLocked) return;
         if (attacker == null || !attacker.IsAlive || attacker.IsEmerging) return;
         Ultimate?.AddCharge(5);
+        Gear?.Block();
         _parryReady = Time.unscaledTime + parryCooldown;
         parrySuccess++;
         isGuarding = false;
@@ -581,6 +585,7 @@ public class PlayerController : MonoBehaviour
 
     public bool TryGrab(EnemyController by)
     {
+        if (Gear && (Gear.Rooted || Gear.Bubble)) return false;
         if (Ultimate && Ultimate.TryAbsorb(by,true)) return false;
         if (UltimateLocked) return false;
         if (currentHp <= 0 || IsInvulnerable || Unavailable) return false;
@@ -646,6 +651,8 @@ public class PlayerController : MonoBehaviour
     {
         if (!isGrabbed) return;
 
+        if (Gear && Gear.FilterDamage(grabberEnemy, false, ref dmg)) return;
+        Gear?.Hurt();
         currentHp = Mathf.Max(0f, currentHp - dmg);
         if (hero != null)
         {
@@ -798,7 +805,7 @@ public class PlayerController : MonoBehaviour
         float beforeExecution=enemy.currentHp;
         enemy.KillByExecution(dashDir);
         NotifyDamageDealt(enemy, beforeExecution);
-        if (enemy.currentHp < beforeExecution) Ultimate?.AddCharge(20);
+        if (enemy.currentHp < beforeExecution) { Ultimate?.AddCharge(20); Gear?.Executed(); }
         if (hero != null && hero.Face != null && Random.value < 0.6f) hero.Face.TriggerHappy();
 
         yield return new WaitForSeconds(0.35f);
@@ -942,6 +949,8 @@ public class PlayerController : MonoBehaviour
         float damageMult = 1.1f + lv * 0.8f;
         float dmg = CurrentAttackDamage * damageMult;
         float gb = CurrentGuardBreakPower * (1.3f + lv * 0.8f);
+
+        if (Gear && Gear.WaterSmash(dir, dmg)) return;
 
         // 1. AOE 重砸敌人并击退削韧
         var enemies = EnemyController.AllEnemies;
@@ -1185,7 +1194,7 @@ public class PlayerController : MonoBehaviour
         UpdateMarkerAnimation();
 
         // 键盘按键映射：空格格挡，J 键攻击，Shift 翻滚闪避，F 键踢推附近家具
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && !Gear)
         {
             TriggerShellGuard();
         }
@@ -1682,7 +1691,7 @@ public class PlayerController : MonoBehaviour
             }
 
             // 2. 第二优先级：未命中任何可推家具时，主角执行闪避翻滚
-            if (rollCooldownTimer <= 0f)
+            if (Gear && Gear.UsesCharges ? Gear.DodgeAvailable : rollCooldownTimer <= 0f)
             {
                 StartCoroutine(PerformDodgeRollRoutine(swipeDir));
                 return;
@@ -1862,7 +1871,7 @@ public class PlayerController : MonoBehaviour
             }
 
             // 2. 第二优先级：未命中任何可推家具时，主角执行闪避翻滚
-            if (rollCooldownTimer <= 0f)
+            if (Gear && Gear.UsesCharges ? Gear.DodgeAvailable : rollCooldownTimer <= 0f)
             {
                 TriggerDodgeRoll(swipeDir);
                 return;
@@ -2080,6 +2089,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void UpdateAutoAttack()
     {
+        if (Gear && (Gear.Guarding || Gear.Busy)) return;
         if (isRolling || !canMove || isAttackingAnim || isCharging || isSmashing || isGuarding || Unavailable) return;
 
         var pendingEnemy = EnemyController.FindPending();
@@ -2299,7 +2309,9 @@ public class PlayerController : MonoBehaviour
             if (hitDist <= attackRange * 1.35f)
             {
                 // 造成伤害并削弱破防值
+                float hpBefore=currentTarget.currentHp;
                 DealDamage(currentTarget, dmg, guardBreak);
+                if(currentTarget && currentTarget.currentHp<hpBefore) Gear?.NormalHit(currentTarget);
 
                 // 命中敌人恢复 8 点精力
                 currentStamina = Mathf.Min(maxStamina, currentStamina + 8f);
@@ -2371,7 +2383,8 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private IEnumerator PerformDodgeRollRoutine(Vector2 swipeDir)
     {
-        if (isRolling) yield break;
+        if (isRolling || (Gear && !Gear.DodgeAvailable)) yield break;
+        Gear?.SpendDodge();
 
         // 翻滚打断当前移动和自动攻击，全力闪避
         StopMovement();
@@ -2399,7 +2412,7 @@ public class PlayerController : MonoBehaviour
             elapsed += Time.deltaTime;
             float t = elapsed / rollDuration;
 
-            Vector3 stepMove = rollDir * (rollSpeed * Time.deltaTime);
+            Vector3 stepMove = rollDir * (rollSpeed * (Gear ? Gear.DodgeMultiplier : 1f) * Time.deltaTime);
             Vector3 nextPos = transform.position + stepMove;
 
             // 地面安全检测
@@ -2461,15 +2474,19 @@ public class PlayerController : MonoBehaviour
             Vfx.Spawn("VFX_ArrowHit", punchTarget + Vector3.up * 0.4f, 0, 1.3f, true);
             Vfx.Spawn("VFX_ArrowBurst", punchTarget + Vector3.up * 0.6f, 0, 1.0f, true);
 
+            var gearFirstHits = new System.Collections.Generic.List<EnemyController>();
             var enemies = EnemyController.AllEnemies;
             for (int i = 0; i < enemies.Count; i++)
             {
                 var e = enemies[i];
                 if (e != null && e.IsAlive && Vector2.Distance(punchTarget, e.transform.position) <= 2.2f)
                 {
-                    DealDamage(e, CurrentAttackDamage * 1.25f, CurrentGuardBreakPower * 1.2f);
+                    gearFirstHits.Add(e);
+                    DealDamage(e, CurrentAttackDamage * (1.25f + (GameJam.Gear.TapGearCombat.Lv("arm_spring")>0?1f:0f)), CurrentGuardBreakPower * 1.2f);
                 }
             }
+
+            Gear?.CounterHit(gearFirstHits);
 
             // 等待机械臂出拳收回并钻出壳 (punchLen - 0.42s)
             float waitRemain = Mathf.Max(0.1f, punchLen - 0.42f);
@@ -2633,7 +2650,7 @@ public class PlayerController : MonoBehaviour
     public bool TriggerDodgeRoll(Vector2? optionalDir = null)
     {
         if (UltimateLocked) return false;
-        if (rollCooldownTimer > 0f || isRolling || Unavailable) return false;
+        if ((Gear && Gear.UsesCharges ? !Gear.DodgeAvailable : rollCooldownTimer > 0f) || isRolling || Unavailable) return false;
 
         // 翻滚消耗 15 点精力
         if (!ConsumeStamina(rollStaminaCost))
@@ -2762,6 +2779,7 @@ public class PlayerController : MonoBehaviour
         if (!IsAlive || damage <= 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return PlayerDamageResult.Ignored;
         if (Ultimate && Ultimate.TryAbsorb(attacker)) return PlayerDamageResult.Blocked;
         if (IsInvulnerable) { NotifyDodgeAvoided(); return PlayerDamageResult.Dodged; }
+        if (Gear && Gear.FilterDamage(attacker, canBlock, ref damage)) return PlayerDamageResult.Blocked;
         bool blocked=isGuarding && canBlock;
         TakeDamageCore(damage, attacker, canBlock, false);
         return blocked ? PlayerDamageResult.Blocked : PlayerDamageResult.Damaged;
@@ -2770,6 +2788,7 @@ public class PlayerController : MonoBehaviour
     private void TakeDamageCore(float damage, EnemyController attacker, bool canBlock, bool legacy)
     {
         if (IsInvulnerable) { NotifyDodgeAvoided(); return; }
+        if (legacy && Gear && Gear.FilterDamage(attacker, canBlock, ref damage)) return;
         CancelPlace();
 
         if (isGuarding && canBlock)
@@ -2784,6 +2803,7 @@ public class PlayerController : MonoBehaviour
             // 普通格挡成功，吸收全部伤害
             // 有来源的弹反已在 DoParry 奖励并提前返回；这里只奖励无弹反目标的格挡。
             Ultimate?.AddCharge(5);
+            Gear?.Block();
             isGuarding = false;
             CameraRig.I?.Shake(0.15f, 0.2f);
             Sfx.Play("sfx_parry", 0.8f, true);
@@ -2796,6 +2816,7 @@ public class PlayerController : MonoBehaviour
         }
 
         currentHp -= damage;
+        Gear?.Hurt();
         currentHp = Mathf.Max(0f, currentHp);
 
         if (DamageTextManager.Instance != null)
@@ -2839,7 +2860,7 @@ public class PlayerController : MonoBehaviour
     void EndDodge() { if (!dodgeActive) return; dodgeActive=false; Emit(DodgeEnded); }
     public void NotifyDodgeAvoided()
     {
-        if (!dodgeActive || !isRolling || LastDodgeWasPerfect || Time.unscaledTime-dodgeStartedAt > 0.25f) return;
+        if (!dodgeActive || !isRolling || LastDodgeWasPerfect || Time.unscaledTime-dodgeStartedAt > (Gear ? Gear.PerfectWindow : .25f)) return;
         LastDodgeWasPerfect=true; PerfectDodgeCount++; Emit(PerfectDodge);
     }
     public void DealDamage(EnemyController enemy, float damage, float guardDamage)

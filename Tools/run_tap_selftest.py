@@ -33,7 +33,7 @@ def capture():
             data=c.create_string_buffer(size.value); length=w.DWORD(16384)
             code=api.RegEnumValueW(int(key),index,name,c.byref(length),None,c.byref(typ),data,c.byref(size))
             if code: raise OSError(code)
-            if name.value.startswith(('TAP_', 'GJ_UltChoice')):
+            if name.value.startswith(('TAP_', 'GJ_UltChoice', 'GJ_GEAR_')):
                 result[name.value]={'type':typ.value,'base64':base64.b64encode(data.raw[:size.value]).decode('ascii')}
             index+=1
     return result

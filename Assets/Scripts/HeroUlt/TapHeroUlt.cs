@@ -59,7 +59,7 @@ namespace GameJam.HeroUlt
         public void AddCharge(float amount)
         {
             if (!Player || !Player.IsAlive || amount <= 0 || float.IsNaN(amount) || float.IsInfinity(amount)) return;
-            bool was = Ready; Charge = Mathf.Clamp(Charge + amount, 0, 100);
+            bool was = Ready; Charge = Mathf.Clamp(Charge + amount * (Player.Gear ? Player.Gear.ChargeMultiplier : 1f), 0, 100);
             if (!was && Ready) Sfx.Play("sfx_parry", .6f, true);
         }
         public bool Select(UltKind kind)
