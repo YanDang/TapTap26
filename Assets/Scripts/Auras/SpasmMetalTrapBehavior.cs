@@ -80,7 +80,7 @@ public class SpasmMetalTrapBehavior : BiomechanicalAuraBase
         if (flingDir.sqrMagnitude < 0.01f) flingDir = Vector3.up;
 
         enemy.TakeDamage(damage, 60f, transform.position);
-        enemy.ApplyKnockback(flingDir, knockbackForce * 0.15f, 0.45f);
+        enemy.ApplyKnockback(flingDir, knockbackForce * 0.15f, 0.45f, this);
         enemy.ApplyParalysis(stunDuration);
 
         if (DamageTextManager.Instance != null)

@@ -30,7 +30,7 @@ public class WaterBladeProjectile : MonoBehaviour
             if (enemy != null && enemy.IsAlive)
             {
                 enemy.TakeDamage(damage, guardBreak, transform.position);
-                enemy.ApplyKnockback(direction, knockbackPower * 0.1f, 0.3f);
+                enemy.ApplyKnockback(direction, knockbackPower * 0.1f, 0.3f, this);
 
                 if (DamageTextManager.Instance != null)
                 {

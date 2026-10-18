@@ -102,7 +102,7 @@ public class GasCystMineBehavior : BiomechanicalAuraBase
             {
                 e.TakeDamage(blastDamage, 75f, transform.position);
                 Vector3 blastDir = (e.transform.position - transform.position).normalized;
-                e.ApplyKnockback(blastDir, 0.6f, 0.35f);
+                e.ApplyKnockback(blastDir, 0.6f, 0.35f, this);
             }
         }
 

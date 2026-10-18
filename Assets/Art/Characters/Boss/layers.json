@@ -1,0 +1,1049 @@
+{
+  "width": 1080,
+  "height": 1964,
+  "ppu": 344.4,
+  "originX": 500,
+  "groundY": 1850,
+  "layers": [
+    {
+      "name": "躯干原画",
+      "bone": "躯干",
+      "order": 20,
+      "file": "躯干原画.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 37413,
+      "hiddenPixels": 15804,
+      "phase": 0
+    },
+    {
+      "name": "斗篷后片",
+      "bone": "斗篷_后_1",
+      "order": 30,
+      "file": "斗篷后片.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": true,
+      "chain": "后",
+      "visiblePixels": 178421,
+      "hiddenPixels": 25610,
+      "phase": 1,
+      "centerlinePixels": [
+        [
+          416.0,
+          445.0
+        ],
+        [
+          385.5,
+          477.0
+        ],
+        [
+          345.5,
+          509.0
+        ],
+        [
+          343.0,
+          541.0
+        ],
+        [
+          345.5,
+          573.0
+        ],
+        [
+          348.0,
+          605.0
+        ],
+        [
+          340.5,
+          637.0
+        ],
+        [
+          335.0,
+          669.0
+        ],
+        [
+          324.5,
+          701.0
+        ],
+        [
+          317.5,
+          733.0
+        ],
+        [
+          321.5,
+          766.0
+        ],
+        [
+          323.0,
+          798.0
+        ],
+        [
+          320.5,
+          830.0
+        ],
+        [
+          319.0,
+          862.0
+        ],
+        [
+          318.5,
+          894.0
+        ],
+        [
+          318.0,
+          926.0
+        ],
+        [
+          317.0,
+          958.0
+        ],
+        [
+          315.0,
+          990.0
+        ],
+        [
+          313.0,
+          1022.0
+        ],
+        [
+          310.0,
+          1054.0
+        ],
+        [
+          308.0,
+          1087.0
+        ],
+        [
+          303.5,
+          1119.0
+        ],
+        [
+          293.0,
+          1151.0
+        ],
+        [
+          287.0,
+          1183.0
+        ],
+        [
+          284.0,
+          1215.0
+        ],
+        [
+          280.0,
+          1247.0
+        ],
+        [
+          276.0,
+          1279.0
+        ],
+        [
+          272.0,
+          1311.0
+        ],
+        [
+          268.5,
+          1343.0
+        ],
+        [
+          266.0,
+          1375.0
+        ],
+        [
+          263.0,
+          1408.0
+        ],
+        [
+          261.0,
+          1440.0
+        ],
+        [
+          259.0,
+          1472.0
+        ],
+        [
+          256.5,
+          1504.0
+        ],
+        [
+          254.0,
+          1536.0
+        ],
+        [
+          251.0,
+          1568.0
+        ],
+        [
+          247.5,
+          1600.0
+        ],
+        [
+          244.5,
+          1632.0
+        ],
+        [
+          240.5,
+          1664.0
+        ],
+        [
+          236.0,
+          1696.0
+        ],
+        [
+          327.0,
+          1729.0
+        ]
+      ],
+      "centerlineSpace": "canvas-top-left-pixel-centres",
+      "recommendedBoneCount": 8
+    },
+    {
+      "name": "斗篷前片",
+      "bone": "斗篷_前_1",
+      "order": 31,
+      "file": "斗篷前片.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": true,
+      "chain": "前",
+      "visiblePixels": 184794,
+      "hiddenPixels": 0,
+      "phase": 1,
+      "centerlinePixels": [
+        [
+          479.0,
+          424.0
+        ],
+        [
+          452.5,
+          456.0
+        ],
+        [
+          452.5,
+          489.0
+        ],
+        [
+          453.0,
+          521.0
+        ],
+        [
+          453.5,
+          554.0
+        ],
+        [
+          453.5,
+          587.0
+        ],
+        [
+          454.0,
+          619.0
+        ],
+        [
+          452.5,
+          652.0
+        ],
+        [
+          451.5,
+          685.0
+        ],
+        [
+          450.0,
+          717.0
+        ],
+        [
+          448.5,
+          750.0
+        ],
+        [
+          447.5,
+          782.0
+        ],
+        [
+          446.0,
+          815.0
+        ],
+        [
+          444.0,
+          848.0
+        ],
+        [
+          442.5,
+          880.0
+        ],
+        [
+          478.0,
+          913.0
+        ],
+        [
+          438.0,
+          946.0
+        ],
+        [
+          432.5,
+          978.0
+        ],
+        [
+          426.5,
+          1011.0
+        ],
+        [
+          472.0,
+          1043.0
+        ],
+        [
+          471.0,
+          1076.0
+        ],
+        [
+          423.0,
+          1109.0
+        ],
+        [
+          476.5,
+          1141.0
+        ],
+        [
+          475.0,
+          1174.0
+        ],
+        [
+          421.0,
+          1207.0
+        ],
+        [
+          421.0,
+          1239.0
+        ],
+        [
+          420.5,
+          1272.0
+        ],
+        [
+          420.0,
+          1304.0
+        ],
+        [
+          419.0,
+          1337.0
+        ],
+        [
+          473.5,
+          1370.0
+        ],
+        [
+          417.0,
+          1402.0
+        ],
+        [
+          416.0,
+          1435.0
+        ],
+        [
+          414.5,
+          1468.0
+        ],
+        [
+          413.5,
+          1500.0
+        ],
+        [
+          413.0,
+          1533.0
+        ],
+        [
+          412.0,
+          1565.0
+        ],
+        [
+          409.0,
+          1598.0
+        ],
+        [
+          406.0,
+          1631.0
+        ],
+        [
+          405.0,
+          1663.0
+        ],
+        [
+          397.0,
+          1696.0
+        ],
+        [
+          327.0,
+          1729.0
+        ]
+      ],
+      "centerlineSpace": "canvas-top-left-pixel-centres",
+      "recommendedBoneCount": 8
+    },
+    {
+      "name": "另一只脚",
+      "bone": "另一脚",
+      "order": 5,
+      "file": "另一只脚.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 8769,
+      "hiddenPixels": 3801,
+      "phase": 1
+    },
+    {
+      "name": "大腿甲肉",
+      "bone": "大腿",
+      "order": 22,
+      "file": "大腿甲肉.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 37235,
+      "hiddenPixels": 4826,
+      "phase": 0
+    },
+    {
+      "name": "小腿甲肉",
+      "bone": "小腿",
+      "order": 23,
+      "file": "小腿甲肉.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 28204,
+      "hiddenPixels": 3305,
+      "phase": 0
+    },
+    {
+      "name": "脚甲",
+      "bone": "脚",
+      "order": 24,
+      "file": "脚甲.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 21163,
+      "hiddenPixels": 0,
+      "phase": 0
+    },
+    {
+      "name": "颈",
+      "bone": "颈",
+      "order": 33,
+      "file": "颈.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 11187,
+      "hiddenPixels": 2318,
+      "phase": 0
+    },
+    {
+      "name": "兜帽头",
+      "bone": "头",
+      "order": 34,
+      "file": "兜帽头.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 28812,
+      "hiddenPixels": 4380,
+      "phase": 0
+    },
+    {
+      "name": "骨刺上",
+      "bone": "骨刺1",
+      "order": 25,
+      "file": "骨刺上.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 29926,
+      "hiddenPixels": 6007,
+      "phase": 0
+    },
+    {
+      "name": "上臂甲肉",
+      "bone": "上臂",
+      "order": 35,
+      "file": "上臂甲肉.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 16618,
+      "hiddenPixels": 6193,
+      "phase": 0
+    },
+    {
+      "name": "骨刺下",
+      "bone": "骨刺2",
+      "order": 36,
+      "file": "骨刺下.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 9007,
+      "hiddenPixels": 0,
+      "phase": 0
+    },
+    {
+      "name": "前臂甲肉",
+      "bone": "前臂",
+      "order": 37,
+      "file": "前臂甲肉.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 16208,
+      "hiddenPixels": 1454,
+      "phase": 0
+    },
+    {
+      "name": "手掌",
+      "bone": "手掌",
+      "order": 38,
+      "file": "手掌.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 7541,
+      "hiddenPixels": 1857,
+      "phase": 0
+    },
+    {
+      "name": "爪1近节",
+      "bone": "爪1_1",
+      "order": 39,
+      "file": "爪1近节.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 1897,
+      "hiddenPixels": 879,
+      "phase": 0
+    },
+    {
+      "name": "爪1远节",
+      "bone": "爪1_2",
+      "order": 40,
+      "file": "爪1远节.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 1883,
+      "hiddenPixels": 517,
+      "phase": 0
+    },
+    {
+      "name": "爪2近节",
+      "bone": "爪2_1",
+      "order": 41,
+      "file": "爪2近节.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 1245,
+      "hiddenPixels": 1099,
+      "phase": 0
+    },
+    {
+      "name": "爪2远节",
+      "bone": "爪2_2",
+      "order": 42,
+      "file": "爪2远节.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 910,
+      "hiddenPixels": 380,
+      "phase": 0
+    },
+    {
+      "name": "爪3近节",
+      "bone": "爪3_1",
+      "order": 43,
+      "file": "爪3近节.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 1105,
+      "hiddenPixels": 781,
+      "phase": 0
+    },
+    {
+      "name": "爪3远节",
+      "bone": "爪3_2",
+      "order": 44,
+      "file": "爪3远节.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 863,
+      "hiddenPixels": 0,
+      "phase": 0
+    },
+    {
+      "name": "爪4近节",
+      "bone": "爪4_1",
+      "order": 45,
+      "file": "爪4近节.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 858,
+      "hiddenPixels": 189,
+      "phase": 0
+    },
+    {
+      "name": "爪4远节",
+      "bone": "爪4_2",
+      "order": 46,
+      "file": "爪4远节.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 311,
+      "hiddenPixels": 0,
+      "phase": 0
+    },
+    {
+      "name": "独眼",
+      "bone": "独眼",
+      "order": 50,
+      "file": "独眼.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "visiblePixels": 5983,
+      "hiddenPixels": 0,
+      "phase": 0
+    },
+    {
+      "name": "破披风后片",
+      "bone": "斗篷_后_1",
+      "order": 7,
+      "file": "破披风后片.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": true,
+      "chain": "后",
+      "phase": 2,
+      "visiblePixels": 169836,
+      "hiddenPixels": 0,
+      "centerlinePixels": [
+        [
+          399.5,
+          452.0
+        ],
+        [
+          365.0,
+          483.0
+        ],
+        [
+          335.5,
+          515.0
+        ],
+        [
+          335.0,
+          546.0
+        ],
+        [
+          337.5,
+          578.0
+        ],
+        [
+          340.5,
+          609.0
+        ],
+        [
+          331.5,
+          641.0
+        ],
+        [
+          326.0,
+          672.0
+        ],
+        [
+          315.5,
+          704.0
+        ],
+        [
+          310.0,
+          735.0
+        ],
+        [
+          314.0,
+          767.0
+        ],
+        [
+          315.5,
+          799.0
+        ],
+        [
+          313.5,
+          830.0
+        ],
+        [
+          312.0,
+          862.0
+        ],
+        [
+          312.0,
+          893.0
+        ],
+        [
+          311.5,
+          925.0
+        ],
+        [
+          311.0,
+          956.0
+        ],
+        [
+          309.0,
+          988.0
+        ],
+        [
+          306.5,
+          1019.0
+        ],
+        [
+          304.0,
+          1051.0
+        ],
+        [
+          303.0,
+          1083.0
+        ],
+        [
+          299.5,
+          1114.0
+        ],
+        [
+          289.0,
+          1146.0
+        ],
+        [
+          281.5,
+          1177.0
+        ],
+        [
+          279.0,
+          1209.0
+        ],
+        [
+          275.5,
+          1240.0
+        ],
+        [
+          271.5,
+          1272.0
+        ],
+        [
+          268.5,
+          1303.0
+        ],
+        [
+          265.0,
+          1335.0
+        ],
+        [
+          262.0,
+          1366.0
+        ],
+        [
+          259.5,
+          1398.0
+        ],
+        [
+          258.0,
+          1430.0
+        ],
+        [
+          256.0,
+          1461.0
+        ],
+        [
+          253.5,
+          1493.0
+        ],
+        [
+          251.0,
+          1524.0
+        ],
+        [
+          248.5,
+          1556.0
+        ],
+        [
+          245.5,
+          1587.0
+        ],
+        [
+          242.0,
+          1619.0
+        ],
+        [
+          240.0,
+          1650.0
+        ],
+        [
+          240.0,
+          1682.0
+        ],
+        [
+          240.0,
+          1714.0
+        ]
+      ],
+      "centerlineSpace": "canvas-top-left-pixel-centres",
+      "recommendedBoneCount": 8
+    },
+    {
+      "name": "破披风前片",
+      "bone": "斗篷_前_1",
+      "order": 8,
+      "file": "破披风前片.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": true,
+      "chain": "前",
+      "phase": 2,
+      "visiblePixels": 93760,
+      "hiddenPixels": 0,
+      "centerlinePixels": [
+        [
+          479.0,
+          424.0
+        ],
+        [
+          455.5,
+          449.0
+        ],
+        [
+          453.5,
+          475.0
+        ],
+        [
+          454.0,
+          501.0
+        ],
+        [
+          454.5,
+          527.0
+        ],
+        [
+          455.0,
+          553.0
+        ],
+        [
+          455.0,
+          579.0
+        ],
+        [
+          456.0,
+          605.0
+        ],
+        [
+          455.5,
+          631.0
+        ],
+        [
+          437.5,
+          657.0
+        ],
+        [
+          428.5,
+          683.0
+        ],
+        [
+          412.5,
+          709.0
+        ],
+        [
+          422.0,
+          735.0
+        ],
+        [
+          423.5,
+          761.0
+        ],
+        [
+          440.5,
+          787.0
+        ],
+        [
+          420.0,
+          813.0
+        ],
+        [
+          419.0,
+          839.0
+        ],
+        [
+          407.5,
+          865.0
+        ],
+        [
+          426.0,
+          891.0
+        ],
+        [
+          429.0,
+          917.0
+        ],
+        [
+          426.0,
+          943.0
+        ],
+        [
+          415.0,
+          968.0
+        ],
+        [
+          404.0,
+          994.0
+        ],
+        [
+          419.5,
+          1020.0
+        ],
+        [
+          420.5,
+          1046.0
+        ],
+        [
+          427.0,
+          1072.0
+        ],
+        [
+          406.5,
+          1098.0
+        ],
+        [
+          408.5,
+          1124.0
+        ],
+        [
+          404.0,
+          1150.0
+        ],
+        [
+          423.5,
+          1176.0
+        ],
+        [
+          421.0,
+          1202.0
+        ],
+        [
+          412.5,
+          1228.0
+        ],
+        [
+          402.5,
+          1254.0
+        ],
+        [
+          399.0,
+          1280.0
+        ],
+        [
+          418.0,
+          1306.0
+        ],
+        [
+          418.5,
+          1332.0
+        ],
+        [
+          423.5,
+          1358.0
+        ],
+        [
+          388.5,
+          1384.0
+        ],
+        [
+          413.0,
+          1410.0
+        ],
+        [
+          377.0,
+          1436.0
+        ],
+        [
+          468.5,
+          1462.0
+        ]
+      ],
+      "centerlineSpace": "canvas-top-left-pixel-centres",
+      "recommendedBoneCount": 8
+    },
+    {
+      "name": "躯干镜像补全",
+      "bone": "躯干",
+      "order": 19,
+      "file": "躯干镜像补全.png",
+      "pivotX": 0,
+      "pivotY": 0,
+      "skin": false,
+      "chain": "",
+      "phase": 2,
+      "rendererTint": [
+        0.78,
+        0.74,
+        0.86,
+        1.0
+      ],
+      "mirrorAxisX": 500,
+      "visiblePixels": 71824,
+      "hiddenPixels": 0
+    }
+  ],
+  "alphaEncoding": "straight",
+  "premultiplyAt": "sprite-shader-only",
+  "centerlineSpace": "canvas-top-left-pixel-centres",
+  "phaseTwo": {
+    "show": [
+      "破披风后片",
+      "破披风前片",
+      "躯干镜像补全"
+    ],
+    "hide": [
+      "斗篷后片",
+      "斗篷前片",
+      "另一只脚"
+    ],
+    "mirrorAxisX": 500,
+    "mirroredLimbs": "duplicate-existing-hierarchies-in-builder",
+    "rendererTint": [
+      0.78,
+      0.74,
+      0.86,
+      1.0
+    ]
+  }
+}

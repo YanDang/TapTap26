@@ -48,6 +48,12 @@ public sealed class TapSelfTest : MonoBehaviour
     }
     IEnumerator Tests()
     {
+        if(Array.IndexOf(Environment.GetCommandLineArgs(),"-tapboss")>=0) {
+            float startupDeadline=Time.realtimeSinceStartup+15;
+            while(!BossEncounterController.EncounterActive && Time.realtimeSinceStartup<startupDeadline)yield return null;
+            Check(BossEncounterController.EncounterActive,"P2 actual -tapboss command-line startup");
+            if(BossEncounterController.Instance)BossEncounterController.Instance.CancelEncounter();
+        }
         yield return SceneManager.LoadSceneAsync("BiomechanicalCombatScene",LoadSceneMode.Single);
         yield return new WaitForSecondsRealtime(2f);
         var p=PlayerController.Instance; var cam=Camera.main; var control=CameraController.Instance;
@@ -87,6 +93,16 @@ public sealed class TapSelfTest : MonoBehaviour
         while(p.IsInvulnerable && Time.realtimeSinceStartup<dodgeDeadline) yield return null;
         Check(!p.IsInvulnerable,"dodge plus existing counter-punch ends without stuck invulnerability");
         yield return CombatTests(p);
+        yield return BossQualityGates.Run(Check);
+        yield return BossRegression.Run(Check);
+        // Destroy the persistent owner to exercise the serialized standalone entry,
+        // not a direct StartEncounter substitute. It must load the formal arena itself.
+        Destroy(BossEncounterController.Instance.gameObject);yield return null;
+        yield return SceneManager.LoadSceneAsync("BossTest",LoadSceneMode.Single);
+        float entryDeadline=Time.realtimeSinceStartup+15;
+        while(!BossEncounterController.EncounterActive && Time.realtimeSinceStartup<entryDeadline)yield return null;
+        Check(BossEncounterController.EncounterActive && SceneManager.GetActiveScene().name=="BiomechanicalCombatScene","P2 standalone BossTest enters formal arena and spawns boss");
+        if(BossEncounterController.Instance)BossEncounterController.Instance.CancelEncounter();
         PrefsRoundTrip();
     }
     IEnumerator CombatTests(PlayerController p)

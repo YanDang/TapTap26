@@ -386,6 +386,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     /// </summary>
     public void OnPlayerInteract(PlayerController player)
     {
+        if (BossEncounterController.EncounterActive) return;
         if (PlayerSessionData.IsCombatInputBlocked) return;
         RefreshDailyState();
         if (state == DoorState.Spent) return;
@@ -626,6 +627,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     /// </summary>
     public void EnterGatheringScene(PlayerController player)
     {
+        if (BossEncounterController.EncounterActive) return;
         if (PlayerSessionData.IsCombatInputBlocked) return;
         RefreshDailyState();
         if (state != DoorState.Cleared) return;

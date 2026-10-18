@@ -248,7 +248,7 @@ public class PlayerController : MonoBehaviour
     {
         get
         {
-            return baseMoveSpeed * moveSpeedMultiplier;
+            return baseMoveSpeed * moveSpeedMultiplier * BossGroundEffects.PlayerMoveMultiplier(this);
         }
     }
 
@@ -567,6 +567,8 @@ public class PlayerController : MonoBehaviour
     {
         DoParry(attacker);
     }
+
+    public bool IsGrabbedBy(EnemyController by) => isGrabbed && grabberEnemy == by;
 
     public bool TryGrab(EnemyController by)
     {
@@ -938,7 +940,7 @@ public class PlayerController : MonoBehaviour
                 {
                     DealDamage(e, dmg, gb);
                     Vector3 knockDir = (e.transform.position - transform.position).normalized;
-                    e.Displace(knockDir, 0.35f + 0.45f * lv);
+                    e.Displace(knockDir, 0.35f + 0.45f * lv, this);
                 }
             }
         }

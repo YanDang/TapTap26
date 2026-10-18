@@ -10,7 +10,10 @@ public class EnemyCombatPolicy
     public virtual bool ReceiveDamage(EnemyController enemy, ref float damage, ref float guardDamage) => true;
     public virtual bool InterruptOnHit => true;
     public virtual bool VulnerabilityBonus => true;
+    public virtual float DeathDuration => .45f;
     public virtual bool Control(EnemyController enemy, EnemyControlKind kind, ref float strength, ref float duration) => true;
+    public virtual bool ControlFromSource(EnemyController enemy, EnemyControlKind kind, ref float strength, ref float duration, UnityEngine.Object source)
+        => Control(enemy, kind, ref strength, ref duration);
     public virtual bool CanExecute(EnemyController enemy) => true;
     public virtual float ExecutionDamage(EnemyController enemy) => enemy.currentHp;
     public virtual void Parried(EnemyController enemy) { enemy.aiState=EnemyController.EnemyAIState.Pending; }

@@ -11,6 +11,8 @@ public static class TapWindowsBuild
     public static void Build()
     {
         var scenes=EditorBuildSettings.scenes.Where(s=>s.enabled).Select(s=>s.path).ToArray();
+        const string bossTest="Assets/Scenes/BossTest.unity";
+        if(File.Exists(bossTest) && !scenes.Contains(bossTest))scenes=scenes.Concat(new[]{bossTest}).ToArray();
         if(!scenes.Contains("Assets/Scenes/BiomechanicalCombatScene.unity")) throw new InvalidOperationException("Formal combat scene must be enabled");
         var args=Environment.GetCommandLineArgs(); int index=Array.IndexOf(args,"-tapbuildpath");
         var path=index>=0 && index+1<args.Length ? args[index+1] : "Builds/Windows/TapTap26.exe";

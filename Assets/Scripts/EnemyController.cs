@@ -727,14 +727,14 @@ public class EnemyController : MonoBehaviour
     public event System.Action<EnemyController> Died;
     public static bool CombatWorldPaused => PlayerSessionData.IsCombatInputBlocked || BiomechanicalAuraBase.IsCombatPaused || TimeManager.Hitstop;
     public bool CanExecute => IsAlive && !IsEmerging && (CombatPolicy == null || CombatPolicy.CanExecute(this));
-    public bool FilterControl(EnemyControlKind kind, ref float strength, ref float duration)
-        => CombatPolicy == null || CombatPolicy.Control(this, kind, ref strength, ref duration);
+    public bool FilterControl(EnemyControlKind kind, ref float strength, ref float duration, UnityEngine.Object source = null)
+        => CombatPolicy == null || CombatPolicy.ControlFromSource(this, kind, ref strength, ref duration, source);
     bool AllowsControl(EnemyControlKind kind)
     { float strength=1, duration=0; return FilterControl(kind, ref strength, ref duration); }
-    public void Displace(Vector3 direction, float distance)
+    public void Displace(Vector3 direction, float distance, UnityEngine.Object source = null)
     {
         float duration=0;
-        if (FilterControl(EnemyControlKind.Knockback, ref distance, ref duration)) transform.position += direction * distance;
+        if (FilterControl(EnemyControlKind.Knockback, ref distance, ref duration, source)) transform.position += direction * distance;
     }
     public void Knockback(Vector3 dir, float distance)
     {
@@ -1973,10 +1973,11 @@ public class EnemyController : MonoBehaviour
     private IEnumerator DeathAndRespawnRoutine()
     {
         // 1. 死亡平滑淡出
-        float dur = 0.45f;
+        float dur = CombatPolicy != null ? CombatPolicy.DeathDuration : 0.45f;
         float elapsed = 0f;
         while (elapsed < dur)
         {
+            if (ExternalAI != null && CombatWorldPaused) { yield return null; continue; }
             elapsed += Time.deltaTime;
             float t = elapsed / dur;
             SetVisualAlpha(1f - t);
@@ -2111,11 +2112,11 @@ public class EnemyController : MonoBehaviour
     /// <summary>
     /// 强力击退物理冲量（弹力金属、水刃炮台等机制）
     /// </summary>
-    public void ApplyKnockback(Vector3 dir, float force, float duration = 0.35f)
+    public void ApplyKnockback(Vector3 dir, float force, float duration = 0.35f, UnityEngine.Object source = null)
     {
         if (IsEmerging) return;
         if (isDead) return;
-        if (!FilterControl(EnemyControlKind.Knockback, ref force, ref duration)) return;
+        if (!FilterControl(EnemyControlKind.Knockback, ref force, ref duration, source)) return;
         StartCoroutine(KnockbackRoutine(dir.normalized, force, duration));
     }
 
