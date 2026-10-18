@@ -10,6 +10,7 @@ namespace GameJam.HeroUlt
         public Button SwitchButton { get; private set; }
         public UltArcGraphic Arcs { get; private set; }
         public bool PickerOpen => picker && picker.activeSelf;
+        public string Caption => caption ? caption.text : string.Empty;
         static readonly string[] Names={"钳臂·重锤","贝壳加农","壳中回响"};
         static readonly string[] Icons={"ult_icon_arm","ult_icon_cannon","ult_icon_echo"};
         static readonly string[] Desc={"冲刺重拳 · 锤飞并眩晕\nBoss 8伤 / +2架势","蓄力炮击 · 爆炸与燃烧\n6伤 + 每秒1伤持续4秒","缩壳5秒 · 吸收所有攻击\n最多8层 · 再点释放"};

@@ -63,7 +63,7 @@ public static class TapUltTests
         check(u.Select(UltKind.EchoShell),"P4 choose echo");e=Enemy(p,Vector2.right*.2f);yield return null;yield return Wait(()=>p.CanBeginUltimate);u.AddCharge(100);check(u.TryRelease(),"P4 echo starts");hp=p.currentHp;
         p.TakeDamage(1,e,true);p.TakeDamage(2,e,false);p.TakeDamage(3);check(p.currentHp==hp && u.Stacks==3,"P4 echo absorbs blockable unblockable and legacy element damage");
         check(!p.TryGrab(e) && u.Stacks==4 && e.IsParalyzed,"P4 echo rejects grab and stuns grabber");
-        for(int i=0;i<8;i++)p.TakeDamage(1,e,false);check(u.Stacks==8 && p.currentHp==hp,"P4 echo eight-stack cap");yield return Frame("p4-echo-eight");
+        for(int i=0;i<8;i++)p.TakeDamage(1,e,false);check(u.Stacks==8 && p.currentHp==hp,"P4 echo eight-stack cap");yield return Wait(()=>u.UI.Caption=="回响 8 / 8",1);check(u.UI.Caption=="回响 8 / 8","P6 eight stacks rendered in HUD before capture");yield return Frame("p4-echo-eight");
         // Reset target position after grab deflection, then release through player left-click route.
         e.transform.position=p.transform.position+Vector3.right*.2f;hp=e.currentHp;p.LeftClick();check(!u.Active && !p.UltimateLocked && e.currentHp<hp,"P4 early echo click causes wave damage and unlocks");yield return Frame("p4-echo-wave");
         yield return Wait(()=>p.CanBeginUltimate);u.AddCharge(100);check(u.TryRelease(),"P4 echo repeat release");yield return new WaitForSecondsRealtime(2.7f);check(u.Active && p.hero.InShell,"P4 echo remains visibly shelled beyond normal roll watchdog");yield return Wait(()=>!u.Active);check(!p.UltimateLocked,"P4 echo automatic five-second release");

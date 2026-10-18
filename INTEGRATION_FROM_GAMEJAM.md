@@ -232,3 +232,45 @@ python Tools/run_tap_selftest.py --boss --baseline --timeout 300 --output E:/gam
 E:/unity/Downloads/Editor/Unity.exe -batchmode -quit -projectPath E:/gamejam_wt/taptap26 -executeMethod TapGearCraftingTests.Run -logFile E:/gamejam_wt/integ_b_evidence/P5/crafting-final.log
 ```
 实际测试环境Unity2022.3.57f1；已清理自动ProjectVersion/packages-lock改动，不宣称恢复到2022.3.62f3c1后的全新环境也已构建。git核对无.unity场景差异，未删除用户场景；自产Tools/__pycache__/run_tap_selftest.cpython-313.pyc已清理；.vsconfig原样保留；源E:/gamejam只读。仓外integ_b_report.md落盘但不属于仓内commit。中文P5提交，不push。process-exit-audit.txt：Unity.exe/TapTap26.exe查询成功且无匹配进程；本工作区执行权已释放。功能回归完成，视觉及上述未验证边界保留，不宣称P6或源效果完全等效。
+
+## P6 历史检查点（已被下方最终结果取代）
+- run-1：281 passed / 17 failed，真实Mix/Boss暂停及两扇Collect门往返/采集/每日独立资源通过；首次UI探针在ReturnRoutine结束同帧点击HUD，raycast none；夹具无条件切换导致picker意外开启，污染后续17项。原失败证据保留。存档player恢复前和supervisor恢复后均一致。
+- 新候选修正夹具等待真实HUD更新和条件清理，不降低断言；增加普通家具、真实UI raycast+pointer callback；抓钩按钮上移避开格挡，水柱alpha及回响截图等待标签。build-2/run-2串行执行中，不能用run-1为新源码背书。
+- Boss期间门生产入口明确禁止Collect，保留规则；Boss真实Mix往返与Boss门拒绝分别验证，Collect往返在Boss结束后。
+
+## P6 最终总负责审核：功能回归通过，整体表现有保留
+
+### 最终候选与独立复跑
+证据根目录：`E:/gamejam_wt/integ_b_evidence/P6/`。以下均在最后的装备Canvas隐藏修复后产生，不引用旧final-*作为最终结果。
+- `build-closeout.log`：Succeeded，errors=0、warnings=2，Windows Development。日志仍有许可服务报错，不称整份日志无Error；实际Editor为2022.3.57f1。
+- `closeout-normal/selftest.txt`：312 passed / 0 failed；`closeout-baseline/selftest.txt`：308 passed / 0 failed。
+- `closeout-720p/selftest.txt`：1280×720，312 passed / 0 failed。两种分辨率都是16:9，不证明其它比例。
+- 总负责独立运行最终二进制：`parent-verification/selftest.txt`，312 passed / 0 failed，进程退出0；不是仅采信子代理口头结果。
+- 上述四轮`supervisor-result.json`均exit_code=0、player_restored_before_supervisor=true、post_exit_raw_restore=true，初始受保护键数量0；保留既有非空类型/字节夹具。
+- `closeout-timeout-recovery/supervisor-result.json`：4秒超时，child exit_code=124、恢复前false、监督器恢复后true；外层命令实际退出3（脚本将恢复前不一致映射为3）。这是故障恢复通过，不是完整自测通过，不是Player自己恢复成功。没有验证操作系统断电/监督器一起崩溃。
+- 总负责重跑`python -B Tools/test_gear_prefs.py`：1 test OK。
+- 源码/测试/Player/Assembly-CSharp.dll SHA256：`final-source-binary-sha256.json`；候选构建后没有再改源码。
+
+### 新增覆盖与必要修复
+- `Assets/Scripts/Integration/TapP6Tests.cs`及meta：通过生产入口实际加载Mix，验证Boss血量、阶段、前摇和impact index暂停保持；按钮raycast/pointer事件返回后继续，镜头、主HUD及输入锁恢复。
+- Boss期间Collect门拒绝保持原规则；Boss结束后通过两扇真实门进入Collect，采集、返回、同日同门拒绝、两门资源独立、生产存储重新加载及次日可用通过。试炼完成与次日状态为测试夹具，并非人工完成试炼/完整七天通关。
+- 普通家具真实受伤、拾取、放下、踢动落定/占格及永久家具抗损回归通过。
+- 新按钮经过EventSystem.RaycastAll验证最上层命中，再派发PointerEventData；实际打开选择/改装、抓钩拉敌及释放回响。属于合成指针事件验证，不是实体手机触摸或物理键盘全测。
+- `TapGearUI`隐藏非战斗覆盖场景上的装备Canvas并恢复；抓钩按钮上移避开原动作盘。`TapGearFx`水柱改为半透明外层与细内层；`TapUltUI.Caption`提供实际HUD文本读取，八层截图等待真实“回响 8 / 8”，未改数值。
+- `Tools/run_tap_selftest.py`新增宽高参数。未降低旧断言，run-1的281/17失败保留。
+
+### 总负责实际GPU图像复核
+以下均为独立复跑`parent-verification/`的真实帧：
+- `p6-mix.png`：工坊、材料格与配方完整显示，装备/战斗按钮不再残留；原天数/精力进度面板仍显示，无明显错误粉材质。
+- `p6-collect-a.png`：温室、返回、采集对象与反馈可见，无战斗装备HUD覆盖；第二扇门证据为`p6-collect-b.png`。
+- `p4-echo-eight.png`：左侧明确显示“回响 8 / 8”，关闭P4旧八层显示证据缺口。
+- `p5-water.png`：外层半透明、地砖透见；仍为几何柱/亮带，身体细节受蓝色覆盖，末端与抓钩区域视觉重叠，不判定为源水流美术等效。
+- `p6-restored-hud.png`为返回战场恢复帧；720p对应全套帧位于`closeout-720p/`。
+
+### 交付边界与待验收
+P0–P6功能集成和上述自动回归已交付；完整任务视觉/实机验收仍有缺口，不能标为无条件全通过：P3巨爪实体、吐出动作与双斩辨识不足；P4源残影/火球烟雾/镜头表现不完整；P5水流仍简化、部分HUD拥挤。实体Android/iOS、多触点/pinch、其它宽高比、最终候选全物理键盘链路、长时间随机战斗、全部装备等级组合和人工听感未验证。
+正式Boss剧情入口、奖励与存档扩展仍留给程序同学，现有开发入口F9、-tapboss、BossTest保留。P0实测尺度与设计近似值差异已在P0说明，留验收方确认，不隐瞒换算口径。
+
+### 提交卫生与复现
+总负责确认ProjectVersion.txt/packages-lock.json已还原，无.unity场景差异；仅清理本次自产pycache，保留原.vsconfig未跟踪。实际构建使用57f1，不宣称还原后的62f3c1全新环境构建通过。最终进程查询exit0、MATCH_COUNT=0，见`process-exit-audit.txt`；未结束其它工程进程。不push。
+复现：先按P5命令串行Build，再运行`python Tools/run_tap_selftest.py --boss --timeout 300 --output <新证据目录>`；baseline追加`--baseline`，720p追加`--width 1280 --height 720`。不要并行启动共享PlayerPrefs的游戏实例。

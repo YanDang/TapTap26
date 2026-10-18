@@ -52,6 +52,8 @@ def main():
     parser.add_argument('--exe',default='Builds/Windows/TapTap26.exe')
     parser.add_argument('--output',default='Builds/Windows')
     parser.add_argument('--timeout',type=float,default=180)
+    parser.add_argument('--width',type=int,default=1920)
+    parser.add_argument('--height',type=int,default=1080)
     parser.add_argument('--baseline',action='store_true')
     parser.add_argument('--boss',action='store_true',help='Also validate the real -tapboss startup entry')
     parser.add_argument('--recover',help='Restore a supervisor-prefs-before.json after a supervisor/OS crash; close game first')
@@ -61,7 +63,7 @@ def main():
     output=Path(args.output).resolve(); output.mkdir(parents=True,exist_ok=True)
     original=capture()
     (output/'supervisor-prefs-before.json').write_text(json.dumps(original,ensure_ascii=False,indent=2),encoding='utf-8')
-    command=[str(Path(args.exe).resolve()),'-tapselftest','-tapoutput',str(output),'-screen-fullscreen','0','-screen-width','1920','-screen-height','1080','-logFile',str(output/'player.log')]
+    command=[str(Path(args.exe).resolve()),'-tapselftest','-tapoutput',str(output),'-screen-fullscreen','0','-screen-width',str(args.width),'-screen-height',str(args.height),'-logFile',str(output/'player.log')]
     if args.baseline: command.append('-tapbaseline')
     if args.boss: command.append('-tapboss')
     code=2; player=None; observed=None

@@ -93,6 +93,7 @@ public sealed class TapSelfTest : MonoBehaviour
         float dodgeDeadline=Time.realtimeSinceStartup+5f;
         while(p.IsInvulnerable && Time.realtimeSinceStartup<dodgeDeadline) yield return null;
         Check(!p.IsInvulnerable,"dodge plus existing counter-punch ends without stuck invulnerability");
+        yield return TapP6Tests.Run(Check);
         yield return TapGearTests.Run(Check);
         yield return CombatTests(p);
         yield return BossQualityGates.Run(Check);

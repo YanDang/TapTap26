@@ -30,7 +30,7 @@ namespace GameJam.Gear
             Instance=this;font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");foreach(var t in FindObjectsOfType<Text>())if(t.font && t.font.name!="Arial" && t.font.name!="LegacyRuntime"){font=t.font;break;}
             canvas=gameObject.AddComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.sortingOrder=2000;gameObject.AddComponent<GraphicRaycaster>();var sc=gameObject.AddComponent<CanvasScaler>();sc.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;sc.referenceResolution=new Vector2(1920,1080);sc.matchWidthOrHeight=.5f;
             OpenButton=Button(transform,"G 装备改装",new Vector2(-580,160),new Vector2(150,42),()=>Toggle());
-            GrappleButton=Button(transform,"Q 抓钩",new Vector2(770,-275),new Vector2(118,70),()=>Owner.GrappleNearest());
+            GrappleButton=Button(transform,"Q 抓钩",new Vector2(770,-100),new Vector2(118,70),()=>Owner.GrappleNearest());
             panel=Box(transform,Vector2.zero,new Vector2(1680,930),new Color(.015f,.035f,.055f,.99f)).gameObject;
             Label(panel.transform,"寄居蟹 · 装备改装 / 与家具共用背壳仓库",new Vector2(0,420),new Vector2(1500,55),32);
             slots=Label(panel.transform,"",new Vector2(0,365),new Vector2(1580,50),22);
@@ -53,7 +53,7 @@ namespace GameJam.Gear
         public bool Upgrade(string id){if(!CanModify(out var why)){message.text=why;return false;}bool ok=GearCrafting.Upgrade(id,out why);message.text=why;Refresh();return ok;}
         public void Equip(string id){if(CanModify(out var why))GearInventory.Equip(id);else message.text=why;Refresh();}
         public void Refresh(){if(!slots)return;slots.text="";foreach(GearSlot s in System.Enum.GetValues(typeof(GearSlot))){var it=GearInventory.Equipped(s);slots.text+=GearCrafting.SlotName(s)+": "+(it==null?"空":GearDefs.Get(it.id).name+" Lv"+it.level)+"    ";}for(int i=0;i<15;i++){var d=GearDefs.All[i];var it=GearInventory.Find(d.id);int next=it==null?1:Mathf.Min(3,it.level+1);details[i].text=d.name+"  "+(it==null?"未合成":new string('★',it.level)+" "+d.stat+it.Attr(d.stat).ToString("F0"))+"\n核心 "+GearCrafting.CountCore(d)+"/1 · "+GearCrafting.ElementName(d.element)+"材料 "+GearCrafting.CountAny(d)+"/"+GearDefs.AnyCount(next);}}
-        void Update(){if(!Owner){Destroy(gameObject);return;}if(Input.GetKeyDown(KeyCode.G))Toggle();if(IsOpen && Input.GetKeyDown(KeyCode.Escape))Close();if(IsOpen && !CanModify(out _))Close();GrappleButton.interactable=!IsOpen && TapGearCombat.Lv("arm_grapple")>0 && Owner.GrappleRemaining<=0 && !TapGearCombat.Paused;}
+        void Update(){if(!Owner){Destroy(gameObject);return;}canvas.enabled=Owner.Player.IsAlive && (IsOpen || !PlayerSessionData.IsCombatInputBlocked);if(Input.GetKeyDown(KeyCode.G))Toggle();if(IsOpen && Input.GetKeyDown(KeyCode.Escape))Close();if(IsOpen && !CanModify(out _))Close();GrappleButton.interactable=!IsOpen && TapGearCombat.Lv("arm_grapple")>0 && Owner.GrappleRemaining<=0 && !TapGearCombat.Paused;}
         void OnDestroy(){if(Instance==this)Instance=null;if(TimeManager.I)TimeManager.I.Refresh();}
     }
 }

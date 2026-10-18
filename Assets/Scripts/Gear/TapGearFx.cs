@@ -35,7 +35,7 @@ namespace GameJam.Gear
         public void ChainLightning(Vector3[] p){Line(p,Color.yellow,Unit*.12f,.35f);Sfx.Play("sfx_parry",.5f,true);}
         public void FloatBubble(Transform h,float s){Ring(Vector3.zero,Unit*1.3f,new Color(.7f,.5f,1),s,h,"bubble");}
         public void EelArc(Vector3 a,Vector3 b){Line(new[]{a,Vector3.Lerp(a,b,.5f)+Vector3.up*Unit*.2f,b},Color.yellow,Unit*.08f,.35f);}
-        public void WaterJet(Vector3 a,Vector3 b,float w){Line(new[]{a,b},new Color(.3f,.8f,1),w,.4f);}
+        public void WaterJet(Vector3 a,Vector3 b,float w){Line(new[]{a,b},new Color(.3f,.8f,1,.32f),w,.4f);Line(new[]{a,b},new Color(.75f,.95f,1,.65f),w*.16f,.4f);}
         public void Puddle(Vector3 p,float r,float s){Ring(p,r,Color.cyan,s);}
         public void Grapple(Vector3 a,Vector3 b,float s){Line(new[]{a,b},new Color(.7f,.8f,.9f),Unit*.1f,s);}
         public void Decoy(Vector3 p,float s){Ring(p,Unit*.7f,new Color(.8f,.5f,1),s);}
