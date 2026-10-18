@@ -1030,6 +1030,9 @@ public class EnemyController : MonoBehaviour
         bool playerInRange = PlayerInRange;
         wasChasingPlayer = false;
 
+        if (targetPlayer && targetPlayer.Ultimate && targetPlayer.Ultimate.Taunts(this))
+        { furnitureTarget=null;wasChasingPlayer=true;return true; }
+
         if (furnitureTarget != null && !furnitureTarget.Targetable)
         {
             furnitureTarget = null;

@@ -183,7 +183,13 @@ public class PlayerController : MonoBehaviour
     public bool Unavailable => isGrabbed || isThrown || isDefeatedRoutineRunning || currentHp <= 0f;
     public bool IsGrabbed => isGrabbed;
     public bool IsThrown => isThrown;
-    public bool IsInvulnerable => isRolling || isInvulnerable || Unavailable;
+    public bool IsInvulnerable => isRolling || isInvulnerable || Unavailable || (Ultimate && Ultimate.DashInvulnerable);
+    public GameJam.HeroUlt.TapHeroUlt Ultimate => GetComponent<GameJam.HeroUlt.TapHeroUlt>();
+    public bool UltimateLocked { get; private set; }
+    public string UltimateEligibility => $"enabled={isActiveAndEnabled} alive={IsAlive} unavailable={Unavailable} rolling={isRolling} charging={isCharging} smashing={isSmashing} attacking={isAttackingAnim} guarding={isGuarding} placing={Placing} furniture={heldFurniture!=null} canMove={canMove} execution={executionTarget!=null}";
+    public bool CanBeginUltimate => isActiveAndEnabled && IsAlive && !Unavailable && !isRolling && !isCharging && !isSmashing && !isAttackingAnim && !isGuarding && !Placing && heldFurniture == null && canMove && executionTarget == null;
+    public void BeginUltimateLock() { CancelLeftHold(); StopMovement(); UltimateLocked=true; }
+    public void EndUltimateLock() { UltimateLocked=false; }
     public bool CanRoll => rollCooldownTimer <= 0f && !isRolling && !Unavailable;
     public float RollCooldownTimer => rollCooldownTimer;
     public float RollCooldown => rollCooldown;
@@ -475,7 +481,9 @@ public class PlayerController : MonoBehaviour
 
     public void DoParry(EnemyController attacker)
     {
+        if (UltimateLocked) return;
         if (attacker == null || !attacker.IsAlive || attacker.IsEmerging) return;
+        Ultimate?.AddCharge(5);
         _parryReady = Time.unscaledTime + parryCooldown;
         parrySuccess++;
         isGuarding = false;
@@ -511,6 +519,7 @@ public class PlayerController : MonoBehaviour
 
     public void TriggerShellGuard()
     {
+        if (UltimateLocked) return;
         if (ParryRemaining > 0f || isRolling || isCharging || isSmashing || Unavailable || Dead) return;
 
         // 0. 时钟倒计时 QTE 判定
@@ -572,6 +581,8 @@ public class PlayerController : MonoBehaviour
 
     public bool TryGrab(EnemyController by)
     {
+        if (Ultimate && Ultimate.TryAbsorb(by,true)) return false;
+        if (UltimateLocked) return false;
         if (currentHp <= 0 || IsInvulnerable || Unavailable) return false;
 
         // 打断现有动作与寻路
@@ -738,6 +749,7 @@ public class PlayerController : MonoBehaviour
 
     public void ExecuteEnemy(EnemyController enemy)
     {
+        if (UltimateLocked) return;
         if (executionTarget != null || enemy == null || !enemy.CanExecute || enemy.aiState == EnemyController.EnemyAIState.Executing) return;
         executionRoutine=StartCoroutine(ExecuteRoutine(enemy));
     }
@@ -786,6 +798,7 @@ public class PlayerController : MonoBehaviour
         float beforeExecution=enemy.currentHp;
         enemy.KillByExecution(dashDir);
         NotifyDamageDealt(enemy, beforeExecution);
+        if (enemy.currentHp < beforeExecution) Ultimate?.AddCharge(20);
         if (hero != null && hero.Face != null && Random.value < 0.6f) hero.Face.TriggerHappy();
 
         yield return new WaitForSeconds(0.35f);
@@ -811,6 +824,7 @@ public class PlayerController : MonoBehaviour
 
     public void StartCharge()
     {
+        if (UltimateLocked) return;
         if (isRolling || Unavailable || isSmashing) return;
         isCharging = true;
         chargeLevel = 0f;
@@ -841,6 +855,7 @@ public class PlayerController : MonoBehaviour
 
     public void PerformChargedSmash(float level)
     {
+        if (UltimateLocked) return;
         StartCoroutine(PerformSmashRoutine(level));
     }
 
@@ -1011,6 +1026,7 @@ public class PlayerController : MonoBehaviour
 
     void OnDisable()
     {
+        Ultimate?.Cancel(false);
         EndDodge();
         if (executionRoutine != null) { StopCoroutine(executionRoutine); executionRoutine=null; }
         if (executionTarget != null) executionTarget.CancelExecution();
@@ -1085,6 +1101,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (UltimateLocked) return;
         // 工坊或温室叠加开启时，战斗角色输入与逻辑全面静默冻结
         if (PlayerSessionData.IsCombatInputBlocked) return;
 
@@ -1327,6 +1344,7 @@ public class PlayerController : MonoBehaviour
 
     public void RightClickGround(Vector3 p)
     {
+        if (UltimateLocked) return;
         if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick) return;
         if (Unavailable || isRolling) return;
         if (InCombat)
@@ -1338,6 +1356,7 @@ public class PlayerController : MonoBehaviour
 
     public void RightClickEnemy(EnemyController e)
     {
+        if (UltimateLocked) return;
         if (e == null || !e.IsAlive || Unavailable || isRolling) return;
         currentTarget = e;
         InCombat = true;
@@ -1360,6 +1379,7 @@ public class PlayerController : MonoBehaviour
 
     public void LeftClick()
     {
+        if (UltimateLocked) { Ultimate?.ReleaseEcho(); return; }
         _leftHeld = false;
         if (Unavailable || isRolling || isSmashing) return;
 
@@ -1400,6 +1420,7 @@ public class PlayerController : MonoBehaviour
 
     public void LeftRelease()
     {
+        if (UltimateLocked) return;
         if (!_leftHeld) return;
         _leftHeld = false;
 
@@ -1485,6 +1506,7 @@ public class PlayerController : MonoBehaviour
 
     public bool BeginPlace(Vector3 target, System.Action release, System.Action cancel)
     {
+        if (UltimateLocked) return false;
         if (PlayerSessionData.IsCombatInputBlocked || Placing || Dead || Unavailable || isRolling || isCharging || isAttackingAnim) return false;
         CancelLeftHold();
         _placeRelease = release; _placeCancel = cancel;
@@ -1677,6 +1699,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public bool TrySwipePushFurniture(Vector2 startScreenPos, Vector2 releaseScreenPos, Vector2 swipeDir)
     {
+        if (UltimateLocked) return false;
         if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick)
             return false;
 
@@ -1870,6 +1893,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnScreenTap(Vector2 screenPosition)
     {
+        if (UltimateLocked) return;
         if (cam == null || grid == null || groundTilemap == null) return;
 
         Vector3 worldPos = cam.ScreenToWorldPoint(screenPosition);
@@ -1921,6 +1945,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void MoveToWorldPoint(Vector3 worldPos)
     {
+        if (UltimateLocked) return;
         // 摇杆控制模式下彻底屏蔽触屏寻路移动，杜绝任何误触打断走位
         if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick)
             return;
@@ -2132,6 +2157,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void TriggerManualAttack()
     {
+        if (UltimateLocked) return;
         if (Unavailable || attackCooldownTimer > 0f || isAttackingAnim || isCharging || isSmashing) return;
 
         // 0. 时钟倒计时 QTE 判定
@@ -2180,6 +2206,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void MoveWithInput(Vector2 moveDir)
     {
+        if (UltimateLocked) return;
         if (!canMove || isRolling || isCharging || isSmashing || moveDir.sqrMagnitude < 0.01f) return;
 
         // 摇杆/键盘输入时打断点击寻路路径
@@ -2605,6 +2632,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public bool TriggerDodgeRoll(Vector2? optionalDir = null)
     {
+        if (UltimateLocked) return false;
         if (rollCooldownTimer > 0f || isRolling || Unavailable) return false;
 
         // 翻滚消耗 15 点精力
@@ -2652,6 +2680,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void PerformManualAttack()
     {
+        if (UltimateLocked) return;
         if (isRolling || Unavailable) return;
 
         // 优先检查附近是否有处决就绪 (Pending) 的怪物！
@@ -2722,11 +2751,16 @@ public class PlayerController : MonoBehaviour
     }
 
     public void TakeDamage(float damage)
-    { TakeDamageCore(damage, null, true, true); }
+    {
+        if (!IsAlive || damage <= 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return;
+        if (Ultimate && Ultimate.TryAbsorb(null)) return;
+        TakeDamageCore(damage, null, true, true);
+    }
 
     public PlayerDamageResult TakeDamage(float damage, EnemyController attacker, bool canBlock)
     {
         if (!IsAlive || damage <= 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return PlayerDamageResult.Ignored;
+        if (Ultimate && Ultimate.TryAbsorb(attacker)) return PlayerDamageResult.Blocked;
         if (IsInvulnerable) { NotifyDodgeAvoided(); return PlayerDamageResult.Dodged; }
         bool blocked=isGuarding && canBlock;
         TakeDamageCore(damage, attacker, canBlock, false);
@@ -2748,6 +2782,8 @@ public class PlayerController : MonoBehaviour
             }
 
             // 普通格挡成功，吸收全部伤害
+            // 有来源的弹反已在 DoParry 奖励并提前返回；这里只奖励无弹反目标的格挡。
+            Ultimate?.AddCharge(5);
             isGuarding = false;
             CameraRig.I?.Shake(0.15f, 0.2f);
             Sfx.Play("sfx_parry", 0.8f, true);
@@ -2773,7 +2809,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        if (hero != null)
+        if (hero != null && !UltimateLocked)
         {
             hero.Play("Hurt");
             hero.Face?.TriggerPain();
@@ -2882,6 +2918,7 @@ public class PlayerController : MonoBehaviour
 
     public void TriggerDefeat()
     {
+        Ultimate?.Cancel(true);
         if (isDefeatedRoutineRunning) return;
         StartCoroutine(DefeatAndReviveRoutine());
     }

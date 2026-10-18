@@ -324,6 +324,7 @@ namespace GameJam
         /// <summary>立即结束缩壳（被打断时），身体回来。</summary>
         public void CancelShell()
         {
+            ultEcho=false;
             if (shell == Shell.None) return;
             shell = Shell.None;
             transform.localScale = Vector3.one; transform.localPosition = heroBasePos;
@@ -357,6 +358,18 @@ namespace GameJam
 
         public Vector3 PunchTipWorld => claw ? claw.position : transform.position;
 
+        // P4: reuse the existing shell/body mask and mechanical telescoping arm.
+        bool ultEcho;
+        public void BeginUltEcho() { if(!ready)return;Stop();ultEcho=true;shell=Shell.Hold;shellT=0;HideBody(true); }
+        float ultCannonAim;
+        Quaternion ultShellRest;
+        public void SetUltCannonAim(float amount) {
+            if(!shellLayer)return;
+            if(ultCannonAim==0 && amount>0)ultShellRest=shellLayer.transform.localRotation;
+            if(ultCannonAim>0 && amount<=0)shellLayer.transform.localRotation=ultShellRest;
+            ultCannonAim=Mathf.Clamp01(amount);
+        }
+
         void HideBody(bool hide)
         {
             if (hide)
@@ -384,6 +397,7 @@ namespace GameJam
         void LateUpdate()
         {
             if (!ready) return;
+            if (GetComponentInParent<PlayerController>()?.UltimateLocked == true && EnemyController.CombatWorldPaused) return;
             float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
             if (dt <= 0f) return;
 
@@ -434,6 +448,7 @@ namespace GameJam
             }
             lastPose = p;
             Apply(p);
+            if(ultCannonAim>0 && shellLayer)shellLayer.transform.localRotation=ultShellRest*Quaternion.Euler(0,0,-105*ultCannonAim);
         }
 
         static float Noise(float t, int seed) => Mathf.PerlinNoise(t, seed * 13.7f) * 2f - 1f;
@@ -459,7 +474,7 @@ namespace GameJam
         void UpdateShell(float dt)
         {
             shellT += dt;
-            if (shellT > 2.5f)
+            if (shellT > 2.5f && !ultEcho)
             {
                 CancelShell();
                 return;
@@ -487,7 +502,7 @@ namespace GameJam
             if (shell == Shell.Hold)
             {
                 SpinBodyAround(centerRest, 0f, Vector3.zero);
-                if (shellT > 0.25f) { shell = Shell.None; HideBody(false); }   // 没人叫出拳（被打断等）就自己钻出来
+                if (shellT > 0.25f && !ultEcho) { shell = Shell.None; HideBody(false); }   // 没人叫出拳（被打断等）就自己钻出来
                 return;
             }
 

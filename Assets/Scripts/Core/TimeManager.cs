@@ -63,6 +63,13 @@ namespace GameJam
 
         public void Refresh() => Apply();
 
+        UnityEngine.Object actionScaleOwner;
+        float actionScale = 1;
+        public void SetActionScale(UnityEngine.Object owner, float scale)
+        { actionScaleOwner=owner; actionScale=Mathf.Clamp(scale,.01f,1); Apply(); }
+        public void ClearActionScale(UnityEngine.Object owner)
+        { if(actionScaleOwner!=owner)return;actionScaleOwner=null;actionScale=1;Apply(); }
+
         void Apply()
         {
             bool blocked = PlayerSessionData.IsCombatInputBlocked;
@@ -78,7 +85,7 @@ namespace GameJam
                 if (_hitstopUntil > overlayPauseStarted) _hitstopUntil += duration;
                 overlayPaused = false;
             }
-            float ts = Hitstop || blocked ? 0f : (SlowMo ? slowScale : 1f);
+            float ts = Hitstop || blocked ? 0f : Mathf.Min(SlowMo ? slowScale : 1f, actionScaleOwner ? actionScale : 1f);
             UnityEngine.Time.timeScale = ts;
             UnityEngine.Time.fixedDeltaTime = 0.02f * Mathf.Max(ts, 0.05f);
         }

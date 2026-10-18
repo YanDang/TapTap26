@@ -121,3 +121,53 @@ E:/unity/Downloads/Editor/Unity.exe -batchmode -quit -projectPath E:/gamejam_wt/
 python Tools/run_tap_selftest.py --boss --output E:/gamejam_wt/integ_b_evidence/P3/recheck-normal
 python Tools/run_tap_selftest.py --boss --baseline --output E:/gamejam_wt/integ_b_evidence/P3/recheck-baseline
 ```
+
+## P4 最终收尾：功能矩阵通过，完整表现验收未通过
+
+### 实现、共享类改动与使用
+- `Assets/Scripts/HeroUlt/`：TapHeroUlt统一拥有三款动作/能量/取消；TapUltProjectile做XY扫掠命中；TapUltBurn按世界时间燃烧、刷新不叠加；TapUltVisual/UltArcGraphic/TapUltUI提供URP可显示圆环、电弧、三卡选择与可点击图标；TapUltTests接入原完整自测。`Assets/Resources/HeroUlt/`保留源三款图标及meta，新增充能环资源。
+- PlayerController：大招锁覆盖移动、格挡、翻滚、蓄力、处决、摆放等入口；伤害/抓取接吸收，冲刺期无敌、炮击霸体不免伤；成功处决额外20、弹反5、死亡清零/禁用取消。EnemyController仅普通AI目标选择加入6源单位回响嘲讽，Boss不受该嘲讽。
+- HeroActions复用现有机械壳拳、壳体翻转与持续缩壳，回响不被普通2.5秒看门狗提前清掉。TimeManager增加有所有者的动作慢速，仍由原时间管理器统一赋值；未配置/不施放时保持原分支。
+- TapPrefsSnapshot和Python监督器把`GJ_UltChoice`纳入原始字节恢复，与`TAP_*`一起隔离，不写材料/背壳仓库。TapSelfTest追加P4，保留P0–P3共同回归。
+- 正式战斗场景加载时自动安装；非战斗点“切换大招”选择，战中禁止切换；满能量点图标或R释放，回响左键或再次释放可提前结束。Boss入口仍为F9（Development）、`-tapboss`与BossTest。新UI未改既有背包/合成入口。
+- 源数值按主角普攻伤害单位换算：实际扣血 / 初始CurrentAttackDamage ×4充能；伤害倍率、半径与位移分别使用DamageUnit和Unit。不是把源6伤直接当宿主6HP；面板简写沿用源单位。P5装备未做。
+
+### 红测与最小根因修复
+- `block-red-baseline/selftest.txt` **172/1，exit=1**：无来源普通格挡漏5充能。DoParry原有5奖励；普通无目标格挡走另一分支，因此只在该分支增加5。有来源分支调用DoParry后提前return，不经过新奖励。最终新增真实带来源命中测试，验证恰好5而不是10。
+- `aim-red-baseline`保留旧方向失败；炮击未锁定时改为角色朝向，仅钳臂自动找最近目标。最终测试证明敌人在背后也不擅自改变炮击方向。
+- 先前释放失败源于测试敌人触发宿主自动攻击。测试等待实际CanBeginUltimate自然恢复，并保留攻击期拒绝且不扣能量断言；没有清攻击标志或放宽生产动作锁。旧normal/baseline失败证据保留。
+
+### 最终同一候选验证
+证据根 **`E:/gamejam_wt/integ_b_evidence/P4/`**；`final-manifest.json`记录源码、资源、测试、实际构建配置、exe及Assembly-CSharp.dll的SHA256。构建后未改生产/测试代码。
+
+| 门禁 | 真实结果 | 证据 |
+|---|---|---|
+| Windows Development构建 | exit 0；Succeeded，errors=0，warnings=2 | build-final.log |
+| normal完整回归（含-tapboss） | **178 passed / 0 failed，exit 0** | final-normal/selftest.txt、supervisor-result.json |
+| 同一二进制baseline完整回归 | **174 passed / 0 failed，exit 0** | final-baseline/selftest.txt、supervisor-result.json |
+| 原始存档恢复 | 两轮player_restored_before_supervisor=true、post_exit_raw_restore=true；original_TAP_count=0 | 两轮supervisor-result.json、prefs-before.json |
+
+- baseline只关闭P0尺度适配，不关闭P4；相差4项为P0尺度专属断言，不是删共同测试。测试包括无目标不耗能、两种格挡各5、真实伤害充能、拒伤不充能、动作锁、建造/工坊暂停、炮击霸体/爆炸/燃烧刷新与四次伤害、回响吸收红黄/旧伤害/抓取/8层/自动结束、禁用清理，以及真实Boss的重锤8倍+2架势、不位移、回响10倍与架势上限、炮击燃烧。
+- 三款通过生产接口运行；部分Boss探针冻结Boss调度并手动Tick以隔离数值，不冒充自由实战。原始非空类型/字节夹具通过；真实原命名空间为空，崩溃/超时恢复故障注入未测。
+- 实际环境Unity **2022.3.57f1**、D3D11、**NVIDIA GeForce RTX 5080 Laptop GPU**、1920×1080。ProjectVersion/packages-lock已恢复仓库声明的2022.3.62f3c1配置；不宣称恢复配置后重新构建或该版本Editor已验证。
+
+### 最终GPU技能/UI审核（真实限制）
+已通过图像工具逐张复核final-normal七张P4截图，以及final-baseline的ready和echo-eight，不用旧帧代替：
+- `p4-ready.png`：电弧/图标可见；图标中心(380,-180)与背包/合成入口、顶部状态分离；normal/baseline当前16:9静态布局均无新增重叠。`p4-picker.png`三卡名称/图标/说明可读，无截字；缺已装备高亮，弹窗外HUD未压暗。
+- `p4-arm-impact.png`：机械构件可见，但角色/敌人相互遮挡，冲击接触点与挥拳方向不够清楚；没有源残影、速度线及抛物线旋转拖尾，不算完整重锤美术通过。
+- `p4-cannon-charge.png`：炮口/蓄力辨识偏弱；`p4-cannon-explosion.png`只见黄橙圆环，不是源火球、火苗或烟雾。未实现源开炮镜头推近；非Boss击飞用宿主平面击退而不是源抛物线飞出。
+- `p4-echo-eight.png`可见壳体，但**两模式截图仍显示“壳中回响4%”，未明确显示8层标签**；同帧测试断言Stacks=8通过不能代替HUD八层显示证据。截帧/Update时序是否为原因未另验证，保留为视觉未过项。`p4-echo-wave.png`青色冲击环清楚，但粗环遮挡近身细节；中央TARGET/硬直/伤害提示拥挤，敌人顶端裁切。
+- 按钮测试实际使用Button.onClick.Invoke，只验证回调及释放锁，不是触屏命中/指针穿透实测；R代码入口存在，但本轮未验证物理键盘输入。移动端、其它宽高比、安全区、展开背包/合成后布局、人工混音、全墙/家具组合、长时实战与所有取消交错未验证。
+- 结论：**当前功能回归门禁关闭；视觉只做已知限制下的复核，不宣称三款与源等效或完整P4视觉验收。** 不扩P5/P6，遗留视觉由后续阶段/验收方决定。
+
+### 提交卫生与执行权
+- ProjectVersion.txt、packages-lock.json已还原；本轮无.unity场景差异。只提交P4源码、必要资源/meta、仓内报告/handoff；`.vsconfig`保留不提交，外置证据/构建物/截图/大日志不提交。不push。
+- `E:/gamejam_wt/integ_b_report.md`在仓库外，仅落盘更新，不属于本仓库commit。
+- 串行进程`proc_448a8a579669`已退出0，构建及两轮player皆退出；进程核查无本工作区Unity/Player。只见`integ_ours`另一工作区的CrashHandler，未结束他人进程。
+
+复现（同一候选，必须串行，勿与其它共享存档player并发）：
+```text
+E:/unity/Downloads/Editor/Unity.exe -batchmode -quit -projectPath E:/gamejam_wt/taptap26 -executeMethod TapWindowsBuild.Build -logFile E:/gamejam_wt/integ_b_evidence/P4/build-recheck.log
+python Tools/run_tap_selftest.py --boss --timeout 300 --output E:/gamejam_wt/integ_b_evidence/P4/recheck-normal
+python Tools/run_tap_selftest.py --boss --baseline --timeout 300 --output E:/gamejam_wt/integ_b_evidence/P4/recheck-baseline
+```

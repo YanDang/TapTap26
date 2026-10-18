@@ -37,7 +37,7 @@ public sealed class TapPrefsSnapshot
                 if(status != 0 && status != 234) Check(status);
                 var bytes = new byte[size]; length=16384;
                 Check(RegEnumValue(key,i,name,ref length,IntPtr.Zero,out type,bytes,ref size));
-                if(name.ToString().StartsWith("TAP_", StringComparison.Ordinal)) snapshot.Data.values.Add(new Value { name=name.ToString(), type=type, bytes=bytes });
+                if(name.ToString().StartsWith("TAP_", StringComparison.Ordinal) || name.ToString().StartsWith("GJ_UltChoice", StringComparison.Ordinal)) snapshot.Data.values.Add(new Value { name=name.ToString(), type=type, bytes=bytes });
             }
         } finally { RegCloseKey(key); }
         return snapshot;

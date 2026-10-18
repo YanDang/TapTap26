@@ -96,6 +96,7 @@ public sealed class TapSelfTest : MonoBehaviour
         yield return BossQualityGates.Run(Check);
         yield return BossRegression.Run(Check);
         yield return BossPresentationTests.Run(Check);
+        yield return TapUltTests.Run(Check);
         // Destroy the persistent owner to exercise the serialized standalone entry,
         // not a direct StartEncounter substitute. It must load the formal arena itself.
         Destroy(BossEncounterController.Instance.gameObject);yield return null;
