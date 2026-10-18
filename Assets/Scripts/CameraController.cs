@@ -116,6 +116,8 @@ public class CameraController : MonoBehaviour
             return;
         }
 
+        if (BossEncounterController.EncounterActive && EnemyController.CombatWorldPaused) return;
+
         // 跟随玩家模式：摄像机目标始终锁定并对准玩家
         if (followPlayer && targetToFollow != null)
         {
@@ -126,6 +128,9 @@ public class CameraController : MonoBehaviour
                 float orthoSize = float.IsNaN(cam.orthographicSize) ? 5f : cam.orthographicSize;
                 biasY = -(bottomUIDockRatio * 0.5f) * (orthoSize * 2f);
             }
+            // Encounter-only headroom; default P0 scale/zoom and non-boss follow are unchanged.
+            var boss = BossEncounterController.Instance ? BossEncounterController.Instance.Boss : null;
+            if (boss && boss.Entity.IsAlive) biasY += boss.UnitScale * 1.8f;
             targetPosition = new Vector3(
                 targetToFollow.position.x + followOffset.x,
                 targetToFollow.position.y + followOffset.y + biasY,

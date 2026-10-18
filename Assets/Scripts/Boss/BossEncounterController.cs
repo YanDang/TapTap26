@@ -52,6 +52,9 @@ public sealed class BossEncounterController : MonoBehaviour
         Boss=root.AddComponent<BossBrain>();
         root.SetActive(true);
         Boss.Initialize(entity,animator,heroHeight/2f);
+        root.AddComponent<BossAudio>();
+        root.AddComponent<BossMoveFx>();
+        root.AddComponent<BossUltDirector>();
         var smallBar=root.transform.Find("HPBar"); if(smallBar) smallBar.gameObject.SetActive(false);
         root.AddComponent<BossCombatDisplay>().Brain=Boss;
         notified=false; entity.Died+=OnDefeated;

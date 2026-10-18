@@ -20,6 +20,9 @@ public sealed class BossBrain : MonoBehaviour
     public event Action<string> MoveStarted;
     public event Action<string,int> Impact;
     public event Action<int> ThresholdStarted;
+    public event Action PresentationCancelled;
+    public BossAttackShape LastImpactShape { get; private set; }
+    public bool LastImpactPlayerDamaged { get; private set; }
     public float UnitScale { get; private set; }
     public Vector2 Aim { get; private set; }
     public Vector2 Origin { get; private set; }
@@ -63,7 +66,7 @@ public sealed class BossBrain : MonoBehaviour
     void OnDisable() { Cancel(); if(ground)ground.Clear(); }
     void OnDestroy() { ReleaseGrab(); if(Entity) Entity.Died-=OnDeath; }
     void ReleaseGrab() { if(ownsGrab && Player && Player.IsGrabbedBy(Entity)) Player.ThrowFrom(Entity); ownsGrab=false; if(EnemyController.Grabber==Entity) Entity.CancelGrab(); }
-    void Cancel() { ReleaseGrab(); CurrentMove=null; impacts=Array.Empty<float>(); nextImpact=0; }
+    void Cancel() { ReleaseGrab(); CurrentMove=null; impacts=Array.Empty<float>(); nextImpact=0; PresentationCancelled?.Invoke(); }
     public void AddPosture(UnityEngine.Object source=null)
     {
         if(!Entity || !Entity.IsAlive || Invulnerable || Posture>=3) return;
@@ -147,6 +150,7 @@ public sealed class BossBrain : MonoBehaviour
             f.TakeDamage(f.currentDurability,Entity);
         }
         if(Player && !protectedPlayer && InLine(Player.transform.position,Aim-Direction*9*UnitScale,Direction,18*UnitScale,1.6f*UnitScale)) Player.TakeDamage(Player.maxHp*.6f,Entity,false);
+        LastImpactShape=new BossAttackShape {kind=BossAttackShape.Kind.Line,origin=Aim-Direction*9*UnitScale,direction=Direction,length=18*UnitScale,width=1.6f*UnitScale};
         Animator.Play(BossMoves.Ult_Cleave,Array.Empty<float>()); Impact?.Invoke(BossMoves.Ult_Cleave,ultimateCut);
         ground.Add(new BossAttackShape {kind=BossAttackShape.Kind.Line,origin=Aim-Direction*9*UnitScale,direction=Direction,length=18*UnitScale,width=1.6f*UnitScale},Phase==1?BossElement.Dark:Element);
     }
@@ -201,6 +205,7 @@ public sealed class BossBrain : MonoBehaviour
     void ResolveImpact(int i)
     {
         string move=CurrentMove;
+        float playerHpBefore=Player?Player.currentHp:0;
         var shape=Shape(i);
         if(move==BossMoves.P1_LeapSlam) MoveSafely(Aim);
         bool yellow=IsBlockable(move,i);
@@ -213,7 +218,8 @@ public sealed class BossBrain : MonoBehaviour
             if(move==BossMoves.P1_Wrap) { if(EnemyController.Grabber==null && Player.TryGrab(Entity)) { EnemyController.Grabber=Entity; ownsGrab=true; grabTime=0; nextGrabTick=1; } }
             else Player.TakeDamage(Player.maxHp*((move==BossMoves.P1_LeapSlam || (move==BossMoves.P2_Claw5 && i==4))?.4f:.2f),Entity,yellow);
         }
-        Impact?.Invoke(move,i);
+        LastImpactPlayerDamaged=Player && Player.currentHp<playerHpBefore;
+        LastImpactShape=shape; Impact?.Invoke(move,i);
         if(Phase==2) {
             Vector2 side=new Vector2(-Direction.y,Direction.x);
             foreach(var offset in new[]{-Direction,side,-side}) ground.Add(new BossAttackShape {kind=BossAttackShape.Kind.Circle,origin=(Vector2)transform.position+offset*2.3f*UnitScale,direction=Vector2.right,radius=1.65f*UnitScale},Element);
