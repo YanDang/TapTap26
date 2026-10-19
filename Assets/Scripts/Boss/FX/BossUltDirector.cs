@@ -32,10 +32,11 @@ public sealed class BossUltDirector : MonoBehaviour {
  // A non-interactive, lower-order overlay draws the bars behind existing UI.
  void LateUpdate(){
  bool visible=Letterbox>0 && !PlayerSessionData.IsCombatInputBlocked;
- if(visible && !bars){var go=new GameObject("BossLetterbox",typeof(RectTransform),typeof(Canvas));go.transform.SetParent(transform,false);bars=go.GetComponent<Canvas>();bars.renderMode=RenderMode.ScreenSpaceOverlay;bars.sortingOrder=-32768;topBar=Bar("Top",true);bottomBar=Bar("Bottom",false);}
+ if(visible && !bars)bars=CreateLetterbox(transform,out topBar,out bottomBar);
  if(!bars)return;bars.enabled=visible;
  topBar.rectTransform.sizeDelta=bottomBar.rectTransform.sizeDelta=new Vector2(0,Screen.height*Letterbox);
  }
- UnityEngine.UI.Image Bar(string name,bool top){var go=new GameObject(name,typeof(RectTransform),typeof(UnityEngine.UI.Image));go.transform.SetParent(bars.transform,false);var image=go.GetComponent<UnityEngine.UI.Image>();image.color=Color.black;image.raycastTarget=false;var r=image.rectTransform;r.anchorMin=new Vector2(0,top?1:0);r.anchorMax=new Vector2(1,top?1:0);r.pivot=new Vector2(.5f,top?1:0);r.anchoredPosition=Vector2.zero;return image;}
+ public static Canvas CreateLetterbox(Transform parent,out UnityEngine.UI.Image top,out UnityEngine.UI.Image bottom){var go=new GameObject("BossLetterbox",typeof(RectTransform),typeof(Canvas));go.transform.SetParent(parent,false);var canvas=go.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.sortingOrder=-32768;top=Bar(canvas,"Top",true);bottom=Bar(canvas,"Bottom",false);return canvas;}
+ static UnityEngine.UI.Image Bar(Canvas canvas,string name,bool top){var go=new GameObject(name,typeof(RectTransform),typeof(UnityEngine.UI.Image));go.transform.SetParent(canvas.transform,false);var image=go.GetComponent<UnityEngine.UI.Image>();image.color=Color.black;image.raycastTarget=false;var r=image.rectTransform;r.anchorMin=new Vector2(0,top?1:0);r.anchorMax=new Vector2(1,top?1:0);r.pivot=new Vector2(.5f,top?1:0);r.anchoredPosition=Vector2.zero;return image;}
  void OnDisable(){if(b){b.MoveStarted-=Begin;b.Impact-=Hit;b.PresentationCancelled-=Cancel;}Cancel();}
 }

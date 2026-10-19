@@ -327,6 +327,9 @@ namespace GameJam
             // 8. 左下角虚拟摇杆 (Virtual Joystick)
             CreateVirtualJoystick();
 
+            // Read-only HP strip; keep it below modal siblings and retain the world-space bar.
+            HeroHealthDisplay.Build(transform, _font);
+
             // 9. 操作模式设置全屏弹窗 (Settings Modal)
             CreateSettingsModal();
 

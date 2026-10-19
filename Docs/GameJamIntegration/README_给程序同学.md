@@ -1,4 +1,4 @@
-# gamejam 内容接入说明（Boss「无名夜王」/ 主角大招 / 装备改装）
+# gamejam 内容接入说明（Boss「终焉海神」/ 主角大招 / 装备改装）
 
 分支：`integrate/claude-boss-ult-gear`（基于你的 main「1.0」，**没有动 main**，合不合、怎么合由你决定）。
 本说明是总览；逐阶段的技术细节、测试证据和接口契约在同目录 `技术记录_Hermes.md` 和 `P2/`~`P6/handoff.md`。
@@ -15,7 +15,7 @@
 | 命令行 `-tapselftest` | 全量自测，结果写 `Builds/Windows/selftest.txt`（最终 **312 项全过**）；`Tools/run_tap_selftest.py` 会自动备份 / 逐字恢复 `TAP_*`、`GJ_*` 存档键，不会弄脏你的存档 |
 | 命令行 `-tapbaseline` | 关闭下面第 3 节的尺度对齐，用你原来的移速和镜头跑 |
 
-**Boss 正式出场时机（比如第 7 天的裂隙门）没有做**，留给你定。接口：`BossEncounterController.Instance.StartEncounter()`（返回 BossBrain）；Boss 死亡有一次性事件（`EnemyController.Died`），奖励暂时只打日志、不写存档。
+**Boss 正式入口现为第 7 天初始采集门**，详见下方“终焉（第 7 天）”。开发接口 `BossEncounterController.Instance.StartEncounter()` 保留；Boss 死亡有一次性事件（`EnemyController.Died`），奖励暂时只打日志、不写存档。
 
 ## 3. 移速与镜头（策划要求的对齐）
 你那边主角在屏幕上很小、走得很快（主角占屏高 7.7%，每秒走约 4.6 个身高），我们这边是约 18~22%、约 1.9 个身高 / 秒。为了让 Boss（主角 2.5 倍高）和招式范围读得清楚，按我们的尺度做了**运行时**对齐（`Assets/Scripts/Integration/TapCombatScale.cs`，战斗场景加载后一次性设置，不改场景 / prefab）：
@@ -72,3 +72,28 @@
 - 你的 `AndroidAutoBuilder` 里签名密码是写死在代码里的，建议改成环境变量（我们这边接入你的内容时已经这样改了）。
 
 有问题随时找我们（策划这边 + 各个 AI 代理的完整日志都留着）。
+
+## 9. 终焉（第 7 天）
+
+本节为 FINALE-B 更新，覆盖上方历史数值/默认行为说明：普通怪现在统一受到逐日污染，不再是完全固定数值。最终真实 Windows Player 全量回归：normal 516通过/0失败，baseline 511通过/0失败（baseline不执行5项尺度对齐专用断言）。
+
+- 显示名统一为“终焉海神”，类名与文件名不改。
+- 初始门通过原始成品名“初始·异界裂隙之门”识别，不依赖坐标。第 7 天 F/点击免费召唤，不扣精力、不刷守卫；0.35s裂隙、1.45s海神生成、0.8s渐显、1.6s定身、2.35s合拢，镜头与黑边随演出恢复。重复交互不会重复生成。真实击败后恢复普通门试炼/温室规则。F9、-tapboss、BossTest 开发入口保留。
+- 普通怪在统一 EnemyController.Start 入口初始化污染；门试炼提前配置后不会再叠加。层数=天数−1，上限6；HP×(1+.25×层数)，对主角伤害×(1+.12×层数)，Boss排除。原精英/数量/移速/冷却规则保留。活怪按生成日快照，复活按当前日重新初始化。
+- 紫红乘色、低优先级辉光、脚底软光斑和上浮孢子；攻击/状态提示优先。
+- 左上主角血条：深底描边、红填充、白残影、受伤闪框、≤30%脉动、数值。原头顶小血条默认保留，是否去掉仍待确认。
+- 菌群Lv1/2/3每跳12/16/20、Lv3处决+20；扎根Lv3每2s+10；浮囊保命+15。原100血与Boss 20/40/60%伤害不改。
+
+验证入口仍为 Tools/run_tap_selftest.py，新增 TapFinaleCorruptionTests / TapFinaleHeroTests / TapFinaleDoorTests，正常与 --baseline 都执行新增测试。
+
+运行命令（先用 TapWindowsBuild.Build 生成 Builds/FinaleB/Player/TapTap26.exe）：
+`python Tools/run_tap_selftest.py --exe Builds/FinaleB/Player/TapTap26.exe --output Builds/FinaleB/normal-final --timeout 300 --boss`
+以及同命令把输出改为 baseline-final、--boss 改为 --baseline。两个进程依次执行，不能同时运行以免共用存档。两次 Player 自行恢复存档及外部监督恢复核验均 true。
+
+证据位于本机 E:/gamejam_wt/taptap26/Builds/FinaleB/：build-final.log，normal-final/selftest.txt，baseline-final/selftest.txt；normal-final 下五张 finale-*.png 为真实GPU截图，final-contact.png为其缩小拼图。大型构建和证据不入Git。最终构建0错误/1警告；测试使用国际版 Unity 2022.3.57f1，提交前按任务书恢复原 ProjectVersion 与 packages-lock，未声称在原中国版版本重新构建。
+
+数值换算：以默认守卫 HP100、普攻15、抓取10为基础。旧日倍率为HP 1+.20×层、攻击1+.15×层并Round；新倍率为HP 1+.25×层、对主角伤害1+.12×层，不再取整。第1/4/7天非精英新值分别为100/15/10、175/20.4/13.6、250/25.8/17.2（HP/普攻/抓取）。旧HP为100/160/220，旧普攻为Round(15/21.75/28.5)，旧抓取为Round(10/14.5/19)。精英仍额外HP×1.35、攻击×1.25，新值分别135/18.75/12.5、236.25/25.5/17、337.5/32.25/21.5；旧值对应Round(135/18.75/12.5)、Round(216/27.1875/18.125)、Round(297/35.625/23.75)，实际浮点边界遵循Unity。第1天精英列为公式对照，不改变实际出精英规则。
+
+视觉复核：主角满血100/100、低血25/100无遮挡；扣20后80/100另有运行断言。三怪对比、柔边污染光斑、紫红独眼裂隙与海神登场已可见，无错误粉色方块。裂隙独眼部分被原机械门遮挡，海神身体与披风重叠、提示文字略遮头部区域；保留原素材，未宣称演出美术完美。原头顶血条是否移除待确认。登场临时解除相机边界并恢复，裂隙SortingGroup置于地板之上/Boss之下。
+
+验收边界：门功能走真实OnPlayerInteract入口及真实死亡/复活；BossTest和-tapboss启动已覆盖，未把程序化调用说成新一轮实体键盘F/F9或移动端触摸验收。击败标记当前为场景内状态，不新增跨场景/退出重进的Boss永久通关存档。

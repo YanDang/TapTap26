@@ -100,6 +100,14 @@ public sealed class TapSelfTest : MonoBehaviour
         yield return BossRegression.Run(Check);
         yield return BossPresentationTests.Run(Check);
         yield return TapUltTests.Run(Check);
+        GameJam.Gear.GearInventory.ResetAll();
+        yield return TapFinaleCorruptionTests.Run(Check);
+        BossEncounterController.Instance.CancelEncounter();
+        yield return null;
+        yield return TapFinaleHeroTests.Run(Check);
+        yield return TapFinaleHeroTests.CaptureHpEvidence(OutputDirectory);
+        yield return TapFinaleCorruptionTests.CaptureComparison(p.transform.position + Vector3.up * 1.5f, 1.5f, Path.Combine(OutputDirectory,"finale-corruption-days-1-4-7.png"));
+        yield return TapFinaleDoorTests.Run(Check);
         // Destroy the persistent owner to exercise the serialized standalone entry,
         // not a direct StartEncounter substitute. It must load the formal arena itself.
         Destroy(BossEncounterController.Instance.gameObject);yield return null;
@@ -270,5 +278,6 @@ public sealed class TapSelfTest : MonoBehaviour
         Debug.Log($"[TapSelfTest] RESULT passed={passed} failed={failed}");
         Application.Quit(failed==0?0:1);
     }
-    void Update() { if(!ending && started>0 && Time.realtimeSinceStartup-started>90) { Check(false,"90s watchdog"); StopAllCoroutines(); StartCoroutine(Cleanup()); } }
+    // Finale adds real cinematic/revival waits and five GPU PNG captures to the full suite.
+    void Update() { if(!ending && started>0 && Time.realtimeSinceStartup-started>150) { Check(false,"150s watchdog"); StopAllCoroutines(); StartCoroutine(Cleanup()); } }
 }

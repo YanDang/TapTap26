@@ -148,19 +148,35 @@ public class EnemyController : MonoBehaviour
     public int enemyDayLevel = 1;
     public bool isElite = false;
 
+    public TapCorruption Corruption { get; internal set; }
+    public float DamageToPlayer(float baseDamage) => baseDamage * (Corruption ? Corruption.DamageMultiplier : 1f);
+    bool difficultyCaptured;
+    float difficultyHp, difficultyAttack, difficultyGrab, difficultySpeed, difficultyCooldown, difficultyGrabChance;
+    Vector3 difficultyScale;
+
     /// <summary>
     /// 根据当前天数动态强化敌人属性（生命、攻击、攻速、移速均随天数递增）
     /// 并可赋予精英异化词缀（体型变大、粉紫光泽、更强威胁）
     /// </summary>
     public void ApplyDayDifficulty(int day, bool makeElite = false)
     {
-        day = Mathf.Max(1, day);
+        if (TapCorruption.IsBoss(this)) return;
+        day = Mathf.Clamp(day, 1, 7);
+        if (!difficultyCaptured)
+        {
+            difficultyCaptured = true;
+            difficultyHp = Corruption ? Corruption.BaseMaxHp : maxHp;
+            difficultyAttack = attackDamage; difficultyGrab = grabDamage;
+            difficultySpeed = moveSpeed; difficultyCooldown = attackCooldown; difficultyGrabChance = grabChance;
+            difficultyScale = visualRoot ? visualRoot.localScale : Vector3.one;
+        }
         enemyDayLevel = day;
         isElite = makeElite;
 
         float dayFactor = day - 1;
-        float hpMult = 1.0f + dayFactor * 0.20f;       // 基础 HP 每天 +20%
-        float dmgMult = 1.0f + dayFactor * 0.15f;      // 攻击力每天 +15%
+        // FINALE: daily HP/player damage belong solely to corruption. Keep elite and pacing rules.
+        float hpMult = 1.0f;
+        float dmgMult = 1.0f;
         float spdMult = 1.0f + dayFactor * 0.05f;      // 移速每天 +5%
         float cdReduce = dayFactor * 0.10f;            // 攻击间隔每天缩短 0.10s
 
@@ -172,20 +188,16 @@ public class EnemyController : MonoBehaviour
             cdReduce += 0.15f;
         }
 
-        maxHp = Mathf.Round(maxHp * hpMult);
-        currentHp = maxHp;
-        attackDamage = Mathf.Round(attackDamage * dmgMult);
-        moveSpeed = Mathf.Min(2.1f, moveSpeed * spdMult);
-        attackCooldown = Mathf.Max(1.35f, attackCooldown - cdReduce);
-        grabDamage = Mathf.Round(grabDamage * dmgMult);
-        grabChance = Mathf.Min(0.70f, grabChance + dayFactor * 0.04f);
+        TapCorruption.Apply(this, day, difficultyHp * hpMult);
+        attackDamage = difficultyAttack * dmgMult;
+        moveSpeed = Mathf.Min(2.1f, difficultySpeed * spdMult);
+        attackCooldown = Mathf.Max(1.35f, difficultyCooldown - cdReduce);
+        grabDamage = difficultyGrab * dmgMult;
+        grabChance = Mathf.Min(0.70f, difficultyGrabChance + dayFactor * 0.04f);
+        if (visualRoot) visualRoot.localScale = difficultyScale * (makeElite ? 1.22f : 1f);
 
         if (makeElite)
         {
-            if (visualRoot != null)
-            {
-                visualRoot.localScale *= 1.22f;
-            }
             originalColor = new Color(1f, 0.78f, 0.95f);
             ApplyFlash(0.35f, new Color(1f, 0.2f, 0.8f));
             if (DamageTextManager.Instance != null)
@@ -566,6 +578,9 @@ public class EnemyController : MonoBehaviour
 
     void Start()
     {
+        // Factories finish assigning HP and BossBrain before Start, unlike Awake/OnEnable.
+        // Covers runtime AddComponent, both factories, prefab Instantiate and serialized scene enemies.
+        if (!Corruption) TapCorruption.Apply(this, TapCorruption.CurrentDay);
         isDead = false;
         isStaggered = false;
         if (ExternalAI == null && aiState != EnemyAIState.Chase)
@@ -627,8 +642,14 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    Color uncorruptedVisualColor = Color.white;
+    bool corruptionVisualSuppressed;
+    bool CorruptionStatusActive => IsStaggered || IsParalyzed || isPacified || IsAttacking ||
+        aiState == EnemyAIState.Pending || aiState == EnemyAIState.Executing || Pacified;
     public void SetVisualColor(Color color)
     {
+        uncorruptedVisualColor = color;
+        if (Corruption && !corruptionVisualSuppressed && !CorruptionStatusActive) color *= Corruption.BodyMultiplier;
         if (monsterRenderer != null) monsterRenderer.color = color;
         if (visualRenderers != null)
         {
@@ -643,7 +664,7 @@ public class EnemyController : MonoBehaviour
     {
         if (monsterRenderer != null)
         {
-            Color c = originalColor;
+            Color c = monsterRenderer.color;
             c.a = alpha;
             monsterRenderer.color = c;
         }
@@ -683,6 +704,16 @@ public class EnemyController : MonoBehaviour
     public void ApplyFlash(float persistent, Color persistentColor)
     {
         float hit = Mathf.Clamp01((flashUntil - Time.unscaledTime) / Mathf.Max(flashDuration, 1e-3f));
+        corruptionVisualSuppressed = persistent > 0f || hit > 0f || CorruptionStatusActive;
+        if (Corruption)
+        {
+            SetVisualColor(uncorruptedVisualColor);
+            if (!corruptionVisualSuppressed && Corruption.Level > 0)
+            {
+                persistent = Corruption.GlowStrength;
+                persistentColor = TapCorruption.Glow;
+            }
+        }
         Color c = hit > persistent ? flashColor : persistentColor;
         float amount = Mathf.Max(hit * 0.85f, persistent);
 
@@ -866,6 +897,9 @@ public class EnemyController : MonoBehaviour
             }
             return;
         }
+
+        // Clear last frame's channel before this frame's state writes its warning/status.
+        if (Corruption) ApplyFlash(0f, Color.white);
 
         // 麻痹硬直拦截（电鳗发电机、弹力金属等触发）
         if (paralysisTimer > 0f)
@@ -1492,7 +1526,7 @@ public class EnemyController : MonoBehaviour
                     }
                     else
                     {
-                        targetPlayer.TakeDamage(attackDamage, this, true);
+                        targetPlayer.TakeDamage(DamageToPlayer(attackDamage), this, true);
                         Sfx.Play("sfx_hit");
                         CameraRig.I?.Shake(0.12f, 0.15f);
                     }
@@ -1648,7 +1682,7 @@ public class EnemyController : MonoBehaviour
         if (grabTickTimer <= 0f)
         {
             grabTickTimer += grabTick;
-            targetPlayer.GrabTick(grabDamage);
+            targetPlayer.GrabTick(DamageToPlayer(grabDamage));
         }
 
         if (stateTimer >= grabHold && targetPlayer.IsGrabbed)
@@ -2031,6 +2065,8 @@ public class EnemyController : MonoBehaviour
 
         // 3. 复活刷新：重置位置回初始出生点 (营地外)
         transform.position = spawnPosition;
+        if (difficultyCaptured) ApplyDayDifficulty(TapCorruption.CurrentDay, isElite);
+        else TapCorruption.Apply(this, TapCorruption.CurrentDay);
         currentHp = maxHp;
         currentGuardBreak = maxGuardBreak;
         isStaggered = false;

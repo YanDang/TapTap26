@@ -21,7 +21,7 @@ public sealed class BossCombatDisplay : MonoBehaviour
     {
         if(!Brain || !Brain.Entity || !Brain.Entity.IsAlive || PlayerSessionData.IsCombatInputBlocked)return;
         float w=Screen.width*.6f,x=(Screen.width-w)*.5f,y=30;
-        GUI.Box(new Rect(x,y,w,58),"无名夜王  Phase "+Brain.Phase+"   架势 "+Brain.Posture+" / 3");
+        GUI.Box(new Rect(x,y,w,58),"终焉海神  Phase "+Brain.Phase+"   架势 "+Brain.Posture+" / 3");
         GUI.color=new Color(.65f,.08f,.18f); GUI.DrawTexture(new Rect(x+5,y+29,(w-10)*Mathf.Clamp01(Brain.Entity.currentHp/Brain.Entity.maxHp),16),Texture2D.whiteTexture);
         GUI.color=Color.white; foreach(float mark in new[]{.7f,.5f,.3f})GUI.DrawTexture(new Rect(x+5+(w-10)*mark,y+27,2,20),Texture2D.whiteTexture);
     }

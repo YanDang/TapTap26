@@ -15,6 +15,15 @@ public sealed class BossBrain : MonoBehaviour
     public string CurrentMove { get; private set; }
     public float Elapsed { get; private set; }
     public bool AutoAttack = true;
+    public float IntroHoldRemaining { get; private set; }
+    public void HoldForIntro(float seconds)
+    {
+        Cancel();
+        IntroHoldRemaining = Mathf.Max(0, seconds);
+        Animator.SetLocomotion(Vector3.zero);
+        Animator.SetTelegraph(0, Color.white);
+        if (Player) Animator.SetFacing(Player.transform.position.x >= transform.position.x ? 1 : -1);
+    }
     public int NextImpact => nextImpact;
     public float GearImpactRemaining => nextImpact<impacts.Length?impacts[nextImpact]-Elapsed:float.PositiveInfinity;
     public bool Invulnerable => thresholdActive && (ThresholdIndex==1 || ultimateCut<(ThresholdIndex==0?1:2));
@@ -77,7 +86,7 @@ public sealed class BossBrain : MonoBehaviour
     }
     public bool ForceMove(string move)
     {
-        if(!Entity.IsAlive || thresholdActive || Posture==3 || ImpactsFor(move).Length==0) return false;
+        if(!Entity.IsAlive || IntroHoldRemaining>0 || thresholdActive || Posture==3 || ImpactsFor(move).Length==0) return false;
         if(move==BossMoves.P1_Wrap && EnemyController.Grabber!=null) return false;
         Cancel(); CurrentMove=move; Elapsed=0; nextImpact=0; impacts=ImpactsFor(move);
         Origin=transform.position; Aim=Player ? (Vector2)Player.transform.position : Origin+Vector2.right;
@@ -89,6 +98,11 @@ public sealed class BossBrain : MonoBehaviour
     {
         if(!isActiveAndEnabled || !Entity || !Entity.IsAlive || EnemyController.CombatWorldPaused || dt<=0) return;
         worldClock+=dt;
+        if(IntroHoldRemaining>0) {
+            IntroHoldRemaining=Mathf.Max(0,IntroHoldRemaining-dt);
+            if(Player) Animator.SetFacing(Player.transform.position.x>=transform.position.x?1:-1);
+            Animator.SetLocomotion(Vector3.zero); Animator.Tick(dt); return;
+        }
         if(Entity.aiState==EnemyController.EnemyAIState.Executing) return;
         if(thresholdActive) { AdvanceThreshold(dt); Animator.Tick(dt); return; }
         if(ThresholdIndex<3 && Entity.currentHp/Entity.maxHp<=Marks[ThresholdIndex]) { BeginThreshold(); return; }

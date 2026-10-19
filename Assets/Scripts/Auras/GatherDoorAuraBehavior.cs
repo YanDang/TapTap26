@@ -44,6 +44,48 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
 
     private string doorId;
     private int trialDay = -1;
+    // Adapter authors this product marker; unlike object names/coordinates it survives saved furniture restoration.
+    public bool IsInitialDoor => parentFurniture != null && parentFurniture.originalProduct != null &&
+        parentFurniture.originalProduct.productName == "初始·异界裂隙之门";
+    public bool IsFinalRift => IsInitialDoor && PlayerSessionData.greenhouse != null &&
+        PlayerSessionData.greenhouse.day >= GameRunProgress.FinalDay && !FinalBossDefeated;
+    public bool FinalSummoning => finalIntro && finalIntro.Running;
+    public bool FinalBossDefeated { get; private set; }
+    public int FinalSummons { get; private set; }
+    public string PromptText => promptTextMesh ? promptTextMesh.text : "";
+    BossDoorIntro finalIntro;
+    EnemyController finalBoss;
+
+    public void FinalBossArrived(BossBrain boss)
+    {
+        if (finalBoss) finalBoss.Died -= OnFinalBossDefeated;
+        finalBoss = boss.Entity;
+        finalBoss.Died += OnFinalBossDefeated;
+        UpdatePromptText();
+    }
+    void OnFinalBossDefeated(EnemyController enemy)
+    {
+        FinalBossDefeated = true; // Only real death counts, never cancellation/destruction/unload.
+        enemy.Died -= OnFinalBossDefeated;
+        finalBoss = null;
+        UpdatePromptText();
+    }
+    public void RefreshFinalPrompt() => UpdatePromptText();
+    bool TryFinalRift(PlayerController player)
+    {
+        if (!IsFinalRift) return false;
+        if (!FinalSummoning && !BossEncounterController.EncounterActive && !BossDoorIntro.Active)
+        {
+            if (!finalIntro) finalIntro = gameObject.AddComponent<BossDoorIntro>();
+            if (finalIntro.Begin(this, player)) FinalSummons++;
+        }
+        UpdatePromptText();
+        if (DamageTextManager.Instance)
+            DamageTextManager.Instance.ShowText(transform.position + Vector3.up,
+                FinalSummoning ? "裂隙正在撕开……" : BossEncounterController.EncounterActive ? "终焉海神就在眼前！" : "门前空间不足，请让开后重试",
+                new Color(1f, .3f, .72f), .13f);
+        return true;
+    }
     public string DoorId => doorId ?? (doorId = gameObject.scene.name + ":" +
         transform.position.x.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + ":" +
         transform.position.y.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + ":" +
@@ -88,9 +130,11 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         if (!AllDoors.Contains(this)) AllDoors.Add(this);
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
+        if (finalBoss) finalBoss.Died -= OnFinalBossDefeated;
         AllDoors.Remove(this);
+        base.OnDestroy();
     }
 
     private Vector2 DoorCenter => (Vector2)transform.position + new Vector2(0f, 0.5f);
@@ -176,6 +220,14 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     private void UpdatePromptText()
     {
         if (promptTextMesh == null) return;
+
+        if (IsFinalRift)
+        {
+            promptTextMesh.text = "终焉裂隙之门 · " + (FinalSummoning ? "终焉海神正在降临" :
+                BossEncounterController.EncounterActive ? "终焉海神已降临" : "交互直面终焉海神");
+            promptTextMesh.color = new Color(1f, .3f, .72f);
+            return;
+        }
 
         switch (state)
         {
@@ -328,6 +380,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
         if (rangeRingRenderer != null)
         {
             Color curCol = state == DoorState.Spent ? Color.gray : (state == DoorState.Closed ? ColorClosed : ((state == DoorState.Fighting || state == DoorState.Summoning) ? ColorFighting : ColorCleared));
+            if (IsFinalRift) curCol = new Color(1f, .3f, .72f);
             float alpha = 0.25f + 0.15f * Mathf.Sin(t * (state == DoorState.Fighting ? 4f : 2f));
             rangeRingRenderer.color = new Color(curCol.r, curCol.g, curCol.b, alpha);
         }
@@ -386,12 +439,12 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     /// </summary>
     public void OnPlayerInteract(PlayerController player)
     {
-        if (BossEncounterController.EncounterActive) return;
         if (PlayerSessionData.IsCombatInputBlocked) return;
         RefreshDailyState();
-        if (state == DoorState.Spent) return;
         if (player == null) player = PlayerController.Instance ?? FindObjectOfType<PlayerController>();
         if (player == null || !player.IsAlive || IsCombatPaused) return;
+        if (TryFinalRift(player)) { player.ConsumeDoorInteraction(); return; }
+        if (BossEncounterController.EncounterActive || BossDoorIntro.Active || state == DoorState.Spent) return;
         player.ConsumeDoorInteraction();
 
         switch (state)
@@ -430,6 +483,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     /// </summary>
     private void OnDisable()
     {
+        if (finalIntro) finalIntro.Cancel();
         AllDoors.Remove(this);
         if (Application.isPlaying && GameRunProgress.WorldReady && state == DoorState.Summoning)
             GameRunProgress.RefundDoor(DoorId);
@@ -627,7 +681,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     /// </summary>
     public void EnterGatheringScene(PlayerController player)
     {
-        if (BossEncounterController.EncounterActive) return;
+        if (BossEncounterController.EncounterActive || BossDoorIntro.Active) return;
         if (PlayerSessionData.IsCombatInputBlocked) return;
         RefreshDailyState();
         if (state != DoorState.Cleared) return;

@@ -28,20 +28,34 @@ public sealed class BossEncounterController : MonoBehaviour
     }
     public BossBrain StartEncounter()
     {
+        if(BossDoorIntro.Active) return Boss;
+        return SpawnEncounter(null, 0);
+    }
+    // Door director is the only formal gameplay caller. The parameterless development entry is retained.
+    public BossBrain StartEncounter(Vector3 position, float introHold)
+    {
+        return SpawnEncounter(position, introHold);
+    }
+    public static float PresentationUnitScale(PlayerController player)
+    {
+        var scale=FindObjectOfType<TapCombatScale>();
+        return (scale && scale.VisualHeight>0 ? scale.VisualHeight : TapCombatScale.HeroBounds(player).size.y)/2f;
+    }
+    BossBrain SpawnEncounter(Vector3? spawnPosition, float introHold)
+    {
         if(EncounterActive) return Boss;
         if(EnemyController.CombatWorldPaused || !PlayerController.Instance || !FindObjectOfType<BiomechanicalCombatAdapter>()) return null;
         var prefab=Resources.Load<GameObject>("Boss/Boss");
         if(!prefab) { Debug.LogError("Boss production prefab missing; no substitute spawned"); return null; }
         var p=PlayerController.Instance;
-        var root=new GameObject("Boss_无名夜王"); root.SetActive(false);
-        Vector3 at=p.transform.position+Vector3.right*1.3f+Vector3.down*.7f;
+        var root=new GameObject("Boss_终焉海神"); root.SetActive(false);
+        Vector3 at=spawnPosition ?? (p.transform.position+Vector3.right*1.3f+Vector3.down*.7f);
         var map=IsometricPathfinder.Instance;
-        if(map && !map.IsWalkable(map.WorldToCell(at))) at=p.transform.position;
+        if(!spawnPosition.HasValue && map && !map.IsWalkable(map.WorldToCell(at))) at=p.transform.position;
         root.transform.position=at;
         var visual=Instantiate(prefab,root.transform); visual.name="BossVisual";
         var animator=visual.GetComponentInChildren<BossAnimator>();
-        float heroHeight=TapCombatScale.HeroBounds(p).size.y;
-        var scale=FindObjectOfType<TapCombatScale>(); if(scale) heroHeight=scale.VisualHeight;
+        float heroHeight=PresentationUnitScale(p)*2f;
         visual.transform.localScale=Vector3.one*(heroHeight*2.5f/animator.Height);
         var body=root.AddComponent<Rigidbody2D>(); body.bodyType=RigidbodyType2D.Kinematic; body.gravityScale=0;
         var collider=root.AddComponent<CircleCollider2D>(); collider.radius=heroHeight*.45f;
@@ -52,6 +66,7 @@ public sealed class BossEncounterController : MonoBehaviour
         Boss=root.AddComponent<BossBrain>();
         root.SetActive(true);
         Boss.Initialize(entity,animator,heroHeight/2f);
+        if(introHold>0) { Boss.HoldForIntro(introHold); animator.Vanish=1; }
         root.AddComponent<BossAudio>();
         root.AddComponent<BossMoveFx>();
         root.AddComponent<BossUltDirector>();
@@ -60,7 +75,7 @@ public sealed class BossEncounterController : MonoBehaviour
         notified=false; entity.Died+=OnDefeated;
         return Boss;
     }
-    void OnDefeated(EnemyController entity) { if(notified)return; notified=true; Debug.Log("[BossEncounter] defeated once; no reward and no save"); Defeated?.Invoke(entity); }
+    void OnDefeated(EnemyController entity) { if(notified)return; notified=true; Debug.Log("[BossEncounter] 终焉海神 defeated once; no reward and no save"); Defeated?.Invoke(entity); }
     public void CancelEncounter() { if(Boss) Destroy(Boss.gameObject); Boss=null; }
     void OnDestroy() { if(Instance==this) Instance=null; }
 }

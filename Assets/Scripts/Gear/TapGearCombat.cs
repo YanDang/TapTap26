@@ -57,7 +57,7 @@ namespace GameJam.Gear
         void OnDisable(){GearInventory.Changed-=Refresh;Player.DodgeStarted-=DodgeStart;Player.DodgeEnded-=DodgeEnd;Player.PerfectDodge-=Perfect;Cancel();if(ui)ui.Close();}
         void OnDestroy(){if(ui)Destroy(ui.gameObject);}
         public void Cancel(){SetGuard(false);Rooted=false;pull=null;bubble=0;spaceDown=false;spaceHeld=0;rolled=false;foreach(var z in zones)if(z.decoy)Destroy(z.decoy);zones.Clear();WarningActive=false;GearFx.Root(transform,false);TapGearFx.Clear(this);}
-        void Refresh(){Cancel();Durability=Mathf.RoundToInt(Stat("shell_mobile",3,8));Stacks=0;DodgeCharges=3;RechargeRemaining=0;FloatUses=Lv("shell_float")>=3?2:Lv("shell_float")>0?1:0;hits=0;safeClock=healClock=still=0;}
+        void Refresh(){Cancel();Durability=Mathf.RoundToInt(Stat("shell_mobile",3,8));Stacks=0;DodgeCharges=3;RechargeRemaining=0;FloatUses=Lv("shell_float")>=3?2:Lv("shell_float")>0?1:0;hits=0;safeClock=healClock=still=rootHeal=0;}
         void Update()
         {
             if(!Player || !Player.isActiveAndEnabled || !Player.IsAlive){Cancel();return;}
@@ -80,9 +80,11 @@ namespace GameJam.Gear
             if(Guarding && (Player.Unavailable || Player.UltimateLocked || Player.Placing || rolled))SetGuard(false);
             var target=Player.currentTarget;
             if(target && target.IsAlive && encounters.Add(target))FloatUses=Lv("shell_float")>=3?2:Lv("shell_float")>0?1:0;
-            if(Lv("core_fungi")>0){float previous=safeClock;safeClock+=dt;if(safeClock>=6){healClock+=Mathf.Max(0,safeClock-6)-Mathf.Max(0,previous-6);float interval=Mathf.Max(2,Stat("core_fungi",5,3)-(Lv("core_fungi")>=2?1:0));if(healClock>=interval){healClock-=interval;Heal();}}}
+            if(Lv("core_fungi")>0){float previous=safeClock;safeClock+=dt;if(safeClock>=6){healClock+=Mathf.Max(0,safeClock-6)-Mathf.Max(0,previous-6);float interval=Mathf.Max(2,Stat("core_fungi",5,3)-(Lv("core_fungi")>=2?1:0));if(healClock>=interval){healClock-=interval;Heal(FungiTickHeal(Lv("core_fungi")));}}}
             if(Lv("leg_root")>0){bool moved=Vector2.Distance(anchor,transform.position)>.15f*Unit || rolled || Player.Unavailable || Player.UltimateLocked;if(moved){anchor=transform.position;still=0;if(Rooted){Rooted=false;GearFx.Root(transform,false);Blast(transform.position,1.5f*Unit,2);GearFx.CoralSpikes(transform.position,1.5f*Unit);}}else still+=dt;
-                if(!Rooted && still>=(Lv("leg_root")>=2?.6f:1)){Rooted=true;GearFx.Root(transform,true);}if(Rooted && Lv("leg_root")>=3){rootHeal+=dt;if(rootHeal>=2){rootHeal-=2;Heal();}}else rootHeal=0;}
+                float rootDelay=Lv("leg_root")>=2?.6f:1;
+                if(!Rooted && still>=rootDelay){Rooted=true;GearFx.Root(transform,true);}
+                if(Rooted && Lv("leg_root")>=3){rootHeal+=Mathf.Min(dt,Mathf.Max(0,still-rootDelay));if(rootHeal>=2){rootHeal-=2;Heal(RootHeal);}}else rootHeal=0;}
             if(rolled && Lv("leg_jet")>=3)foreach(var e in Nearby(transform.position,1.2f*Unit))if(rammed.Add(e))e.Displace(((Vector2)(e.transform.position-transform.position)).normalized,1.5f*Unit,this);
             bool ult=Player.Ultimate && Player.Ultimate.Active;if(wasUlt && !ult && Lv("core_antenna")>=3)Player.GearRestoreDodge();wasUlt=ult;
             TickPull(dt);
@@ -105,7 +107,7 @@ namespace GameJam.Gear
                 if(perfect){var boss=src.GetComponent<BossBrain>();if(boss)boss.AddPosture(this);else src.Parried();if(Lv("shell_mobile")>=3)foreach(var e in Nearby(transform.position,2*Unit))e.Displace(((Vector2)(e.transform.position-transform.position)).normalized,2*Unit,this);}
                 if(Durability<=0){broken=3;SetGuard(false);}if(blockable)return true;damage*=.5f;}
             if(Rooted)damage*=1-Stat("leg_root",.3f,.5f);
-            if(Lv("shell_float")>0 && FloatUses>0 && damage>=Player.currentHp){FloatUses--;bubble=1.5f;Heal();GearFx.FloatBubble(transform,1.5f);if(Lv("shell_float")>=2)foreach(var e in Nearby(transform.position,3*Unit))e.Displace(((Vector2)(e.transform.position-transform.position)).normalized,Stat("shell_float",2,5)*Unit,this);return true;}
+            if(Lv("shell_float")>0 && FloatUses>0 && damage>=Player.currentHp){FloatUses--;bubble=1.5f;Heal(FloatHeal);GearFx.FloatBubble(transform,1.5f);if(Lv("shell_float")>=2)foreach(var e in Nearby(transform.position,3*Unit))e.Displace(((Vector2)(e.transform.position-transform.position)).normalized,Stat("shell_float",2,5)*Unit,this);return true;}
             return false;
         }
         public void Hurt(){safeClock=healClock=0;if(Lv("shell_static")>0){Stacks=Mathf.Min(3,Stacks+1);GearFx.StaticStacks(transform,Stacks);}}
@@ -115,8 +117,11 @@ namespace GameJam.Gear
             var points=new List<Vector3>{transform.position};var list=Nearby(transform.position,6*Unit);int max=Lv("shell_static")+2;
             foreach(var e in list){if(points.Count>max)break;Damage(e,Stat("shell_static",1,4)*(e.IsWet?1.5f:1));if(Lv("shell_static")>=3)e.ApplyParalysis(.5f);points.Add(e.transform.position);}Stacks=0;GearFx.StaticStacks(transform,0);GearFx.ChainLightning(points.ToArray());
         }
-        void Heal(){if(Player.currentHp>=Player.maxHp)return;Player.Heal(Player.maxHp/5f);Heals++;GearFx.Heal(transform);}
-        public void Executed(){if(Lv("core_fungi")>=3)Heal();}
+        // Absolute HP units on the host's existing 100-HP scale, not fractions of max HP.
+        public static int FungiTickHeal(int level) => 8+4*Mathf.Clamp(level,1,3);
+        public const int ExecuteHeal=20, RootHeal=10, FloatHeal=15;
+        void Heal(float amount){if(Player.currentHp>=Player.maxHp)return;Player.Heal(amount);Heals++;GearFx.Heal(transform);}
+        public void Executed(){if(Lv("core_fungi")>=3)Heal(ExecuteHeal);}
         public void NormalHit(EnemyController e)
         {
             if(!e || !e.IsAlive)return;hits++;

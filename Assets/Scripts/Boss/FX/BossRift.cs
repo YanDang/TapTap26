@@ -25,6 +25,8 @@ namespace GameJam.Boss
         public bool autoDestroyWhenClosed;
         /// <summary>排序基准：地上的裂隙要画在 Boss 身后（导演设成 Boss 排序 - 20），天上的用默认 74。</summary>
         public int baseOrder = 74;
+        public Color GlowColor = new Color(.62f, .28f, 1f, 1f);
+        public Color InnerColor = new Color(.20f, .05f, .32f, 1f);
 
         const int N = 22;                // 每侧边缘点数
         static readonly Color Abyss = new Color(.02f, .01f, .06f, 1f), Inner = new Color(.20f, .05f, .32f, 1f),
@@ -133,8 +135,8 @@ namespace GameJam.Boss
             {
                 var c = (Edge(i, 1, o, 1) + Edge(i, -1, o, 1)) * .5f;
                 verts.Add(c); cols.Add(Abyss);
-                verts.Add(Edge(i, 1, o, 1)); cols.Add(Inner);
-                verts.Add(Edge(i, -1, o, 1)); cols.Add(Inner);
+                verts.Add(Edge(i, 1, o, 1)); cols.Add(InnerColor);
+                verts.Add(Edge(i, -1, o, 1)); cols.Add(InnerColor);
             }
             for (int i = 0; i < N - 1; i++)
             {
@@ -146,7 +148,7 @@ namespace GameJam.Boss
             // 外辉光：边缘一圈往外淡出
             verts.Clear(); cols.Clear(); tris.Clear();
             float glowW = Mathf.Lerp(.25f, .55f, o) * (1f + flash * .8f);
-            var gc = Color.Lerp(Violet, Vein, flash * .6f); gc.a = .55f * Mathf.Clamp01(o * 3f);
+            var gc = Color.Lerp(GlowColor, Vein, flash * .6f); gc.a = .55f * Mathf.Clamp01(o * 3f);
             var ge = gc; ge.a = 0f;
             for (int s = 0; s < 2; s++)
             {
@@ -171,7 +173,7 @@ namespace GameJam.Boss
             for (int i = 0; i < N; i++) _rimGlow.SetPosition(N + i, Edge(N - 1 - i, -1, o, 1));
             float rimA = Mathf.Clamp01(o * 4f);
             Col(_rimA, Color.Lerp(Vein, Color.white, flash), rimA); Col(_rimB, Color.Lerp(Vein, Color.white, flash), rimA);
-            Col(_rimGlow, Violet, .35f * rimA + flash * .3f);
+            Col(_rimGlow, GlowColor, .35f * rimA + flash * .3f);
 
             // 白色裂纹：从边缘往外分叉，像独眼周围的血丝
             for (int k = 0; k < _veins.Count; k++)
@@ -215,7 +217,7 @@ namespace GameJam.Boss
                 _iris.localScale = Vector3.one * Mathf.Max(.001f, irisScale);
                 _iris.localPosition = new Vector3(look.x * ew * .3f, look.y * eh * .18f, -.01f);
                 _pupil.localScale = Vector3.one * Mathf.Lerp(1f, .8f, squint);
-                bool vis = eo > .02f; _eyeR.enabled = vis; _iris.gameObject.SetActive(vis);
+                bool vis = withEye && eo > .02f; _eyeR.enabled = vis; _iris.gameObject.SetActive(vis);
             }
         }
 
