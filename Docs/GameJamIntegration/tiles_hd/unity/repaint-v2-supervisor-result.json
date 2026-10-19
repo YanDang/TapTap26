@@ -1,0 +1,16 @@
+{
+  "command": [
+    "E:/unity/Downloads/Editor/Unity.exe",
+    "-batchmode",
+    "-projectPath",
+    "E:\\gamejam_wt\\tiles_hd",
+    "-executeMethod",
+    "TilesHD.RepaintMap.Repaint",
+    "-logFile",
+    "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\unity\\repaint-v2.log",
+    "-quit"
+  ],
+  "exit_code": 0,
+  "editor_restored_before_supervisor": true,
+  "raw_restored_after_exit": true
+}

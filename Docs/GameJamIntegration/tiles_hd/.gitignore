@@ -1,0 +1,15 @@
+# Local preference recovery journals contain user state; never publish.
+**/*supervisor-before.json
+**/*prefs-before.json
+**/*prefs-after.json
+**/__pycache__/
+# Full regression media is local; keep required map frames and representative player frame.
+unity/selftest/*.png
+!unity/selftest/target-after.png
+# Keep only the historical inputs required by report_final_revision.py.
+art/revision_before/*
+!art/revision_before/basic_ground_tiles.png
+!art/revision_before/supplemental_validation.json
+art/seam_3x3_cell_1.png
+art/seam_3x3_cell_16.png
+art/audit_stdout.json

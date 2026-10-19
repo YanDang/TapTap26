@@ -1,0 +1,20 @@
+{
+  "command": [
+    "E:\\gamejam_wt\\tiles_hd\\Builds\\Windows\\TapTap26.exe",
+    "-tapselftest",
+    "-tapoutput",
+    "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\unity\\selftest",
+    "-screen-fullscreen",
+    "0",
+    "-screen-width",
+    "1920",
+    "-screen-height",
+    "1080",
+    "-logFile",
+    "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\unity\\selftest\\player.log"
+  ],
+  "exit_code": 0,
+  "player_restored_before_supervisor": true,
+  "post_exit_raw_restore": true,
+  "original_TAP_count": 0
+}

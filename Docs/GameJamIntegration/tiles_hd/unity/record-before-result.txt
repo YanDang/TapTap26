@@ -1,0 +1,1 @@
+GPU capture completed; editor raw preferences restored=True

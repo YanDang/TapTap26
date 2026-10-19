@@ -1,0 +1,331 @@
+{
+  "original_backup_matches_HEAD": true,
+  "v1_matches_baseline": true,
+  "rects_all_56_exactly_doubled": true,
+  "v1_sha256": "4190ccdda28f698d0d86457428b9890441c12a5c44edd378d6900fa0a7807640",
+  "original_sha256": "4d96142faa69be0539a89fd86ad05fda4ddf1d5b86e05039f8e7d4eca787a611",
+  "final_sha256": "cb7f29e4fdf6ca93a8fe024a2af867c510a8e2821cf67f0f0f11b51276e21ed9",
+  "props": [
+    {
+      "cell": 40,
+      "reference_bbox_x2": [
+        54,
+        0,
+        202,
+        232
+      ],
+      "new_bbox": [
+        54,
+        0,
+        202,
+        232
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 41,
+      "reference_bbox_x2": [
+        54,
+        0,
+        202,
+        232
+      ],
+      "new_bbox": [
+        54,
+        0,
+        202,
+        232
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 42,
+      "reference_bbox_x2": [
+        64,
+        0,
+        192,
+        230
+      ],
+      "new_bbox": [
+        64,
+        0,
+        192,
+        230
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 43,
+      "reference_bbox_x2": [
+        64,
+        0,
+        192,
+        230
+      ],
+      "new_bbox": [
+        64,
+        0,
+        192,
+        230
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 44,
+      "reference_bbox_x2": [
+        72,
+        0,
+        184,
+        232
+      ],
+      "new_bbox": [
+        72,
+        0,
+        184,
+        232
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 45,
+      "reference_bbox_x2": [
+        72,
+        0,
+        184,
+        232
+      ],
+      "new_bbox": [
+        72,
+        0,
+        184,
+        232
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 46,
+      "reference_bbox_x2": [
+        76,
+        0,
+        178,
+        232
+      ],
+      "new_bbox": [
+        76,
+        0,
+        178,
+        232
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 47,
+      "reference_bbox_x2": [
+        76,
+        0,
+        178,
+        232
+      ],
+      "new_bbox": [
+        76,
+        0,
+        178,
+        232
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 48,
+      "reference_bbox_x2": [
+        20,
+        8,
+        234,
+        232
+      ],
+      "new_bbox": [
+        20,
+        8,
+        234,
+        232
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 49,
+      "reference_bbox_x2": [
+        20,
+        8,
+        234,
+        232
+      ],
+      "new_bbox": [
+        20,
+        8,
+        234,
+        232
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 50,
+      "reference_bbox_x2": [
+        12,
+        0,
+        244,
+        212
+      ],
+      "new_bbox": [
+        12,
+        0,
+        244,
+        212
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 51,
+      "reference_bbox_x2": [
+        12,
+        0,
+        244,
+        212
+      ],
+      "new_bbox": [
+        12,
+        0,
+        244,
+        212
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 52,
+      "reference_bbox_x2": [
+        20,
+        8,
+        234,
+        232
+      ],
+      "new_bbox": [
+        20,
+        8,
+        234,
+        232
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 53,
+      "reference_bbox_x2": [
+        20,
+        8,
+        234,
+        232
+      ],
+      "new_bbox": [
+        20,
+        8,
+        234,
+        232
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 54,
+      "reference_bbox_x2": [
+        12,
+        0,
+        244,
+        212
+      ],
+      "new_bbox": [
+        12,
+        0,
+        244,
+        212
+      ],
+      "not_equal_to_lanczos_upscale": true
+    },
+    {
+      "cell": 55,
+      "reference_bbox_x2": [
+        12,
+        0,
+        244,
+        212
+      ],
+      "new_bbox": [
+        12,
+        0,
+        244,
+        212
+      ],
+      "not_equal_to_lanczos_upscale": true
+    }
+  ],
+  "texture_edges": [
+    {
+      "file": "texture_kelp_0.png",
+      "wrap_x_MAE": 0.5224609375,
+      "wrap_y_MAE": 0.11848958333333333,
+      "interior_x_MAE": 0.7179484487007168,
+      "interior_y_MAE": 0.2818348556125774
+    },
+    {
+      "file": "texture_kelp_1.png",
+      "wrap_x_MAE": 0.9059244791666666,
+      "wrap_y_MAE": 0.0810546875,
+      "interior_x_MAE": 0.7042129332640925,
+      "interior_y_MAE": 0.2715731534090909
+    },
+    {
+      "file": "texture_kelp_2.png",
+      "wrap_x_MAE": 0.3889973958333333,
+      "wrap_y_MAE": 0.14583333333333334,
+      "interior_x_MAE": 0.7192689877606713,
+      "interior_y_MAE": 0.29676299283154123
+    },
+    {
+      "file": "texture_limestone_0.png",
+      "wrap_x_MAE": 0.033203125,
+      "wrap_y_MAE": 0.044921875,
+      "interior_x_MAE": 0.12222018572825025,
+      "interior_y_MAE": 0.40261103983382207
+    },
+    {
+      "file": "texture_limestone_1.png",
+      "wrap_x_MAE": 0.017578125,
+      "wrap_y_MAE": 0.10026041666666667,
+      "interior_x_MAE": 0.12070617974095797,
+      "interior_y_MAE": 0.4039996741609645
+    },
+    {
+      "file": "texture_limestone_2.png",
+      "wrap_x_MAE": 0.0234375,
+      "wrap_y_MAE": 0.029296875,
+      "interior_x_MAE": 0.12028806207233626,
+      "interior_y_MAE": 0.40417914019224505
+    },
+    {
+      "file": "texture_silt_0.png",
+      "wrap_x_MAE": 0.07356770833333333,
+      "wrap_y_MAE": 0.16829427083333334,
+      "interior_x_MAE": 0.030654961917562725,
+      "interior_y_MAE": 0.07533977629113718
+    },
+    {
+      "file": "texture_silt_1.png",
+      "wrap_x_MAE": 0.0234375,
+      "wrap_y_MAE": 0.0107421875,
+      "interior_x_MAE": 0.031237271912675137,
+      "interior_y_MAE": 0.07659922053193223
+    },
+    {
+      "file": "texture_silt_2.png",
+      "wrap_x_MAE": 0.029947916666666668,
+      "wrap_y_MAE": 0.013671875,
+      "interior_x_MAE": 0.031323822906484194,
+      "interior_y_MAE": 0.07651298774030629
+    }
+  ]
+}

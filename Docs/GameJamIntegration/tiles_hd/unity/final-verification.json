@@ -1,0 +1,566 @@
+{
+  "scene_sha256": "6e20265240179ca59a0c3a27a8cab88842cf6a8d604ae6b1327aa9362d3e784a",
+  "idempotent_scene_bytes": true,
+  "texture_sha256": "cb7f29e4fdf6ca93a8fe024a2af867c510a8e2821cf67f0f0f11b51276e21ed9",
+  "frozen_texture_unchanged": true,
+  "old_serialized_records": 118,
+  "new_serialized_records": 150,
+  "removed_records": [],
+  "changed_existing_records": [
+    {
+      "fileID": "822251685",
+      "classID": "1839735485"
+    },
+    {
+      "fileID": "9223372036854775807",
+      "classID": "1660057539"
+    }
+  ],
+  "only_tilemap_and_scene_roots_changed": true,
+  "old_cells": 695,
+  "new_cells": 695,
+  "identical_occupied_positions": true,
+  "identical_origin_size": true,
+  "repaint_result": "PASS unchanged existing component serialization=197; footprint=695; changed=0\ntile 1 = 102\ntile 0 = 58\ntile 31 = 5\ntile 25 = 17\ntile 28 = 9\ntile 26 = 8\ntile 3 = 413\ntile 21 = 2\ntile 22 = 1\ntile 17 = 1\ntile 2 = 35\ntile 29 = 10\ntile 24 = 18\ntile 23 = 4\ntile 27 = 6\ntile 20 = 2\ntile 30 = 4",
+  "build_result": {
+    "command": [
+      "E:/unity/Downloads/Editor/Unity.exe",
+      "-batchmode",
+      "-projectPath",
+      "E:\\gamejam_wt\\tiles_hd",
+      "-executeMethod",
+      "TapWindowsBuild.Build",
+      "-logFile",
+      "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\unity\\build.log",
+      "-quit",
+      "-tapbuildpath",
+      "Builds/Windows/TapTap26.exe"
+    ],
+    "exit_code": 0,
+    "editor_restored_before_supervisor": true,
+    "raw_restored_after_exit": true
+  },
+  "player_result": {
+    "command": [
+      "E:\\gamejam_wt\\tiles_hd\\Builds\\Windows\\TapTap26.exe",
+      "-tapselftest",
+      "-tapoutput",
+      "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\unity\\selftest",
+      "-screen-fullscreen",
+      "0",
+      "-screen-width",
+      "1920",
+      "-screen-height",
+      "1080",
+      "-logFile",
+      "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\unity\\selftest\\player.log"
+    ],
+    "exit_code": 0,
+    "player_restored_before_supervisor": true,
+    "post_exit_raw_restore": true,
+    "original_TAP_count": 0
+  },
+  "selftest_summary": "RESULT passed=534 failed=0",
+  "player_error_lines": [],
+  "player_exe_sha256": "2c392ecb0dac1e2e5211b488220e26b6c30dfde366d10ccfeb938cf572b856dc",
+  "unity_player_crashhandler_processes": [],
+  "images": [
+    {
+      "file": "BiomechanicalCombatScene-after-closeup.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "af790b297547b7bb38c496c910b3d86c9600264b494906b88ac6699bc73efa75"
+    },
+    {
+      "file": "BiomechanicalCombatScene-after-panorama.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "d511df24d7f9b81e90ecb5f322d7bc148f7b6795f639be7348125cbc0c546bb4"
+    },
+    {
+      "file": "BiomechanicalCombatScene-before-closeup.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "cc8473ef3c158ff6dd1751c1762222f72bea222a8afaaacaee20a3d581c468ff"
+    },
+    {
+      "file": "BiomechanicalCombatScene-before-panorama.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "69547c9237038f0ef98e52aa21e7ce5475ab35cf2897ffa5ae7a31debe6df733"
+    },
+    {
+      "file": "original-view.png",
+      "size": [
+        1024,
+        896
+      ],
+      "sha256": "b76c3f891be55b27533fbeeebc36f307a3e18d87446f3f9aeaef07668c8ceb13"
+    },
+    {
+      "file": "selftest\\finale-boss-emerges.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "9a9981f8f1f6d10007b51db10b33bed4b4ae151d570cb19ec457bde7104ac984"
+    },
+    {
+      "file": "selftest\\finale-corruption-days-1-4-7.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "fdb8686e7d9948c850b2a06159bd66ea8d8c6a02e1032f232f47f5c2c70fbfb7"
+    },
+    {
+      "file": "selftest\\finale-hero-full.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "5ad0d5aba2aed3c27a2b69851dbf679b34091b1cb24514e4a66a842209b6bc4c"
+    },
+    {
+      "file": "selftest\\finale-hero-low.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "2fa2ed4ef279d5a907b9a8e2e8025e62c9be38b811023788f2b0c216df35c9cb"
+    },
+    {
+      "file": "selftest\\finale-rift-open.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "becd06bd87e8704ecce54c84bba6c47595102c69d795c41796e20a61f4cea8e5"
+    },
+    {
+      "file": "selftest\\p1-combat.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "c83365659c8e104081c3aacb3660ae715ee835465390775ef46502aa15fc4e00"
+    },
+    {
+      "file": "selftest\\p2-boss.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "27be4a927e78865fac946de95e532f330e913c369e40d616fb6a14385179bae3"
+    },
+    {
+      "file": "selftest\\p2-full-idle.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "e66aa4e2bba3955eeec9e35abca192f041c3c5818c6e1c290db7508a08deaa7b"
+    },
+    {
+      "file": "selftest\\p2-full-walk.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "afe4a4726de902d55c462182b05a7fe4d0693d2d3e20c3d8ce8439f1ade95638"
+    },
+    {
+      "file": "selftest\\p2-gait-0.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "bbc71c227de14318541fa510ef65ed5838d1e614810a48055dbd493f24cbe568"
+    },
+    {
+      "file": "selftest\\p2-gait-1.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "0bc9e5cd1fd6eed33a74944852a06a59255cbf4fd118aba8a1da03d15c17f126"
+    },
+    {
+      "file": "selftest\\p2-gait-10.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "2c0752a6a68d712bb1e9276c0b7cace36189e9add57e86790e6d4299d4ca75d4"
+    },
+    {
+      "file": "selftest\\p2-gait-11.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "24b30cd89a01cc8ea7627aae89f8733bcd8537d5acaa5cf9383eb06a378544c7"
+    },
+    {
+      "file": "selftest\\p2-gait-12.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "1043dcb40fd49453e5a445e308ff74a1bd82ab6f252f20abb84e35adf7b9f51f"
+    },
+    {
+      "file": "selftest\\p2-gait-13.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "a1775ecb42a99567569d5a6a8bd5c1693875c70b9ded9b96b492b1cbd249dd54"
+    },
+    {
+      "file": "selftest\\p2-gait-14.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "e84653ac57873b3cf0078c8383d7163d569905fbdf6b15d5091e6c9ec6e92e7f"
+    },
+    {
+      "file": "selftest\\p2-gait-15.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "1f65bfa055c872797a2de949a4cad96a554184e62c470a698ee366ddd1eb3b6c"
+    },
+    {
+      "file": "selftest\\p2-gait-2.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "906298d2a34f697bd0995655b2b479c3c77086ef90933e9af6f25f35af4b6e9c"
+    },
+    {
+      "file": "selftest\\p2-gait-3.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "87b57fa788b940e438d04bb7f5c5942f21aafe1b056379a84df72ace61e88346"
+    },
+    {
+      "file": "selftest\\p2-gait-4.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "55da36f71cac764aa34cbbafea931f6a99a51a23b13eb171cd9b41b535476b88"
+    },
+    {
+      "file": "selftest\\p2-gait-5.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "4b22d2061fc83ae5eb8828343e7d571520a30dd1b8d9634da684e00490ce25c6"
+    },
+    {
+      "file": "selftest\\p2-gait-6.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "c39dd0c2e3c3b905344ba2526510b8f2bb1d65586a40925a79d04e488c63607a"
+    },
+    {
+      "file": "selftest\\p2-gait-7.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "414e57b213dbff18ecb5e2c83a8584e4f57379c8516c0703fcd1bda6aef45744"
+    },
+    {
+      "file": "selftest\\p2-gait-8.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "003ddc00063ea8ac00b2d546c9d610f9db4b412617486705c63951ddf26da245"
+    },
+    {
+      "file": "selftest\\p2-gait-9.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "00632d08922aac24e3a310195ddfda95b6911e928cf68bba70b6a179714b211a"
+    },
+    {
+      "file": "selftest\\p3-cancel-restored.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "031cd68033d63b0e4caff044cbe7a9581d1064f9e3a11ff7f5a952c501ad8f33"
+    },
+    {
+      "file": "selftest\\p3-double-cleave.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "dbc4eab9b229353484ed0ae25ef2628959fbb0f890f85cec9412064cfdf6954c"
+    },
+    {
+      "file": "selftest\\p3-giant-claw-emerge.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "c6a8b0ac77bf4417cb0d738434e3aeb891dc03167ff72e33ffb6245f986e42f8"
+    },
+    {
+      "file": "selftest\\p3-P1_Claw3.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "a49c69172ebe716bb0ae7b45dea9d47b25dff55237bfda3ba0c7b1c06fa64605"
+    },
+    {
+      "file": "selftest\\p3-P1_CloakSweep.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "8cd76d04ef7697af62904c8479874b871ddfbde6c975d8453d7a64f158eb2de5"
+    },
+    {
+      "file": "selftest\\p3-P1_LeapSlam.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "f20823a7a17c7a40280628609c154924f23ccc3f7e922939a3a4c1a685d7e85b"
+    },
+    {
+      "file": "selftest\\p3-P1_Lunge.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "0ba48495ce82b736f7b192b3df022ae321cd818f91c6071cc70b89f4906eba39"
+    },
+    {
+      "file": "selftest\\p3-P1_Wrap.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "7c0aad23182933a702daabfc99169748617921fdc69a967b76055bcea6cb0900"
+    },
+    {
+      "file": "selftest\\p3-P2_Claw5.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "f0547635acfa0986a9ccb2aa90f1830fbe95078a0922641cc8c5d4060fecab5a"
+    },
+    {
+      "file": "selftest\\p3-P2_EyeBeam.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "a7aabd6c03c6d480dc1471d89926c7d6a4080284b2c01dfb31eb77818a6f5159"
+    },
+    {
+      "file": "selftest\\p3-P2_SpinThrust.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "a8f042a024c5ed8788b9d98beb8558579a5c966d25ca3586f5e06a85ca38b4d9"
+    },
+    {
+      "file": "selftest\\p3-paused.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "3b1e7292e23f227b7e1e9468c7a5fa5dd356ce6efd10dd0783667c74401a42c8"
+    },
+    {
+      "file": "selftest\\p3-sigh-rift.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "8c146cdff1f0ce0549c8029e125e6ae44f65245a0cf950eec54ba1a75e5e4b9c"
+    },
+    {
+      "file": "selftest\\p3-sky-eye-locked.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "065850bbee139a5e9f4f2376f4d035d8d9f91d4288eaf7a77710eb87c741b387"
+    },
+    {
+      "file": "selftest\\p3-sky-eye.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "fc6d178d9ee9a284633114cd11a8dad5f871625ee26aa3ae67ee37349f1bc762"
+    },
+    {
+      "file": "selftest\\p3-transform.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "53f07934bf3e81be69d81010b68c96b533429a2bce4aa45d080b094b0ecabd15"
+    },
+    {
+      "file": "selftest\\p4-arm-impact.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "3dad70d84f66b906f24d2767fe113d11582315b3eb2e77b8284ec6f1be746aa5"
+    },
+    {
+      "file": "selftest\\p4-cannon-charge.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "c75ffae78a24cb10da5ef3f9dd891a1a18bfdad401c7db5a53a645097ce58889"
+    },
+    {
+      "file": "selftest\\p4-cannon-explosion.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "f0a692897e6c2298386e603ab06802691ded05a277bab4a3d4fce7ecd7deb60f"
+    },
+    {
+      "file": "selftest\\p4-echo-eight.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "577d2e074ba0ed5852ba55eb785f6840757896ffd25d8ceb304543c8dbe6a820"
+    },
+    {
+      "file": "selftest\\p4-echo-wave.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "88af96af6c5eacabad70797910a0c4f24444244fcedc9fe440a6c381972f61af"
+    },
+    {
+      "file": "selftest\\p4-picker.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "097012dcc16382e520d313aa8870c791eb948e9eed4795d510a8267d497126a2"
+    },
+    {
+      "file": "selftest\\p4-ready.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "277f4451f86932186f8e4ebfed2b204943ef81ae70f810cb666aeb9650fb3539"
+    },
+    {
+      "file": "selftest\\p5-bench.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "bdcfb2fca7e9b1fff059e1f99af3da6f777e2c8fd52023326616adfa45a24348"
+    },
+    {
+      "file": "selftest\\p5-logic-warning.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "47e9355356a6333daf0ea74ff3b1c33a73104e199126c72bfcad7d2d7b3c6892"
+    },
+    {
+      "file": "selftest\\p5-shell.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "7716987894bfe2e4ea5039d3722f326a07951674090a36ca4adde280cc789ef3"
+    },
+    {
+      "file": "selftest\\p5-water.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "4ba0227a405c86109616fcf1384bc315f9054115d6c98cfce8e2b89979931605"
+    },
+    {
+      "file": "selftest\\p6-collect-a.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "ba62acde5c2162d628da9fe5d9ca77b63b157205e33e54d3b1eddc4dac659ae6"
+    },
+    {
+      "file": "selftest\\p6-collect-b.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "1792f5bcbb8804bbae6a8b55d9c70c6bf54e4c24bf1d8e4647d922428c477734"
+    },
+    {
+      "file": "selftest\\p6-mix.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "e051e4be159fa6610905aee630b1d9141365f2a5ff552c6b658a9c56bdd35e26"
+    },
+    {
+      "file": "selftest\\p6-restored-hud.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "71fdefe5c771e42784582521911aa56a65fce81305544bb8cf2a7ec2cb52b015"
+    },
+    {
+      "file": "selftest\\target-after.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "52f1f1103b1654f82b8cbfa472777e9a59bcfad7a61ca62aca9dfe6afeec9250"
+    }
+  ],
+  "passed": true
+}

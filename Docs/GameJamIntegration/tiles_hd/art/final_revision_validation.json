@@ -1,0 +1,10 @@
+{
+  "sha256": "cb7f29e4fdf6ca93a8fe024a2af867c510a8e2821cf67f0f0f11b51276e21ed9",
+  "alpha_byte_identical_to_previous": true,
+  "props_byte_identical_to_previous": true,
+  "meta_sha256": "a96d3599814fe3e67494cdf9492d42c4b2bb23f36ae6ccbf91ba81f8f94db8ed",
+  "strict_top_original_geometry_min": 1.0,
+  "strict_whole_min": 1.0,
+  "shell_rgb_mean_before": 177.6666666666667,
+  "shell_rgb_mean_after": 62.69411508756663
+}
