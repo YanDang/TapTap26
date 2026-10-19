@@ -251,6 +251,7 @@ public static class PlayerSessionData
     {
         reason = "";
         if (runProgress.finished) { reason = "本局已结算"; return false; }
+        if (GameRunProgress.FinalBossRequired) { reason = GameRunProgress.FinalBossRequiredMessage; return false; }
         if (!Application.isPlaying || player == null || !player.IsAlive)
             reason = "存活时才能休息";
         else if (IsCombatInputBlocked)
@@ -315,7 +316,7 @@ public static class PlayerSessionData
         int newDay = greenhouse.day;
         string dangerTitle = GetDangerLevelLabel(newDay);
         float hpBonus = (newDay - 1) * 20f;
-        float dmgBonus = (newDay - 1) * 15f;
+        float dmgBonus = (newDay - 1) * 8f;
 
         message = $"已到第 {newDay} 天 · 危险度:【{dangerTitle}】· 生命已补满";
 

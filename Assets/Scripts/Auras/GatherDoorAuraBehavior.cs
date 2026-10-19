@@ -50,7 +50,7 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     public bool IsFinalRift => IsInitialDoor && PlayerSessionData.greenhouse != null &&
         PlayerSessionData.greenhouse.day >= GameRunProgress.FinalDay && !FinalBossDefeated;
     public bool FinalSummoning => finalIntro && finalIntro.Running;
-    public bool FinalBossDefeated { get; private set; }
+    public bool FinalBossDefeated => GameRunProgress.Data.finalBossDefeated;
     public int FinalSummons { get; private set; }
     public string PromptText => promptTextMesh ? promptTextMesh.text : "";
     BossDoorIntro finalIntro;
@@ -65,7 +65,10 @@ public class GatherDoorAuraBehavior : BiomechanicalAuraBase
     }
     void OnFinalBossDefeated(EnemyController enemy)
     {
-        FinalBossDefeated = true; // Only real death counts, never cancellation/destruction/unload.
+        // Only the initial portal's tracked boss death counts, never developer spawns or unload.
+        if (enemy != finalBoss || !IsInitialDoor) return;
+        GameRunProgress.Data.finalBossDefeated = true;
+        PlayerSessionData.SaveBackpackToStorage();
         enemy.Died -= OnFinalBossDefeated;
         finalBoss = null;
         UpdatePromptText();

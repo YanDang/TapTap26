@@ -26,6 +26,7 @@ public class RunProgressData
 {
     public int energy = 8;
     public bool finished;
+    public bool finalBossDefeated;
     public int finalFurnitureCount;
     public List<string> pendingDoors = new List<string>();
     public List<DoorTrialProgress> trials = new List<DoorTrialProgress>();
@@ -41,6 +42,8 @@ public static class GameRunProgress
     public const int HomeTarget = 8;
     public static bool WorldReady { get; set; }
     public static RunProgressData Data => PlayerSessionData.runProgress;
+    public const string FinalBossRequiredMessage = "终焉海神尚未被击败——去北边的终焉裂隙之门";
+    public static bool FinalBossRequired => PlayerSessionData.greenhouse.day >= FinalDay && !Data.finalBossDefeated;
     public static string EndingTitle(int count) => count >= HomeTarget ? "安家" : count >= 4 ? "暂时落脚" : "仍在漂泊";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -188,6 +191,13 @@ public static class GameRunProgress
     public static void Finish()
     {
         if (Data.finished) return;
+        if (FinalBossRequired)
+        {
+            var player = PlayerController.Instance;
+            if (player && DamageTextManager.Instance)
+                DamageTextManager.Instance.ShowText(player.transform.position + Vector3.up, FinalBossRequiredMessage, Color.white);
+            return;
+        }
         CaptureWorld();
         Data.finalFurnitureCount = CountFurniture();
         Data.finished = true;

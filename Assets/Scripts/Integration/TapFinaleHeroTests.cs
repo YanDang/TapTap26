@@ -22,6 +22,24 @@ public static class TapFinaleHeroTests
         var corners=new Vector3[4]; rt.GetWorldCorners(corners);
         return Rect.MinMaxRect(corners[0].x,corners[0].y,corners[2].x,corners[2].y);
     }
+    static void CheckOverheadBars(PlayerController player, Action<bool,string> check)
+    {
+        // Include inactive descendants: hiding the old HP quads is not removal.
+        bool hasHpQuad=false;
+        foreach(var child in player.GetComponentsInChildren<Transform>(true))
+            hasHpQuad |= child.name=="HP_BG" || child.name=="HP_Fill";
+        check(!hasHpQuad,"B2 player has no overhead HP background or fill including inactive descendants");
+        var root=player.transform.Find("Player_HPBar");
+        check(root,"FINALE shared overhead root retained for stamina");
+        if(!root)return;
+        foreach(var name in new[]{"Stamina_BG","Stamina_Fill"})
+        {
+            var child=root.Find(name);
+            var renderer=child?child.GetComponent<MeshRenderer>():null;
+            check(child && child.gameObject.activeInHierarchy && renderer && renderer.enabled,
+                "FINALE overhead stamina retained and visible: "+name);
+        }
+    }
     public static IEnumerator Run(Action<bool,string> check)
     {
         var p=PlayerController.Instance;
@@ -39,7 +57,7 @@ public static class TapFinaleHeroTests
         {
             GearInventory.ResetAll();
             check(Near(p.maxHp,100),"FINALE hero remains 100 HP");
-            check(p.transform.Find("Player_HPBar"),"FINALE original overhead HP bar retained");
+            CheckOverheadBars(p,check);
             p.currentHp=p.maxHp;bar.Tick(0);p.TakeDamage(20,null,false);bar.Tick(0);
             check(Near(p.currentHp,80) && bar.Caption=="80 / 100","FINALE real damage displays 80 / 100");
             check(bar.GhostFraction>bar.FillFraction && bar.DamageFlash>0,"FINALE damage ghost and flash start");
@@ -98,6 +116,7 @@ public static class TapFinaleHeroTests
             foreach(int value in new[]{100,25})
             {
                 p.currentHp=value;bar.Tick(2);yield return null;yield return new WaitForEndOfFrame();
+                CheckOverheadBars(p,(ok,message)=>{if(!ok)throw new InvalidOperationException(message);});
                 var texture=ScreenCapture.CaptureScreenshotAsTexture();
                 try { File.WriteAllBytes(Path.Combine(directory,value==100?"finale-hero-full.png":"finale-hero-low.png"),texture.EncodeToPNG()); }
                 finally { UnityEngine.Object.Destroy(texture); }

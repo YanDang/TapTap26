@@ -202,11 +202,9 @@ public class PlayerController : MonoBehaviour
     private EnemyController grabberEnemy = null;
     private float rollCooldownTimer = 0f;
 
-    // 玩家头顶血条、精力条与状态监视
+    // 玩家头顶仅保留精力条；HP 由 HUD 显示。保留共用根节点名称。
     private GameObject playerHpBarRoot;
-    private Transform playerHpBarFill;
     private Transform playerStaminaBarFill;
-    private MeshRenderer playerHpFillMr;
     private bool isDefeatedRoutineRunning = false;
     private float rollSafetyTimer = 0f;
     private float thrownSafetyTimer = 0f;
@@ -3019,28 +3017,7 @@ public class PlayerController : MonoBehaviour
 
         var unlitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
 
-        var hpBg = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        hpBg.name = "HP_BG";
-        hpBg.transform.SetParent(playerHpBarRoot.transform, false);
-        hpBg.transform.localScale = new Vector3(0.75f, 0.085f, 1f);
-        Destroy(hpBg.GetComponent<Collider>());
-        var hpBgMr = hpBg.GetComponent<MeshRenderer>();
-        if (unlitShader != null) hpBgMr.material = new Material(unlitShader);
-        hpBgMr.material.color = new Color(0.1f, 0.12f, 0.16f, 0.95f);
-        hpBgMr.sortingOrder = 30;
-
-        var hpFill = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        hpFill.name = "HP_Fill";
-        hpFill.transform.SetParent(playerHpBarRoot.transform, false);
-        hpFill.transform.localPosition = new Vector3(0f, 0f, -0.01f);
-        hpFill.transform.localScale = new Vector3(0.71f, 0.065f, 1f);
-        Destroy(hpFill.GetComponent<Collider>());
-        playerHpFillMr = hpFill.GetComponent<MeshRenderer>();
-        if (unlitShader != null) playerHpFillMr.material = new Material(unlitShader);
-        playerHpFillMr.material.color = new Color(0.25f, 0.9f, 0.35f, 1f);
-        playerHpFillMr.sortingOrder = 31;
-        playerHpBarFill = hpFill.transform;
-
+        // HP is displayed by the screen-space HUD; keep the shared stamina root only.
         var staBg = GameObject.CreatePrimitive(PrimitiveType.Quad);
         staBg.name = "Stamina_BG";
         staBg.transform.SetParent(playerHpBarRoot.transform, false);
@@ -3074,18 +3051,7 @@ public class PlayerController : MonoBehaviour
             playerHpBarRoot.transform.rotation = camToFace.transform.rotation;
         }
 
-        float hpRatio = Mathf.Clamp01(currentHp / Mathf.Max(maxHp, 1f));
         float staRatio = Mathf.Clamp01(currentStamina / Mathf.Max(maxStamina, 1f));
-
-        if (playerHpBarFill != null)
-        {
-            playerHpBarFill.localScale = new Vector3(0.71f * hpRatio, 0.065f, 1f);
-            playerHpBarFill.localPosition = new Vector3(-0.71f * 0.5f * (1f - hpRatio), 0f, -0.01f);
-            if (playerHpFillMr != null)
-            {
-                playerHpFillMr.material.color = Color.Lerp(new Color(0.95f, 0.2f, 0.2f), new Color(0.25f, 0.9f, 0.35f), hpRatio);
-            }
-        }
 
         if (playerStaminaBarFill != null)
         {

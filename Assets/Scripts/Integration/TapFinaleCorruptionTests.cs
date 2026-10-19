@@ -10,7 +10,7 @@ public static class TapFinaleCorruptionTests
     public static void Numbers(Action<bool, string> check)
     {
         int[] days = { 1, 4, 7 };
-        float[] hp = { 100, 175, 250 }, hit = { 15, 20.4f, 25.8f }, grab = { 10, 13.6f, 17.2f };
+        float[] hp = { 100, 160, 220 }, hit = { 15, 18.6f, 22.2f }, grab = { 10, 12.4f, 14.8f };
         for (int i = 0; i < days.Length; i++)
         {
             int level = TapCorruptionRules.LevelForDay(days[i]);
@@ -43,8 +43,8 @@ public static class TapFinaleCorruptionTests
                     float baseHp = e.maxHp, baseHit = e.attackDamage, baseGrab = e.grabDamage;
                     yield return null; // actual Start, not direct Apply only
                     var c = e.GetComponent<TapCorruption>();
-                    float hm = day == 1 ? 1 : day == 4 ? 1.75f : 2.5f;
-                    float dm = day == 1 ? 1 : day == 4 ? 1.36f : 1.72f;
+                    float hm = day == 1 ? 1 : day == 4 ? 1.6f : 2.2f;
+                    float dm = day == 1 ? 1 : day == 4 ? 1.24f : 1.48f;
                     check(c && c.Level == day - 1, "FINALE all spawn routes attach day " + day + " kind " + kind);
                     check(Near(e.maxHp, baseHp * hm) && Near(e.currentHp, e.maxHp), "FINALE real spawn HP");
                     check(Near(e.DamageToPlayer(baseHit), baseHit * dm) && Near(e.DamageToPlayer(baseGrab), baseGrab * dm), "FINALE both player damage routes");
@@ -70,9 +70,9 @@ public static class TapFinaleCorruptionTests
                 var elite = EnemyController.CreateEnemyInstance(new Vector3(100, 120, 0)); owned.Add(elite);
                 elite.ExternalAI = (entity, dt) => { }; elite.ApplyDayDifficulty(day, true);
                 yield return null;
-                check(Near(elite.maxHp, 135 * (day == 1 ? 1 : day == 4 ? 1.75f : 2.5f)), "FINALE elite HP only one daily factor");
-                check(Near(elite.DamageToPlayer(elite.attackDamage), day == 1 ? 18.75f : day == 4 ? 25.5f : 32.25f) &&
-                    Near(elite.DamageToPlayer(elite.grabDamage), day == 1 ? 12.5f : day == 4 ? 17f : 21.5f), "FINALE elite hit and grab preserve elite multiplier once");
+                check(Near(elite.maxHp, 135 * (day == 1 ? 1 : day == 4 ? 1.6f : 2.2f)), "FINALE elite HP only one daily factor");
+                check(Near(elite.DamageToPlayer(elite.attackDamage), day == 1 ? 18.75f : day == 4 ? 23.25f : 27.75f) &&
+                    Near(elite.DamageToPlayer(elite.grabDamage), day == 1 ? 12.5f : day == 4 ? 15.5f : 18.5f), "FINALE elite hit and grab preserve elite multiplier once");
                 float before = elite.maxHp; elite.ApplyDayDifficulty(day, true);
                 check(Near(before, elite.maxHp), "FINALE elite difficulty idempotent");
             }
@@ -85,7 +85,7 @@ public static class TapFinaleCorruptionTests
             respawn.TakeDamage(10000, 0, respawn.transform.position);
             float reviveDeadline = Time.realtimeSinceStartup + 8;
             while (!respawn.IsAlive && Time.realtimeSinceStartup < reviveDeadline) yield return null;
-            check(respawn.IsAlive && Near(respawn.maxHp, 250) && Near(respawn.currentHp, 250) && respawn.Corruption.Level == 6,
+            check(respawn.IsAlive && Near(respawn.maxHp, 220) && Near(respawn.currentHp, 220) && respawn.Corruption.Level == 6,
                 "FINALE real respawn refreshes current day once");
             yield return DamageRoutes(check);
             greenhouse.day = 7;
@@ -148,7 +148,7 @@ public static class TapFinaleCorruptionTests
                 e.aiState = EnemyController.EnemyAIState.Attack; e.normalImpact = 0;
                 field("targetPlayer", p); field("stateTimer", 0f); field("impactDone", false);
                 typeof(EnemyController).GetMethod("UpdateAttackState", flags).Invoke(e, new object[] { 0f });
-                check(Near(before - p.currentHp, day == 1 ? 15 : day == 4 ? 20.4f : 25.8f), "FINALE actual normal impact HP loss day " + day);
+                check(Near(before - p.currentHp, day == 1 ? 15 : day == 4 ? 18.6f : 22.2f), "FINALE actual normal impact HP loss day " + day);
                 e.transform.position = originalPosition + Vector3.right * 100;
                 deadline = Time.realtimeSinceStartup + 6;
                 while ((!p.CanBeginUltimate || p.IsInvulnerable) && Time.realtimeSinceStartup < deadline) yield return null;
@@ -159,7 +159,7 @@ public static class TapFinaleCorruptionTests
                     e.aiState = EnemyController.EnemyAIState.Grabbing;
                     field("stateTimer", 0f); field("grabTickTimer", 0f); before = p.currentHp;
                     typeof(EnemyController).GetMethod("UpdateGrabbingState", flags).Invoke(e, new object[] { 0f });
-                    check(Near(before - p.currentHp, day == 1 ? 10 : day == 4 ? 13.6f : 17.2f), "FINALE actual grab tick HP loss day " + day);
+                    check(Near(before - p.currentHp, day == 1 ? 10 : day == 4 ? 12.4f : 14.8f), "FINALE actual grab tick HP loss day " + day);
                     p.ThrowFrom(e);
                 }
                 UnityEngine.Object.Destroy(e.gameObject); e = null;
