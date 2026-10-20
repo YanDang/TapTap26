@@ -962,7 +962,7 @@ public class PlayerController : MonoBehaviour
                 {
                     DealDamage(e, dmg, gb);
                     Vector3 knockDir = (e.transform.position - transform.position).normalized;
-                    e.Displace(knockDir, 0.35f + 0.45f * lv, this);
+                    e.Displace(knockDir, (0.35f + 0.45f * lv) * (TapCombatFeel.On ? TapCombatFeel.WorldScale : 1f), this);   // gamejam 手感：按世界尺度换算
                 }
             }
         }
@@ -2265,6 +2265,7 @@ public class PlayerController : MonoBehaviour
         }
 
         bool isExecution = (currentTarget != null && currentTarget.IsStaggered);
+        string comboClip = null;
 
         if (hero != null)
         {
@@ -2278,6 +2279,7 @@ public class PlayerController : MonoBehaviour
             {
                 if (Time.time - lastAttackTime > 1.2f) comboStep = 0;
                 string clip = comboStep == 0 ? "Sweep" : (comboStep == 1 ? "Thrust" : "Stomp");
+                comboClip = clip;
                 hero.Play(clip);
                 hero.Face?.TriggerAngry();
                 comboStep = (comboStep + 1) % 3;
@@ -2291,6 +2293,25 @@ public class PlayerController : MonoBehaviour
 
         float dmg = isExecution ? CurrentAttackDamage * 2.5f : CurrentAttackDamage;
         float guardBreak = isExecution ? CurrentGuardBreakPower * 2.5f : CurrentGuardBreakPower;
+
+        // gamejam 手感（TapCombatFeel）：挥空音效在出招时，伤害 / 光弧落在动画判定帧
+        bool feel = TapCombatFeel.On && hero != null && comboClip != null;
+        if (feel)
+        {
+            Sfx.Play("sfx_swing", 0.6f);
+            float waited = 0f;
+            while (hero != null && hero.Playing && hero.T < hero.Hit && waited < 0.6f)
+            {
+                if (isRolling || Unavailable || UltimateLocked) { isAttackingAnim = false; yield break; }   // 判定前被翻滚 / 受控打断：这一下不算
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+            if (currentTarget != null && currentTarget.IsAlive)
+            {
+                attackDir = (currentTarget.transform.position - transform.position).normalized;
+                if (attackDir.sqrMagnitude < 0.01f) attackDir = IsFacingLeft ? Vector3.left : Vector3.right;
+            }
+        }
 
         // 生成斩击光弧或重砸特效
         SpawnSlashEffect(attackDir, isExecution);
@@ -2308,12 +2329,30 @@ public class PlayerController : MonoBehaviour
             {
                 // 造成伤害并削弱破防值
                 float hpBefore=currentTarget.currentHp;
+                var hitEnemy = currentTarget;
                 DealDamage(currentTarget, dmg, guardBreak);
                 if(currentTarget && currentTarget.currentHp<hpBefore) Gear?.NormalHit(currentTarget);
+                if (feel && hitEnemy != null && hitEnemy.IsAlive && comboClip == "Stomp")
+                    hitEnemy.Knockback(attackDir, TapCombatFeel.StompKnock * TapCombatFeel.WorldScale);   // 第三下踩踏推得更远
 
                 // 命中敌人恢复 8 点精力
                 currentStamina = Mathf.Min(maxStamina, currentStamina + 8f);
             }
+        }
+
+        if (feel && comboClip == "Stomp")
+        {
+            CameraRig.I?.Shake(0.2f, 0.25f);
+            Sfx.Play("sfx_kick", 0.8f);
+        }
+
+        if (feel)
+        {
+            // 收招跟着动画走：动画放完（最多 0.3 s）才能接下一个动作
+            float rest = 0f;
+            while (hero != null && hero.Playing && rest < 0.3f) { rest += Time.unscaledDeltaTime; yield return null; }
+            isAttackingAnim = false;
+            yield break;
         }
 
         yield return new WaitForSeconds(0.12f);
@@ -2466,6 +2505,7 @@ public class PlayerController : MonoBehaviour
 
             // 等待出拳命中时刻 (HeroActions.punchHitT = 0.42s)
             yield return new WaitForSeconds(0.42f);
+            if (TapCombatFeel.On) GameJam.TimeManager.I?.DoHitstop(TapCombatFeel.PunchHitstop);   // gamejam：反击拳 0.12 s 顿帧
             CameraRig.I?.Shake(0.5f, 0.4f);
             ScreenFX.I?.Pulse();
             Sfx.Play("sfx_explosion");
@@ -2481,6 +2521,8 @@ public class PlayerController : MonoBehaviour
                 {
                     gearFirstHits.Add(e);
                     DealDamage(e, CurrentAttackDamage * (1.25f + (GameJam.Gear.TapGearCombat.Lv("arm_spring")>0?1f:0f)), CurrentGuardBreakPower * 1.2f);
+                    if (TapCombatFeel.On && e != null && e.IsAlive)
+                        e.Knockback(e.transform.position - punchTarget + (e.transform.position - transform.position) * 0.01f, 0.8f * TapCombatFeel.WorldScale);   // gamejam：反击拳击退 0.8
                 }
             }
 

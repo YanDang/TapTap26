@@ -93,6 +93,7 @@ public sealed class TapSelfTest : MonoBehaviour
         float dodgeDeadline=Time.realtimeSinceStartup+5f;
         while(p.IsInvulnerable && Time.realtimeSinceStartup<dodgeDeadline) yield return null;
         Check(!p.IsInvulnerable,"dodge plus existing counter-punch ends without stuck invulnerability");
+        if (!baseline && Array.IndexOf(Environment.GetCommandLineArgs(),"-tapnofeel")<0) yield return TapFeelTests.Run(Check);   // gamejam 手感对齐（-tapbaseline / -tapnofeel 时不装）
         yield return TapP6Tests.Run(Check);
         yield return TapGearTests.Run(Check);
         yield return CombatTests(p);
@@ -143,7 +144,11 @@ public sealed class TapSelfTest : MonoBehaviour
         var policy=new RegressionPolicy(); e.CombatPolicy=policy;
         int ticks=0; e.ExternalAI=(enemy,dt)=>ticks++;
         Vector3 origin=e.transform.position;
+        // 上一组装备自测的闪避反击拳可能刚好落在这里，它的顿帧（TapCombatFeel 0.12 s）按设计会暂停外部 AI——等顿帧过去再观察两帧
+        float hitstopWait=Time.realtimeSinceStartup+1f;
+        while(GameJam.TimeManager.Hitstop && Time.realtimeSinceStartup<hitstopWait) yield return null;
         yield return null; yield return null;
+        Debug.Log($"[P1] external AI ticks={ticks} moved={(e.transform.position-origin).magnitude:R} registered={EnemyController.AllEnemies.Contains(e)} hitstop={GameJam.TimeManager.Hitstop}");
         Check(ticks>0 && e.transform.position==origin && EnemyController.AllEnemies.Contains(e),"P1 external AI sole owner stays registered");
         EnemyController.isAIPaused=true; int previous=ticks;
         yield return null; yield return null;
@@ -210,6 +215,9 @@ public sealed class TapSelfTest : MonoBehaviour
         typeof(PlayerController).GetMethod("DoSmash",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(p,new object[]{0f,Vector3.right,e});
         Check(e.currentHp<beforeSmash && hits==beforeHits+1 && e.transform.position==smashOrigin,"P1 real smash damage event and displacement resistance");
         yield return new WaitForSecondsRealtime(0.2f);
+        // TapCombatFeel 下普攻伤害落在动画判定帧（≈0.2 s 后）：等这 0.2 s 里自动出的那一刀落完，再计数
+        float attackWait=Time.realtimeSinceStartup+1.5f;
+        while(GetPrivate<bool>(p,"isAttackingAnim") && Time.realtimeSinceStartup<attackWait) yield return null;
         p.currentTarget=e; beforeHits=hits;
         yield return (IEnumerator)typeof(PlayerController).GetMethod("PerformAttackRoutine",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(p,null);
         Check(hits==beforeHits+1,"P1 real normal attack emits damage event");

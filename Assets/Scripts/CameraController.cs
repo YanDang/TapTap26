@@ -70,6 +70,12 @@ public class CameraController : MonoBehaviour
     private Coroutine shakeCoroutine;
     private Vector3 shakeOffset = Vector3.zero;
 
+    // gamejam 手感（TapCombatFeel 设置；默认 0 / false = 原逻辑）
+    [System.NonSerialized] public float feelFollowRate;        // >0：跟随玩家时用指数跟随（1 - e^(-rate·dt)）代替 SmoothDamp
+    [System.NonSerialized] public bool perlinShake;            // true：38 Hz Perlin 噪声震屏，强的覆盖弱的
+    [System.NonSerialized] public float shakeReferenceSize;    // >0：震屏强度乘 正交尺寸 / 它（镜头拉近后屏幕上的强度不变）
+    float perlinAmp, perlinDur, perlinT;
+
     void Awake()
     {
         Instance = this;
@@ -113,6 +119,13 @@ public class CameraController : MonoBehaviour
     {
         if (PlayerSessionData.isCraftingOpen || Time.timeScale <= 0.0001f)
         {
+            // gamejam 手感：顿帧（timeScale = 0）期间震屏照常按真实时间抖，冲击感主要就在这几帧
+            if (perlinShake && !PlayerSessionData.isCraftingOpen && GameJam.TimeManager.Hitstop)
+            {
+                Vector3 basePos = transform.position - shakeOffset;
+                UpdatePerlinShake();
+                transform.position = basePos + shakeOffset;
+            }
             return;
         }
 
@@ -351,8 +364,23 @@ public class CameraController : MonoBehaviour
             targetPosition.y = Mathf.Clamp(targetPosition.y, minBounds.y, maxBounds.y);
         }
 
+        if (perlinShake)
+        {
+            Vector3 basePos = transform.position - shakeOffset;    // 先按旧偏移还原镜头本体位置，再换新偏移
+            UpdatePerlinShake();
+            transform.position = basePos + shakeOffset;
+        }
+
         // 阻尼过渡
-        if (panSmoothTime > 0.001f)
+        if (feelFollowRate > 0f && followPlayer && targetToFollow != null && !isMouseDragging && !isTouchDragging)
+        {
+            float k = 1f - Mathf.Exp(-feelFollowRate * Mathf.Min(Time.unscaledDeltaTime, 0.05f));
+            Vector3 newPos = Vector3.Lerp(transform.position - shakeOffset, targetPosition, k);
+            panVelocity = Vector3.zero;
+            if (!float.IsNaN(newPos.x) && !float.IsNaN(newPos.y) && !float.IsNaN(newPos.z))
+                transform.position = newPos + shakeOffset;
+        }
+        else if (panSmoothTime > 0.001f)
         {
             Vector3 newPos = Vector3.SmoothDamp(transform.position - shakeOffset, targetPosition, ref panVelocity, panSmoothTime);
             if (!float.IsNaN(newPos.x) && !float.IsNaN(newPos.y) && !float.IsNaN(newPos.z))
@@ -384,6 +412,12 @@ public class CameraController : MonoBehaviour
     /// </summary>
     public void Shake(float duration, float magnitude)
     {
+        if (perlinShake)
+        {
+            float remaining = perlinAmp * Mathf.Clamp01(1f - perlinT / Mathf.Max(perlinDur, 1e-3f));
+            if (perlinT >= perlinDur || magnitude >= remaining) { perlinAmp = magnitude; perlinDur = duration; perlinT = 0f; }
+            return;
+        }
         if (shakeCoroutine != null) StopCoroutine(shakeCoroutine);
         shakeCoroutine = StartCoroutine(DoShake(duration, magnitude));
     }
@@ -402,6 +436,20 @@ public class CameraController : MonoBehaviour
         }
         shakeOffset = Vector3.zero;
         shakeCoroutine = null;
+    }
+
+    void UpdatePerlinShake()
+    {
+        Vector3 offset = Vector3.zero;
+        if (perlinT < perlinDur)
+        {
+            perlinT += Mathf.Min(Time.unscaledDeltaTime, 0.05f);
+            float k = perlinAmp * Mathf.Clamp01(1f - perlinT / perlinDur);
+            if (shakeReferenceSize > 0f && cam != null) k *= cam.orthographicSize / shakeReferenceSize;
+            float n = Time.unscaledTime * 38f;
+            offset = new Vector3((Mathf.PerlinNoise(n, 0.3f) - 0.5f) * 2f * k, (Mathf.PerlinNoise(0.7f, n) - 0.5f) * 2f * k, 0f);
+        }
+        if (shakeCoroutine == null) shakeOffset = offset;
     }
 
     /// <summary>

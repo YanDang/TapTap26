@@ -415,6 +415,12 @@ public class EnemyController : MonoBehaviour
     private Color flashColor = Color.white;
     private Vector3 knockVel = Vector3.zero;
 
+    // gamejam 手感（TapCombatFeel 设置；默认 = 原逻辑）
+    public const float OriginalHitKnock = 0.18f;
+    public static float DefaultHitKnock = OriginalHitKnock;   // 普通受击的击退距离
+    public static float HitReactSeconds;                      // >0：被打断时停下 N 秒（受击硬直）
+    float hitReactTimer;
+
     // 寻路航点
     private readonly List<Vector3> waypoints = new List<Vector3>();
     private int currentWaypointIndex = 0;
@@ -988,6 +994,15 @@ public class EnemyController : MonoBehaviour
                 transform.position = cand;
             }
             knockVel *= Mathf.Exp(-8f * Time.deltaTime);
+        }
+
+        // gamejam 手感：受击硬直——停在原地（击退照常滑完），不追不打
+        if (hitReactTimer > 0f)
+        {
+            hitReactTimer -= Time.deltaTime;
+            SetMoveAnimation(false);
+            if (squid != null) squid.energy = 0.25f;
+            return;
         }
 
         if (squid != null)
@@ -1861,7 +1876,7 @@ public class EnemyController : MonoBehaviour
         if (damage < 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return;
 
         Flash(Color.white, 0.12f);
-        Knockback((transform.position - attackerPos).normalized, 0.18f);
+        Knockback((transform.position - attackerPos).normalized, DefaultHitKnock);
 
         // 如果在被安抚中挨打，醒过来
         if (aiState == EnemyAIState.Pacified || isPacified)
@@ -1880,6 +1895,11 @@ public class EnemyController : MonoBehaviour
                 currentClock = null;
             }
             aiState = EnemyAIState.Chase;
+            if (HitReactSeconds > 0f && AllowsControl(EnemyControlKind.Stagger))
+            {
+                hitReactTimer = HitReactSeconds;
+                if (squid != null) squid.Interrupt();      // 触手的出招动作也收回来
+            }
 
             // 检查伤害来源：如果当前在攻击家具，只有受到来自玩家的主动攻击时才转火玩家
             // （避免家具的反伤、陷阱、光环等持续触发清空家具目标并狂跳放弃追击）
