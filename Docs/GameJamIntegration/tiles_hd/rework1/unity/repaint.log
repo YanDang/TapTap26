@@ -1,0 +1,350 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Channel LicenseClient-ROG doesn't exist
+[Licensing::Module] Successfully launched the LicensingClient (PId: 31948)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-ROG" at "2026-10-20T03:20:52.4945376Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 31948, path: "E:/unity/Downloads/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.16.1+e780b2e
+  Session Id:              3d16637edcbb4f2d8c205d8bbf4ee7d3
+  Correlation Id:          646b18e90368a6d46d45fbae3804100b
+  External correlation Id: 7701036411954512456
+  Machine Id:              0G9WhLrTPYaYssprnz4Q+XuP49M=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-ROG" (connect: 0.57s, validation: 0.04s, handshake: 0.03s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-ROG-notifications" at "2026-10-20T03:20:52.5734788Z"
+[Licensing::Module] Connected to LicensingClient (PId: 31948, launch time: 0.00, total connection time: 0.64s)
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
+[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
+Built from '2022.3/staging' branch; Version is '2022.3.57f1 (9d8bd91adc0a) revision 10324953'; Using compiler version '192829333'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26200) 64bit CoreCountrySpecific' Language: 'zh' Physical Memory: 32124 MB
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Serial number assigned to: "2476039388065-UnityPersXXXX"
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1, IsPro: 0
+[Licensing::Client] Successfully resolved entitlement details
+
+COMMAND LINE ARGUMENTS:
+E:/unity/Downloads/Editor/Unity.exe
+-batchmode
+-projectPath
+E:\gamejam_wt\tiles_hd
+-executeMethod
+TilesHD.RepaintMap.Repaint
+-logFile
+E:\gamejam_wt\tiles_hd\Docs\GameJamIntegration\tiles_hd\rework1\unity\repaint.log
+-quit
+Successfully changed project path to: E:\gamejam_wt\tiles_hd
+E:/gamejam_wt/tiles_hd
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gfx=262144"
+Player connection [39972]  Target information:
+
+Player connection [39972]  * "[IP] 172.19.0.0 [Port] 55504 [Flags] 2 [Guid] 3701899250 [EditorId] 3701899250 [Version] 1048832 [Id] WindowsEditor(7,LAPTOP-7U6RN08T) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [39972]  * "[IP] 192.168.1.9 [Port] 55504 [Flags] 2 [Guid] 3701899250 [EditorId] 3701899250 [Version] 1048832 [Id] WindowsEditor(7,LAPTOP-7U6RN08T) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [39972] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [39972] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[PhysX] Initialized MultithreadedTaskDispatcher with 24 workers.
+[Package Manager] UpmClient::Connect -- Connected to IPC stream "Upm-33036" after 0.3 seconds.
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 61 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.collab-proxy@2.12.4 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.collab-proxy@2.12.4)
+    com.unity.ide.rider@3.0.36 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.ide.rider@3.0.36)
+    com.unity.ide.visualstudio@2.0.22 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.ide.visualstudio@2.0.22)
+    com.unity.test-framework@1.1.33 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.test-framework@1.1.33)
+    com.unity.textmeshpro@3.0.7 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.textmeshpro@3.0.7)
+    com.unity.timeline@1.7.7 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.timeline@1.7.7)
+    com.unity.visualscripting@1.9.4 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.visualscripting@1.9.4)
+    com.unity.ext.nunit@1.0.6 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.ext.nunit@1.0.6)
+    com.unity.mathematics@1.2.6 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.mathematics@1.2.6)
+    com.unity.burst@1.8.18 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.burst@1.8.18)
+    com.unity.2d.animation@9.1.3 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.2d.animation@9.1.3)
+    com.unity.2d.pixel-perfect@5.0.3 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.2d.pixel-perfect@5.0.3)
+    com.unity.2d.psdimporter@8.0.5 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.2d.psdimporter@8.0.5)
+    com.unity.2d.spriteshape@9.0.5 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.2d.spriteshape@9.0.5)
+    com.unity.2d.tilemap.extras@3.1.3 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.2d.tilemap.extras@3.1.3)
+    com.unity.2d.aseprite@1.1.8 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.2d.aseprite@1.1.8)
+    com.unity.nuget.newtonsoft-json@3.2.1 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.nuget.newtonsoft-json@3.2.1)
+    com.unity.searcher@4.9.2 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.searcher@4.9.2)
+    com.unity.2d.common@8.0.4 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.2d.common@8.0.4)
+    com.unity.collections@1.2.4 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.collections@1.2.4)
+  Built-in packages:
+    com.unity.feature.2d@2.0.1 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.feature.2d@2.0.1)
+    com.unity.render-pipelines.universal@14.0.11 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.render-pipelines.universal@14.0.11)
+    com.unity.ugui@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.ugui@1.0.0)
+    com.unity.modules.ai@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.ai@1.0.0)
+    com.unity.modules.androidjni@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.androidjni@1.0.0)
+    com.unity.modules.animation@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.animation@1.0.0)
+    com.unity.modules.assetbundle@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.assetbundle@1.0.0)
+    com.unity.modules.audio@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.audio@1.0.0)
+    com.unity.modules.cloth@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.cloth@1.0.0)
+    com.unity.modules.director@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.director@1.0.0)
+    com.unity.modules.imageconversion@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.imageconversion@1.0.0)
+    com.unity.modules.imgui@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.imgui@1.0.0)
+    com.unity.modules.jsonserialize@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.jsonserialize@1.0.0)
+    com.unity.modules.particlesystem@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.particlesystem@1.0.0)
+    com.unity.modules.physics@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.physics@1.0.0)
+    com.unity.modules.physics2d@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.physics2d@1.0.0)
+    com.unity.modules.screencapture@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.screencapture@1.0.0)
+    com.unity.modules.terrain@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.terrain@1.0.0)
+    com.unity.modules.terrainphysics@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.terrainphysics@1.0.0)
+    com.unity.modules.tilemap@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.tilemap@1.0.0)
+    com.unity.modules.ui@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.ui@1.0.0)
+    com.unity.modules.uielements@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.uielements@1.0.0)
+    com.unity.modules.umbra@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.umbra@1.0.0)
+    com.unity.modules.unityanalytics@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.unityanalytics@1.0.0)
+    com.unity.modules.unitywebrequest@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.unitywebrequest@1.0.0)
+    com.unity.modules.unitywebrequestassetbundle@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.unitywebrequestassetbundle@1.0.0)
+    com.unity.modules.unitywebrequestaudio@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.unitywebrequestaudio@1.0.0)
+    com.unity.modules.unitywebrequesttexture@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.unitywebrequesttexture@1.0.0)
+    com.unity.modules.unitywebrequestwww@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.unitywebrequestwww@1.0.0)
+    com.unity.modules.vehicles@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.vehicles@1.0.0)
+    com.unity.modules.video@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.video@1.0.0)
+    com.unity.modules.vr@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.vr@1.0.0)
+    com.unity.modules.wind@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.wind@1.0.0)
+    com.unity.modules.xr@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.xr@1.0.0)
+    com.unity.modules.subsystems@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.modules.subsystems@1.0.0)
+    com.unity.render-pipelines.core@14.0.11 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.render-pipelines.core@14.0.11)
+    com.unity.shadergraph@14.0.11 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.shadergraph@14.0.11)
+    com.unity.render-pipelines.universal-config@14.0.10 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.render-pipelines.universal-config@14.0.10)
+    com.unity.2d.sprite@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.2d.sprite@1.0.0)
+    com.unity.2d.tilemap@1.0.0 (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.unity.2d.tilemap@1.0.0)
+  Git packages:
+    com.coplaydev.unity-mcp@https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main (location: E:\gamejam_wt\tiles_hd\Library\PackageCache\com.coplaydev.unity-mcp@30d2207509)
+[Subsystems] No new subsystems found in resolved package list.
+Package Manager log level set to [2]
+[Package Manager] Done registering packages in 0.44 seconds
+Refreshing native plugins compatible for Editor in 23.72 ms, found 5 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 2022.3.57f1 (9d8bd91adc0a)
+[Subsystems] Discovering subsystems at path E:/unity/Downloads/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path E:/gamejam_wt/tiles_hd/Assets
+GfxDevice: creating device client; threaded=0; jobified=0
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce RTX 5080 Laptop GPU (ID=0x2c59)
+    Vendor:   NVIDIA
+    VRAM:     16003 MB
+    Driver:   32.0.16.1692
+[Licensing::Client] Successfully resolved entitlement details
+Initialize mono
+Mono path[0] = 'E:/unity/Downloads/Editor/Data/Managed'
+Mono path[1] = 'E:/unity/Downloads/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'E:/unity/Downloads/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56036
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: E:/unity/Downloads/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.010941 seconds.
+- Loaded All Assemblies, in  0.318 seconds
+Native extension for WindowsStandalone target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.218 seconds
+Domain Reload Profiling: 536ms
+	BeginReloadAssembly (125ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (1ms)
+	RebuildCommonClasses (25ms)
+	RebuildNativeTypeToScriptingClass (9ms)
+	initialDomainReloadingComplete (52ms)
+	LoadAllAssembliesAndSetupDomain (107ms)
+		LoadAssemblies (125ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (104ms)
+			TypeCache.Refresh (103ms)
+				TypeCache.ScanAssembly (91ms)
+			ScanForSourceGeneratedMonoScriptInfo (0ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (218ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (177ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (7ms)
+			SetLoadedEditorAssemblies (8ms)
+			RefreshPlugins (0ms)
+			BeforeProcessingInitializeOnLoad (2ms)
+			ProcessInitializeOnLoadAttributes (112ms)
+			ProcessInitializeOnLoadMethodAttributes (49ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[ScriptCompilation] Requested script compilation because: Assetdatabase observed changes in script compilation related files
+Starting: E:\unity\Downloads\Editor\Data\bee_backend.exe --dont-print-to-structured-log --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: E:/gamejam_wt/tiles_hd
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 2s96ms
+[630/818    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[814/818    1s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll (+2 others)
+[815/818    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll, with 117 defines and 285 references
+
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[816/818    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
+[817/818    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+*** Tundra build success (2.06 seconds), 5 items updated, 818 evaluated
+AssetDatabase: script compilation time: 2.670161s
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.953 seconds
+Refreshing native plugins compatible for Editor in 4.11 ms, found 5 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Start importing Assets/Editor/TilesHD/RepaintMap.cs using Guid(5d2250dd0f3cf8c41b207c96822ea5fb) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 24 workers.
+ -> (artifact id: '7dd084199205bf501b29b9ce61632b7a') in 0.009978 seconds
+Refreshing native plugins compatible for Editor in 3.22 ms, found 5 plugins.
+Native extension for WindowsStandalone target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  3.105 seconds
+Domain Reload Profiling: 4058ms
+	BeginReloadAssembly (165ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (5ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (31ms)
+	RebuildCommonClasses (25ms)
+	RebuildNativeTypeToScriptingClass (6ms)
+	initialDomainReloadingComplete (19ms)
+	LoadAllAssembliesAndSetupDomain (737ms)
+		LoadAssemblies (644ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (182ms)
+			TypeCache.Refresh (148ms)
+				TypeCache.ScanAssembly (130ms)
+			ScanForSourceGeneratedMonoScriptInfo (25ms)
+			ResolveRequiredComponents (7ms)
+	FinalizeReload (3105ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (2894ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (2ms)
+			SetLoadedEditorAssemblies (3ms)
+			RefreshPlugins (0ms)
+			BeforeProcessingInitializeOnLoad (64ms)
+			ProcessInitializeOnLoadAttributes (2722ms)
+			ProcessInitializeOnLoadMethodAttributes (101ms)
+			AfterProcessingInitializeOnLoad (1ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (8ms)
+Start importing Assets/Pic/Test/basic_ground_tiles.png using Guid(d7190b3877736144db1e842cd0cd5e16) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 24 workers.
+ -> (artifact id: '16fc8b2464ed10bbbc1ba876d75af83a') in 0.345300 seconds
+Refreshing native plugins compatible for Editor in 3.16 ms, found 5 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=59ee3322f5a9052429666138bd019258): Total: 10.827 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=1 (actual=1, local cache=0, cache server=0)
+		Asset DB Process Time: managed=41 ms, native=3809 ms
+		Asset DB Callback time: managed=131 ms, native=9 ms
+		Scripting: domain reloads=1, domain reload time=4132 ms, compile time=2670 ms, other=31 ms
+		Project Asset Count: scripts=7668, non-scripts=2736
+		Asset File Changes: new=0, changed=2, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeBeforeRefreshCallbacks: 0.450ms
+	ApplyChangesToAssetFolders: 0.050ms
+	Scan: 212.943ms
+	OnSourceAssetsModified: 2.425ms
+	GetAllGuidsForCategorization: 1.910ms
+	CategorizeAssets: 154.344ms
+	ImportOutOfDateAssets: 3524.422ms (454.660ms without children)
+		ImportManagerImport: 363.374ms (5.523ms without children)
+			ImportInProcess: 357.829ms
+			UpdateCategorizedAssets: 0.023ms
+		CompileScripts: 2670.280ms
+		ReloadNativeAssets: 0.050ms
+		UnloadImportedAssets: 27.641ms
+		ReloadImportedAssets: 0.203ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 3.305ms
+		InitializingProgressBar: 2.611ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.001ms
+		OnDemandSchedulerStart: 2.296ms
+	PostProcessAllAssets: 134.348ms
+	Hotreload: 4.702ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.001ms
+	UnloadStreamsBegin: 0.188ms
+	PersistCurrentRevisions: 0.388ms
+	UnloadStreamsEnd: 0.063ms
+	GenerateScriptTypeHashes: 10.476ms
+	Untracked: 6790.872ms
+Application.AssetDatabase Initial Refresh End
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.04 seconds
+Scanning for USB devices : 2.097ms
+Initializing Unity extensions:
+[Licensing::Client] Successfully resolved entitlement details
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-螺壳海底游记
+[PhysX] Initialized MultithreadedTaskDispatcher with 24 workers.
+ProgressiveSceneManager::Cancel()
+Unloading 54 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 160 unused Assets / (4.0 MB). Loaded Objects now: 6937.
+Memory consumption went from 171.9 MB to 167.9 MB.
+Total: 8.973400 ms (FindLiveObjects: 0.481000 ms CreateObjectMapping: 0.317700 ms MarkObjects: 6.316200 ms  DeleteObjects: 1.857300 ms)
+
+Opening scene 'Assets/Scenes/BiomechanicalCombatScene.unity'
+[PhysX] Initialized MultithreadedTaskDispatcher with 24 workers.
+Unloading 15 Unused Serialized files (Serialized files now loaded: 0)
+Loaded scene 'Assets/Scenes/BiomechanicalCombatScene.unity'
+	Deserialize:            24.901 ms
+	Integration:            241.130 ms
+	Integration of assets:  1.861 ms
+	Thread Wait Time:       0.212 ms
+	Total Operation Time:   268.103 ms
+Unloading 2 unused Assets / (1.0 KB). Loaded Objects now: 7549.
+Memory consumption went from 176.7 MB to 176.7 MB.
+Total: 4.345700 ms (FindLiveObjects: 0.384800 ms CreateObjectMapping: 0.231400 ms MarkObjects: 3.699600 ms  DeleteObjects: 0.029100 ms)
+
+MissingComponentException: There is no 'SpriteRenderer' attached to the "PathLamp_L_2" game object, but a script is trying to access it.
+You probably need to add a SpriteRenderer to the game object "PathLamp_L_2". Or your script needs to check if the component is attached before using it.
+  at (wrapper managed-to-native) UnityEngine.SpriteRenderer.set_sprite(UnityEngine.SpriteRenderer,UnityEngine.Sprite)
+  at TilesHD.RepaintMap+<>c__DisplayClass11_0.<Repaint>b__14 (System.String name, System.Int32 index, UnityEngine.Vector3 position) [0x0008d] in E:\gamejam_wt\tiles_hd\Assets\Editor\TilesHD\RepaintMap.cs:104 
+  at TilesHD.RepaintMap.Repaint () [0x00792] in E:\gamejam_wt\tiles_hd\Assets\Editor\TilesHD\RepaintMap.cs:109 
+
+(Filename: Assets/Editor/TilesHD/RepaintMap.cs Line: 109)
+
+executeMethod method TilesHD.RepaintMap.Repaint threw exception.
+Exiting without the bug reporter. Application will terminate with return code 1

@@ -1,0 +1,24 @@
+{
+  "technical_passed": true,
+  "art_approved": false,
+  "editor_exits": {
+    "before": 0,
+    "repaint-v2": 0,
+    "repaint-repeat": 0,
+    "after": 0,
+    "build": 0
+  },
+  "player_exit": 0,
+  "selftest": "RESULT passed=534 failed=0",
+  "atlas_sha256": "34b525b1926db531944c34d66421d1696e28ef800a347c21f66b91d476f46214",
+  "scene_sha256": "eb86c11ad1dfe482b9e22ac78fa2cce072692bff40d852373f30f47b2ba2a2f1",
+  "repeat_changed": 0,
+  "repeat_scene_bytes_identical": true,
+  "detected_error_lines": [],
+  "editor_original_prefix_count": 2,
+  "player_original_prefix_count": 0,
+  "owned_processes_remaining": [],
+  "actual_unity": "2022.3.57f1",
+  "restored_declared_unity": "2022.3.62f3c1",
+  "restored_environment_rebuilt": false
+}

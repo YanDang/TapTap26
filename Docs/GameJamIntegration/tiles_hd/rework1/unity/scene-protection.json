@@ -1,0 +1,55 @@
+{
+  "passed": true,
+  "baseline_scene_sha256": "6e20265240179ca59a0c3a27a8cab88842cf6a8d604ae6b1327aa9362d3e784a",
+  "final_scene_sha256": "eb86c11ad1dfe482b9e22ac78fa2cce072692bff40d852373f30f47b2ba2a2f1",
+  "baseline_records": 152,
+  "final_records": 173,
+  "protected_baseline_records": 120,
+  "changes": [
+    {
+      "id": "822251685",
+      "type": 1839735485,
+      "authorized": "Tilemap cells"
+    },
+    {
+      "id": "1905965308",
+      "type": 20,
+      "authorized": "Main Camera background ONLY #07121B",
+      "before": [
+        "  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}"
+      ],
+      "after": [
+        "  m_BackGroundColor: {r: 0.02745098, g: 0.07058824, b: 0.105882354, a: 1}"
+      ]
+    }
+  ],
+  "geometry": [
+    {
+      "path": "Grid/Tilemap",
+      "before": 695,
+      "after": 698,
+      "added": [
+        [
+          -3,
+          -12,
+          0
+        ],
+        [
+          16,
+          4,
+          0
+        ],
+        [
+          16,
+          6,
+          0
+        ]
+      ],
+      "removed": [],
+      "origin_unchanged": true,
+      "size_unchanged": true,
+      "passed": true
+    }
+  ],
+  "issues": []
+}

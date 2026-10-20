@@ -1,0 +1,6 @@
+GPU=NVIDIA GeForce RTX 5080 Laptop GPU
+Player=(0.00, 0.75, 0.00)
+Door=(0.00, 5.25, 0.00)
+Tilemap=Grid/Tilemap
+Bounds=Center: (-0.75, 1.38, 0.50), Extents: (19.25, 9.88, 0.50)
+Capture=1920x1080 camera render in live PlayMode; overlay UI excluded; original sprite references on disk untouched.

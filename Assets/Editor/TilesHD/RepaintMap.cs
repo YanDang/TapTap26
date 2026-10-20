@@ -10,7 +10,9 @@ using UnityEditor.SceneManagement;
 namespace TilesHD {
 public static class RepaintMap {
  public const string ScenePath="Assets/Scenes/BiomechanicalCombatScene.unity";
- public const string Output="Docs/GameJamIntegration/tiles_hd/unity";
+ public const string Output="Docs/GameJamIntegration/tiles_hd/rework1/unity";
+ public const string Baseline="Docs/GameJamIntegration/tiles_hd/rework1/baseline";
+ [Serializable] public class ComponentRecord { public string path,type,json; }
  [Serializable] public class Cell { public Vector3Int position; public string asset; public Color color; public Matrix4x4 matrix; public int flags; }
  [Serializable] public class Map { public string path; public Vector3 origin, size; public List<Cell> cells=new List<Cell>(); }
  [Serializable] public class Snapshot { public string scene; public List<Map> maps=new List<Map>(); public List<string> objects=new List<string>(); }
@@ -41,31 +43,44 @@ public static class RepaintMap {
   var state=GameplayState();
   var map=UnityEngine.Object.FindObjectsOfType<Tilemap>().Single(m=>m.name=="Tilemap");
   if(map.GetComponent<TilemapCollider2D>())throw new InvalidOperationException("Refuse to alter a collider-backed Tilemap");
-  var positions=before.maps.Single(m=>m.path==Hierarchy(map.transform)).cells.Select(c=>c.position).ToArray();
+  var originalPositions=before.maps.Single(m=>m.path==Hierarchy(map.transform)).cells.Select(c=>c.position).ToArray();
+  // Three holes already present in 1fed22f, two adjacent in the upper-right report region.
+  // This Tilemap has NO TilemapCollider2D; fill only these visual gaps, never a gameplay collider.
+  var repairedHoles=new[]{new Vector3Int(-3,-12,0),new Vector3Int(16,4,0),new Vector3Int(16,6,0)};
+  var positions=originalPositions.Concat(repairedHoles).Distinct().OrderBy(p=>p.y).ThenBy(p=>p.x).ToArray();
   var occupied=new HashSet<Vector3Int>(positions);
   var tiles=Enumerable.Range(0,56).Select(i=>AssetDatabase.LoadAssetAtPath<Tile>("Assets/Art/Tiles/Test/basic_ground_tiles_"+i+".asset")).ToArray();
   if(tiles.Take(40).Any(t=>!t || !t.sprite))throw new InvalidOperationException("Missing source Tile or sprite");
-  var tex=new Texture2D(2,2);tex.LoadImage(File.ReadAllBytes(Output+"/baseline_source/basic_ground_tiles_original_backup.png"));
+  var tex=new Texture2D(2,2);tex.LoadImage(File.ReadAllBytes(Baseline+"/basic_ground_tiles_original_backup.png"));
   var player=UnityEngine.Object.FindObjectOfType<PlayerController>();var spawn=player.transform.position;
-  // Shared continuous material field: quiet soil arena, northbound 2-3-cell road, organic perimeter meadow.
+  // Work in the actual isometric cell axes, not screen X/Y. The top-face center is
+  // map.GetCellCenterWorld(p)+(0,.5,0); endpoints (0,0)->(9,0)->(9,9) join spawn and door.
   var centers=positions.Select(p=>map.GetCellCenterWorld(p)+new Vector3(0,.5f,0)).ToArray();
   float minX=centers.Min(w=>w.x),maxX=centers.Max(w=>w.x),minY=centers.Min(w=>w.y),maxY=centers.Max(w=>w.y);
-  Func<Vector3,int> desired=w=>{
-   // World-space signed perimeter distance varies *within* a cell; integer-cell erosion
-   // would incorrectly choose only pure tiles and leave a hard grass/soil seam.
+  var stonePatches=new[]{new Rect(-12,1,3,3),new Rect(-5,-12,3,2),new Rect(14,3,3,4),new Rect(6,14,2,3)};
+  var islands=new[]{new Vector2(-8,6),new Vector2(-12,-2),new Vector2(1,-11),new Vector2(14,10),new Vector2(0,14)};
+  Func<Vector2,bool> road=q=>(q.x>=-1.65f&&q.x<=10.65f&&Mathf.Abs(q.y)<=1.65f)||(Mathf.Abs(q.x-9)<=1.65f&&q.y>=-1.65f&&q.y<=10.65f);
+  Func<Vector2,Vector3,int> desired=(q,w)=>{
+   // Small exposed soil interruption, not a repeated checkerboard.
+   if(road(q))return q.x>4.15f&&q.x<4.8f&&q.y<.8f?2:1;
+   // Central 40% rectangular arena remains quiet except the requested route.
+   bool quiet=w.x>-5.5f&&w.x<5.5f&&w.y>-2.4f&&w.y<4.6f;
+   if(quiet)return 2;
+   foreach(var r in stonePatches)if(r.Contains(q))return 1;
+   for(int n=0;n<islands.Length;n++){
+    var d=q-islands[n];float radius=1.25f+.15f*Mathf.Sin(q.x*2+q.y+n);
+    if(d.x*d.x/(radius*radius)+d.y*d.y/(radius*radius*.75f)<1)return 0;
+   }
    float edge=Mathf.Min(w.x-minX,maxX-w.x,w.y-minY,maxY-w.y);
-   float meadowWidth=.82f+.12f*Mathf.Sin(w.x*.8f+w.y*.65f);
-   float roadX=Mathf.Lerp(spawn.x,0,Mathf.Clamp01((w.y-spawn.y)/(5-spawn.y)))+.16f*Mathf.Sin(w.y*1.3f);
-   bool road=w.y>spawn.y-1 && w.y<5.7f && Mathf.Abs(w.x-roadX)<.68f;
-   if(road)return 1;
-   if(edge<meadowWidth)return 0;
+   float width=.55f+.32f*Mathf.Sin(w.x*.72f+w.y*.9f)+.18f*Mathf.Cos(w.x*1.6f-w.y*.5f);
+   if(edge<width)return 0;
    return 2;
   };
   int changed=0;var counts=new Dictionary<int,int>();
   foreach(var p in positions){
    int best=3;float score=float.MaxValue;
    var center=map.GetCellCenterWorld(p);
-   var wants=new int[8,8];for(int u=1;u<=7;u++)for(int v=1;v<=7;v++) {float a=u/8f,b=v/8f;wants[u,v]=desired(center+map.transform.TransformVector(new Vector3((a-b)*.5f,.75f-(a+b)*.25f,0)));}
+   var wants=new int[8,8];for(int u=1;u<=7;u++)for(int v=1;v<=7;v++) {float a=u/8f,b=v/8f;wants[u,v]=desired(new Vector2(p.x+.5f-b,p.y+.5f-a),center+map.transform.TransformVector(new Vector3((a-b)*.5f,.75f-(a+b)*.25f,0)));}
    for(int i=0;i<40;i++){
     float cost=0;
     for(int u=1;u<=7;u++)for(int v=1;v<=7;v++){
@@ -86,12 +101,32 @@ public static class RepaintMap {
   var root=GameObject.Find("TilesHD_Decor");if(!root)root=new GameObject("TilesHD_Decor");
   var usedNames=new HashSet<string>();
   var renderer=map.GetComponent<TilemapRenderer>();
-  Action<string,int,Vector3> prop=(name,index,position)=>{if(!tiles[index]||!tiles[index].sprite)return;usedNames.Add(name);var existing=root.transform.Find(name);var go=existing?existing.gameObject:new GameObject(name);go.transform.SetParent(root.transform,false);go.transform.position=position;var sr=go.GetComponent<SpriteRenderer>()??go.AddComponent<SpriteRenderer>();sr.sprite=tiles[index].sprite;sr.sortingLayerID=renderer.sortingLayerID;sr.sortingOrder=renderer.sortingOrder+1;};
-  for(int step=0;step<3;step++){float y=spawn.y+.4f+step*1.75f;if(y>4.3f)break;prop("PathLamp_L_"+step,40,new Vector3(-1.15f,y,0));prop("PathLamp_R_"+step,41,new Vector3(1.15f,y,0));}
-  // Sparse pipes placed only at existing outer cells, away from route and combat center.
-  int pipe=0;foreach(var p in positions.OrderBy(p=>p.x).ThenBy(p=>p.y)){if(occupied.Contains(p+Vector3Int.left)||occupied.Contains(p+Vector3Int.down))continue;var w=map.GetCellCenterWorld(p);if(Mathf.Abs(w.x)<3 || pipe>=6)continue;prop("EdgePipe_"+pipe,48+pipe%2,w);pipe++;}
+  Action<string,int,Vector3> prop=(name,index,position)=>{if(!tiles[index]||!tiles[index].sprite)return;usedNames.Add(name);var existing=root.transform.Find(name);var go=existing?existing.gameObject:new GameObject(name);go.transform.SetParent(root.transform,false);go.transform.position=position;var sr=go.GetComponent<SpriteRenderer>();if(!sr)sr=go.AddComponent<SpriteRenderer>();sr.sprite=tiles[index].sprite;sr.sortingLayerID=renderer.sortingLayerID;sr.sortingOrder=renderer.sortingOrder+1;};
+  // Station distance along the two cell-axis segments: pairs every seven cells.
+  for(int station=0;station<=14;station+=7){
+   bool second=station>9;var q=second?new Vector3Int(9,station-9,0):new Vector3Int(station,0,0);
+   var normal=second?Vector3Int.right:Vector3Int.up;
+   prop("PathLamp_L_"+(station/7),40,map.GetCellCenterWorld(q+normal*2)+Vector3.up*.5f);
+   prop("PathLamp_R_"+(station/7),41,map.GetCellCenterWorld(q-normal*2)+Vector3.up*.5f);
+  }
+  // Door's runtime authored location is (0,5.25); ornaments flank it, never move its owner.
+  prop("DoorLamp_L",42,new Vector3(-1.15f,5.25f,0));prop("DoorLamp_R",43,new Vector3(1.15f,5.25f,0));
+  var pipeGroups=new[]{new Vector3Int(-13,-1,0),new Vector3Int(12,12,0),new Vector3Int(-1,-12,0)};
+  for(int group=0;group<pipeGroups.Length;group++)for(int i=0;i<3;i++){
+   var q=pipeGroups[group]+(group==1?Vector3Int.down:Vector3Int.right)*i;
+   if(!occupied.Contains(q))throw new Exception("Pipe group outside footprint "+q);
+   prop("EdgePipe_G"+group+"_"+i,48+(group+i)%4,map.GetCellCenterWorld(q)+Vector3.up*.5f);
+  }
   for(int i=root.transform.childCount-1;i>=0;i--)if(!usedNames.Contains(root.transform.GetChild(i).name))UnityEngine.Object.DestroyImmediate(root.transform.GetChild(i).gameObject);
   foreach(var pair in state)if(!pair.Key || EditorJsonUtility.ToJson(pair.Key)!=pair.Value)throw new InvalidOperationException("Gameplay component changed: "+pair.Key);
+  // Explicit sole camera exception: apply AFTER the complete unchanged-component check.
+  // Other camera parameters are not excluded and will also be independently diffed on disk.
+  var cam=Camera.main;if(!cam)throw new Exception("Missing main camera");
+  var originalBackground=cam.backgroundColor;
+  cam.backgroundColor=new Color32(7,18,27,255);
+  File.WriteAllLines(Output+"/component-before.jsonl",state.Select(k=>JsonUtility.ToJson(new ComponentRecord{path=Hierarchy(k.Key.transform),type=k.Key.GetType().FullName,json=k.Value})));
+  File.WriteAllLines(Output+"/component-after.jsonl",state.Select(k=>JsonUtility.ToJson(new ComponentRecord{path=Hierarchy(k.Key.transform),type=k.Key.GetType().FullName,json=EditorJsonUtility.ToJson(k.Key)})));
+  File.WriteAllText(Output+"/camera-exception.txt","Authorized Main Camera.backgroundColor only: "+originalBackground+" -> "+cam.backgroundColor);
   var after=Read();if(after.maps.Single(m=>m.path==Hierarchy(map.transform)).cells.Count!=positions.Length)throw new InvalidOperationException("Footprint changed");
   EditorSceneManager.MarkSceneDirty(map.gameObject.scene);EditorSceneManager.SaveScene(map.gameObject.scene);
   File.WriteAllText(Output+"/tilemap-after.json",JsonUtility.ToJson(after,true));
@@ -100,14 +135,12 @@ public static class RepaintMap {
  }
  [MenuItem("TapTap/Tiles HD/Restore original cells")]
  public static void RestoreOriginal() {
+  // Full immutable 1fed22f scene restores its decor and camera as well as tile cells.
+  // This is an explicit rollback menu, never called on load or in the build pipeline.
+  EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
+  File.Copy(Baseline+"/BiomechanicalCombatScene.unity",ScenePath,true);
+  AssetDatabase.ImportAsset(ScenePath,ImportAssetOptions.ForceUpdate);
   EditorSceneManager.OpenScene(ScenePath);
-  var snapshot=JsonUtility.FromJson<Snapshot>(File.ReadAllText(Output+"/tilemap-before.json"));
-  foreach(var m in UnityEngine.Object.FindObjectsOfType<Tilemap>()) {
-   var source=snapshot.maps.Single(s=>s.path==Hierarchy(m.transform));m.ClearAllTiles();
-   foreach(var c in source.cells){m.SetTile(c.position,AssetDatabase.LoadAssetAtPath<TileBase>(c.asset));m.SetTileFlags(c.position,TileFlags.None);m.SetColor(c.position,c.color);m.SetTransformMatrix(c.position,c.matrix);m.SetTileFlags(c.position,(TileFlags)c.flags);}
-  }
-  var decor=GameObject.Find("TilesHD_Decor");if(decor)UnityEngine.Object.DestroyImmediate(decor);
-  EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
  }
  [MenuItem("TapTap/Tiles HD/Audit")]
  public static void Audit() {

@@ -1,0 +1,72 @@
+{
+  "props_alpha_byte_equal_to_1fed22f": true,
+  "baseline_png_sha256": "cb7f29e4fdf6ca93a8fe024a2af867c510a8e2821cf67f0f0f11b51276e21ed9",
+  "baseline_meta_git_bytes_sha256": "b9340013bbc971c024ff1a857fb86714a94f1bdb7dfcd5c43d4184265bbdd5de",
+  "working_meta_sha256": "a96d3599814fe3e67494cdf9492d42c4b2bb23f36ae6ccbf91ba81f8f94db8ed",
+  "meta_comparison_note": "Git baseline LF, worktree CRLF; normalized bytes exactly identical, no metadata edits by art agent.",
+  "texture_metrics": [
+    {
+      "name": "texture_0_0.png",
+      "wrap_x_mae": 0.3359375,
+      "wrap_y_mae": 0.23763020833333334,
+      "interior_x_mae": 1.4955349869664385,
+      "interior_y_mae": 0.8575007891414141
+    },
+    {
+      "name": "texture_0_1.png",
+      "wrap_x_mae": 1.0849609375,
+      "wrap_y_mae": 0.4563802083333333,
+      "interior_x_mae": 1.4020589590461063,
+      "interior_y_mae": 0.8225755539263604
+    },
+    {
+      "name": "texture_0_2.png",
+      "wrap_x_mae": 1.1949869791666667,
+      "wrap_y_mae": 0.5598958333333334,
+      "interior_x_mae": 1.4458238509082764,
+      "interior_y_mae": 0.8286315778755294
+    },
+    {
+      "name": "texture_1_0.png",
+      "wrap_x_mae": 0.12174479166666667,
+      "wrap_y_mae": 0.07942708333333333,
+      "interior_x_mae": 0.7701899285190615,
+      "interior_y_mae": 0.8168676431655262
+    },
+    {
+      "name": "texture_1_1.png",
+      "wrap_x_mae": 0.4192708333333333,
+      "wrap_y_mae": 0.14615885416666666,
+      "interior_x_mae": 0.7766806166503747,
+      "interior_y_mae": 0.83231667735826
+    },
+    {
+      "name": "texture_1_2.png",
+      "wrap_x_mae": 0.23372395833333334,
+      "wrap_y_mae": 0.20279947916666666,
+      "interior_x_mae": 0.7955080034213099,
+      "interior_y_mae": 0.8402927332803845
+    },
+    {
+      "name": "texture_2_0.png",
+      "wrap_x_mae": 0.1279296875,
+      "wrap_y_mae": 0.19498697916666666,
+      "interior_x_mae": 0.20718939648501142,
+      "interior_y_mae": 0.329651415872434
+    },
+    {
+      "name": "texture_2_1.png",
+      "wrap_x_mae": 0.2001953125,
+      "wrap_y_mae": 0.353515625,
+      "interior_x_mae": 0.19839174252606712,
+      "interior_y_mae": 0.3429748594819159
+    },
+    {
+      "name": "texture_2_2.png",
+      "wrap_x_mae": 0.15266927083333334,
+      "wrap_y_mae": 0.16145833333333334,
+      "interior_x_mae": 0.20109709748696644,
+      "interior_y_mae": 0.34625997882046267
+    }
+  ]
+}

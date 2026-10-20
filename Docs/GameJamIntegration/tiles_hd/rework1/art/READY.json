@@ -1,0 +1,9 @@
+{
+  "status": "ready_for_unity_import",
+  "atlas_sha256": "34b525b1926db531944c34d66421d1696e28ef800a347c21f66b91d476f46214",
+  "atlas_path": "Assets/Pic/Test/basic_ground_tiles.png",
+  "technical_image_checks_passed": true,
+  "art_approved": false,
+  "known_visual_limitations": "repeat patterns; grass medium-frequency std below15%; small shells; dark side faces; requires art acceptance",
+  "handoff": "Docs/GameJamIntegration/tiles_hd/rework1/art/HANDOFF.md"
+}

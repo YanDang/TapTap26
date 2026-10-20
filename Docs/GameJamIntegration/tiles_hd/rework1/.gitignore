@@ -1,0 +1,10 @@
+# Private raw save journals remain local.
+**/*prefs*.json
+**/*supervisor-before.json
+**/__pycache__/
+# Extra legacy selftest captures are local; final task framebuffer is retained.
+unity/selftest/*.png
+!unity/selftest/target-after.png
+# Keep actual execution logs, including the first failed repaint.
+!unity/*.log
+!unity/selftest/player.log

@@ -1,0 +1,344 @@
+{
+  "atlas_sha256": "34b525b1926db531944c34d66421d1696e28ef800a347c21f66b91d476f46214",
+  "size": [
+    2048,
+    1792
+  ],
+  "classifier": "exact 1fed22f: soil default; stone (B-G)<=G*.12; kelp G>R*1.55 and G>B*1.08; no shell exemption",
+  "all_alpha_pass": true,
+  "all_material_pass": true,
+  "all_top_pass": true,
+  "min_alpha_iou": 1.0,
+  "min_material_accuracy": 0.9775818537221046,
+  "min_top_accuracy": 0.9512691570881227,
+  "glow_fraction_opaque": 0.04153294440750887,
+  "protected_files": {
+    "basic_ground_tiles.png.meta": true,
+    "basic_ground_tiles_original_backup.png": true,
+    "basic_ground_tiles_original_backup.png.meta": true,
+    "basic_ground_tiles_v1_backup.png": true,
+    "basic_ground_tiles_v1_backup.png.meta": true
+  },
+  "rows": [
+    {
+      "cell": 0,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9860117111255693,
+      "top_accuracy": 0.9936587700406796,
+      "top_luminance_mean": 122.06577608279491,
+      "medium_frequency_relative_std": 0.1349107098289502
+    },
+    {
+      "cell": 1,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9860636393229166,
+      "top_accuracy": 0.9934746168582376,
+      "top_luminance_mean": 122.37746093151338,
+      "medium_frequency_relative_std": 0.13442764889911551
+    },
+    {
+      "cell": 2,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9819742838541666,
+      "top_accuracy": 0.9609075670498084,
+      "top_luminance_mean": 121.72502708333333,
+      "medium_frequency_relative_std": 0.16061314175770328
+    },
+    {
+      "cell": 3,
+      "alpha_iou": 1.0,
+      "material_accuracy": 1.0,
+      "top_accuracy": 1.0,
+      "top_luminance_mean": 57.83834425287356,
+      "medium_frequency_relative_std": 0.15786403006929103
+    },
+    {
+      "cell": 4,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9807723544221555,
+      "top_accuracy": 0.9664861003631169,
+      "top_luminance_mean": 120.12790987558783,
+      "medium_frequency_relative_std": 0.15242678056464404
+    },
+    {
+      "cell": 5,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9803889657417202,
+      "top_accuracy": 0.9657050514723485,
+      "top_luminance_mean": 120.53239752214508,
+      "medium_frequency_relative_std": 0.12797774132303322
+    },
+    {
+      "cell": 6,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.979498861047836,
+      "top_accuracy": 0.965721464465183,
+      "top_luminance_mean": 122.20932275664035,
+      "medium_frequency_relative_std": 0.1367338897421291
+    },
+    {
+      "cell": 7,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9825581395348837,
+      "top_accuracy": 0.9719235364396654,
+      "top_luminance_mean": 120.14755362007169,
+      "medium_frequency_relative_std": 0.14091771812722803
+    },
+    {
+      "cell": 8,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9877572602293988,
+      "top_accuracy": 0.9876764776262263,
+      "top_luminance_mean": 121.11679134960515,
+      "medium_frequency_relative_std": 0.1307828050316134
+    },
+    {
+      "cell": 9,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9849938999593331,
+      "top_accuracy": 0.9812167254890232,
+      "top_luminance_mean": 121.49420340970269,
+      "medium_frequency_relative_std": 0.12989930048700105
+    },
+    {
+      "cell": 10,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9846814224102857,
+      "top_accuracy": 0.9811467560450083,
+      "top_luminance_mean": 119.84645365094563,
+      "medium_frequency_relative_std": 0.14119290840861473
+    },
+    {
+      "cell": 11,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9851049975581964,
+      "top_accuracy": 0.9777152099682501,
+      "top_luminance_mean": 121.12620186904691,
+      "medium_frequency_relative_std": 0.12818200320166154
+    },
+    {
+      "cell": 12,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.97955322265625,
+      "top_accuracy": 0.9537835249042146,
+      "top_luminance_mean": 120.77450211925286,
+      "medium_frequency_relative_std": 0.14102830370488612
+    },
+    {
+      "cell": 13,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9795328776041666,
+      "top_accuracy": 0.9540828544061303,
+      "top_luminance_mean": 121.96388306992338,
+      "medium_frequency_relative_std": 0.16012349142653767
+    },
+    {
+      "cell": 14,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9786173502604166,
+      "top_accuracy": 0.9512691570881227,
+      "top_luminance_mean": 120.47660469348659,
+      "medium_frequency_relative_std": 0.15007854178804755
+    },
+    {
+      "cell": 15,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9813435872395834,
+      "top_accuracy": 0.959051724137931,
+      "top_luminance_mean": 121.7783688697318,
+      "medium_frequency_relative_std": 0.14572107941679513
+    },
+    {
+      "cell": 16,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9858805338541666,
+      "top_accuracy": 0.9584530651340997,
+      "top_luminance_mean": 79.01571402059388,
+      "medium_frequency_relative_std": 0.4034919989045385
+    },
+    {
+      "cell": 17,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9841499145438268,
+      "top_accuracy": 0.9533532934131737,
+      "top_luminance_mean": 80.05850053892216,
+      "medium_frequency_relative_std": 0.3780554780372682
+    },
+    {
+      "cell": 18,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9851910698280779,
+      "top_accuracy": 0.9563205960105744,
+      "top_luminance_mean": 77.94640769045903,
+      "medium_frequency_relative_std": 0.3671250811309393
+    },
+    {
+      "cell": 19,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9840273816314888,
+      "top_accuracy": 0.9534142822793941,
+      "top_luminance_mean": 78.47932196441451,
+      "medium_frequency_relative_std": 0.3560288701220727
+    },
+    {
+      "cell": 20,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9876483016414757,
+      "top_accuracy": 0.975195277562459,
+      "top_luminance_mean": 92.85169103810148,
+      "medium_frequency_relative_std": 0.371758063827925
+    },
+    {
+      "cell": 21,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9835231895850285,
+      "top_accuracy": 0.9759454284346577,
+      "top_luminance_mean": 92.22045124461465,
+      "medium_frequency_relative_std": 0.34054534148986826
+    },
+    {
+      "cell": 22,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9846814224102857,
+      "top_accuracy": 0.9800095762508978,
+      "top_luminance_mean": 93.70859891070145,
+      "medium_frequency_relative_std": 0.36728443335199273
+    },
+    {
+      "cell": 23,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9865392435949573,
+      "top_accuracy": 0.9732249581639971,
+      "top_luminance_mean": 92.98267635668181,
+      "medium_frequency_relative_std": 0.3587884087919448
+    },
+    {
+      "cell": 24,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.99481201171875,
+      "top_accuracy": 0.9847341954022989,
+      "top_luminance_mean": 64.96703322557471,
+      "medium_frequency_relative_std": 0.32505943902219386
+    },
+    {
+      "cell": 25,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.99267578125,
+      "top_accuracy": 0.9800047892720306,
+      "top_luminance_mean": 64.57547794540228,
+      "medium_frequency_relative_std": 0.30132534500389097
+    },
+    {
+      "cell": 26,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9923299153645834,
+      "top_accuracy": 0.9801245210727969,
+      "top_luminance_mean": 65.5478540828544,
+      "medium_frequency_relative_std": 0.32705450595722946
+    },
+    {
+      "cell": 27,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9944661458333334,
+      "top_accuracy": 0.9837164750957854,
+      "top_luminance_mean": 65.54973419540228,
+      "medium_frequency_relative_std": 0.343456639409711
+    },
+    {
+      "cell": 28,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9861709916212479,
+      "top_accuracy": 0.9836085187843981,
+      "top_luminance_mean": 113.83950975113665,
+      "medium_frequency_relative_std": 0.2096445151311629
+    },
+    {
+      "cell": 29,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9854412362749085,
+      "top_accuracy": 0.9835496799665011,
+      "top_luminance_mean": 114.77485869474188,
+      "medium_frequency_relative_std": 0.22257450966137882
+    },
+    {
+      "cell": 30,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9848047192839707,
+      "top_accuracy": 0.9812687013764213,
+      "top_luminance_mean": 112.72503838420107,
+      "medium_frequency_relative_std": 0.24470863531177298
+    },
+    {
+      "cell": 31,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9870100829403154,
+      "top_accuracy": 0.9842095819127938,
+      "top_luminance_mean": 113.53539711705245,
+      "medium_frequency_relative_std": 0.22785988310575686
+    },
+    {
+      "cell": 32,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9818613909652258,
+      "top_accuracy": 0.9582041497734319,
+      "top_luminance_mean": 101.69100432864298,
+      "medium_frequency_relative_std": 0.3122469206465763
+    },
+    {
+      "cell": 33,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9828986920139735,
+      "top_accuracy": 0.9614834247555449,
+      "top_luminance_mean": 101.01699549248748,
+      "medium_frequency_relative_std": 0.3180426666999866
+    },
+    {
+      "cell": 34,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9797225837943377,
+      "top_accuracy": 0.9650592317817399,
+      "top_luminance_mean": 102.47786966614812,
+      "medium_frequency_relative_std": 0.2921688233732007
+    },
+    {
+      "cell": 35,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9775818537221046,
+      "top_accuracy": 0.9588136407300673,
+      "top_luminance_mean": 99.42957347502401,
+      "medium_frequency_relative_std": 0.2903106513185055
+    },
+    {
+      "cell": 36,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.978986981285598,
+      "top_accuracy": 0.9633131845113412,
+      "top_luminance_mean": 102.56359578670178,
+      "medium_frequency_relative_std": 0.29868167818791036
+    },
+    {
+      "cell": 37,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.977624399381057,
+      "top_accuracy": 0.959887107428091,
+      "top_luminance_mean": 102.95707730739205,
+      "medium_frequency_relative_std": 0.30315501309008785
+    },
+    {
+      "cell": 38,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.983409238776838,
+      "top_accuracy": 0.9640296367112811,
+      "top_luminance_mean": 101.87633469168259,
+      "medium_frequency_relative_std": 0.3043336276643223
+    },
+    {
+      "cell": 39,
+      "alpha_iou": 1.0,
+      "material_accuracy": 0.9812306816333171,
+      "top_accuracy": 0.957855093256815,
+      "top_luminance_mean": 100.41703584409373,
+      "medium_frequency_relative_std": 0.30278839195996743
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "system": {
+    "os": "win32",
+    "ram_total": 33684996096,
+    "ram_free": 13670604800,
+    "comfyui_version": "0.38.0",
+    "required_frontend_version": "1.53.10",
+    "installed_templates_version": "0.11.76",
+    "required_templates_version": "0.11.76",
+    "comfy_package_versions": [
+      {
+        "name": "comfyui-frontend-package",
+        "installed": "1.53.10",
+        "required": "1.53.10"
+      },
+      {
+        "name": "comfyui-workflow-templates",
+        "installed": "0.11.76",
+        "required": "0.11.76"
+      },
+      {
+        "name": "comfyui-embedded-docs",
+        "installed": "0.5.13",
+        "required": "0.5.13"
+      },
+      {
+        "name": "comfy-kitchen",
+        "installed": "0.2.37",
+        "required": "0.2.37"
+      },
+      {
+        "name": "comfy-aimdo",
+        "installed": "0.5.5",
+        "required": "0.5.5"
+      }
+    ],
+    "python_version": "3.12.13 (main, Jul 23 2026, 14:44:57) [MSC v.1944 64 bit (AMD64)]",
+    "pytorch_version": "2.14.1+cu130",
+    "embedded_python": false,
+    "deploy_environment": "local-git",
+    "argv": [
+      "main.py",
+      "--listen",
+      "127.0.0.1",
+      "--port",
+      "8188",
+      "--output-directory",
+      "E:/gamejam_wt/tiles_hd/Docs/GameJamIntegration/tiles_hd/rework1/art/ai_output"
+    ]
+  },
+  "devices": [
+    {
+      "name": "cuda:0 NVIDIA GeForce RTX 5080 Laptop GPU : cudaMallocAsync",
+      "type": "cuda",
+      "index": 0,
+      "vram_total": 17066033152,
+      "vram_free": 15798894592,
+      "torch_vram_total": 0,
+      "torch_vram_free": 0
+    }
+  ]
+}

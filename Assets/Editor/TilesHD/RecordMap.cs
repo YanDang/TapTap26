@@ -18,6 +18,7 @@ public static class RecordMap {
  public static void Before(){Start("before");}
  public static void After(){Start("after");}
  static void Start(string phase){
+  if(phase=="before" && !File.ReadAllBytes(RepaintMap.ScenePath).SequenceEqual(File.ReadAllBytes(RepaintMap.Baseline+"/BiomechanicalCombatScene.unity")))throw new Exception("Before recording requires exact 1fed22f scene; restore baseline scene first in an isolated project, never label modified map BEFORE.");
   SessionState.SetBool(Key+"Captured",false);SessionState.SetBool(Key+"Failed",false);
   Directory.CreateDirectory(RepaintMap.Output);
   var prefs=TapPrefsSnapshot.Capture();prefs.WriteJournal(RepaintMap.Output+"/editor-prefs-"+phase+".json");
@@ -71,13 +72,14 @@ public static class RecordMap {
   EditorApplication.isPlaying=false;
  }
  static void ApplyBaseline(){
-  var tex=new Texture2D(2,2,TextureFormat.RGBA32,false);tex.LoadImage(File.ReadAllBytes(RepaintMap.Output+"/baseline_source/basic_ground_tiles.png"));tex.filterMode=FilterMode.Point;
+  var tex=new Texture2D(2,2,TextureFormat.RGBA32,false);tex.LoadImage(File.ReadAllBytes(RepaintMap.Baseline+"/basic_ground_tiles.png"));tex.filterMode=FilterMode.Bilinear;
   var sprites=new Dictionary<string,Sprite>();
   foreach(var s in AssetDatabase.LoadAllAssetsAtPath("Assets/Pic/Test/basic_ground_tiles.png").OfType<Sprite>()){
-   // Named source cells keep their original 128px rect even if the final atlas already imported.
+   // 1fed22f baseline metadata: 256px rect, pivot (.5,.25), PPU 256.
    int index=int.Parse(s.name.Substring(s.name.LastIndexOf('_')+1));
-   sprites[s.name]=Sprite.Create(tex,new Rect(index%8*128,(6-index/8)*128,128,128),new Vector2(.5f,.25f),128,0,SpriteMeshType.FullRect);
+   sprites[s.name]=Sprite.Create(tex,new Rect(index%8*256,(6-index/8)*256,256,256),new Vector2(.5f,.25f),256,0,SpriteMeshType.FullRect);
   }
+  foreach(var sr in UnityEngine.Object.FindObjectsOfType<SpriteRenderer>(true))if(sr.sprite && sprites.TryGetValue(sr.sprite.name,out var baselineSprite))sr.sprite=baselineSprite;
   foreach(var m in UnityEngine.Object.FindObjectsOfType<Tilemap>()){
    var replacements=new Dictionary<TileBase,Tile>();
    foreach(var pos in m.cellBounds.allPositionsWithin){var tile=m.GetTile(pos) as Tile;if(!tile || !tile.sprite || !sprites.ContainsKey(tile.sprite.name))continue;
