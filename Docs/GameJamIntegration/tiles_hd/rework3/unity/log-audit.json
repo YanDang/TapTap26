@@ -1,0 +1,573 @@
+{
+  "detected_error_lines": [],
+  "service_diagnostics": [
+    {
+      "log": "repaint-v3.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "repaint-v3.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "repaint-v3.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "repaint-v3.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "repeat.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "repeat.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "repeat.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "repeat.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "readback.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "readback.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "readback.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "readback.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "readback.log",
+      "line": "Curl error 42: Callback aborted"
+    },
+    {
+      "log": "build.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "build.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "build.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "build.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    }
+  ],
+  "broad_keyword_matches": [
+    {
+      "log": "repaint-v3.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "repaint-v3.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "repaint-v3.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "repaint-v3.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "repaint-v3.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "repaint-v3.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "after-v3.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "repeat.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "repeat.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "repeat.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "repeat.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "repeat.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "repeat.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "readback.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "readback.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "readback.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "readback.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "readback.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "readback.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "readback.log",
+      "line": "Curl error 42: Callback aborted"
+    },
+    {
+      "log": "build.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "build.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "build.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "build.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "build.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "build.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "build.log",
+      "line": "Compiling shader \"Hidden/Core/FallbackError\" pass \"\" (vp)"
+    },
+    {
+      "log": "build.log",
+      "line": "Compiling shader \"Hidden/Core/FallbackError\" pass \"\" (fp)"
+    },
+    {
+      "log": "build.log",
+      "line": "Serialized binary data for shader Hidden/Core/FallbackError in 0.00s"
+    },
+    {
+      "log": "build.log",
+      "line": "Compiling shader \"Hidden/Universal Render Pipeline/FallbackError\" pass \"\" (vp)"
+    },
+    {
+      "log": "build.log",
+      "line": "Compiling shader \"Hidden/Universal Render Pipeline/FallbackError\" pass \"\" (fp)"
+    },
+    {
+      "log": "build.log",
+      "line": "Serialized binary data for shader Hidden/Universal Render Pipeline/FallbackError in 0.00s"
+    },
+    {
+      "log": "build.log",
+      "line": " 3.4 kb\t 0.0% Packages/com.unity.render-pipelines.universal/Shaders/Utils/FallbackError.shader"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.2 kb\t 0.0% Packages/com.unity.test-framework/UnityEngine.TestRunner/Assertions/OutOfOrderExpectedLogMessageException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.2 kb\t 0.0% Packages/com.unity.test-framework/UnityEngine.TestRunner/Assertions/UnexpectedLogMessageException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Flow/Ports/MissingValuePortInputException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Exceptions/InvalidImplementationException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.render-pipelines.universal/Runtime/Decal/DecalDrawErrorRenderPass.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Dependencies/FullSerializer/fsExceptions.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.test-framework/UnityEngine.TestRunner/Assertions/UnityTestTimeoutException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.test-framework/UnityEngine.TestRunner/Assertions/UnhandledLogMessageException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.test-framework/UnityEngine.TestRunner/Assertions/InvalidSignatureException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Flow/Dependencies/NCalc/EvaluationException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Reflection/Operators/AmbiguousOperatorException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Exceptions/InvalidConversionException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Connections/InvalidConnectionException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Reflection/Operators/InvalidOperatorException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Reflection/GenericClosingException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Graphs/GraphsExceptionUtility.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Graphs/GraphPointerException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Reflection/Operators/OperatorException.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Ensure/ExceptionMessages.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Utilities/ExceptionUtility.cs"
+    },
+    {
+      "log": "build.log",
+      "line": " 0.1 kb\t 0.0% Packages/com.unity.visualscripting/Runtime/VisualScripting.Core/Exceptions/DebugUtility.cs"
+    },
+    {
+      "log": "build.log",
+      "line": "[TapWindowsBuild] Succeeded errors=0 warnings=0 bytes=725650906"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "[TapSelfTest] RESULT passed=534 failed=0"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "      Failed Allocations. Bucket layout:"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        16B: 25 Subsections = 8533 buckets. Failed count: 12675"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        32B: 33 Subsections = 8448 buckets. Failed count: 1211"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        48B: 58 Subsections = 11878 buckets. Failed count: 21428"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        64B: 51 Subsections = 8704 buckets. Failed count: 25584"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        80B: 32 Subsections = 4681 buckets. Failed count: 2026"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        96B: 15 Subsections = 1920 buckets. Failed count: 2875"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        112B: 22 Subsections = 2503 buckets. Failed count: 3383"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        128B: 20 Subsections = 2048 buckets. Failed count: 117"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "      Failed Allocations. Bucket layout:"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        16B: 25 Subsections = 8533 buckets. Failed count: 12675"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        32B: 33 Subsections = 8448 buckets. Failed count: 1211"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        48B: 58 Subsections = 11878 buckets. Failed count: 21428"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        64B: 51 Subsections = 8704 buckets. Failed count: 25584"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        80B: 32 Subsections = 4681 buckets. Failed count: 2026"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        96B: 15 Subsections = 1920 buckets. Failed count: 2875"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        112B: 22 Subsections = 2503 buckets. Failed count: 3383"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        128B: 20 Subsections = 2048 buckets. Failed count: 117"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "      Failed Allocations. Bucket layout:"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        16B: 25 Subsections = 8533 buckets. Failed count: 12675"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        32B: 33 Subsections = 8448 buckets. Failed count: 1211"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        48B: 58 Subsections = 11878 buckets. Failed count: 21428"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        64B: 51 Subsections = 8704 buckets. Failed count: 25584"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        80B: 32 Subsections = 4681 buckets. Failed count: 2026"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        96B: 15 Subsections = 1920 buckets. Failed count: 2875"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        112B: 22 Subsections = 2503 buckets. Failed count: 3383"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        128B: 20 Subsections = 2048 buckets. Failed count: 117"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "      Failed Allocations. Bucket layout:"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        16B: 25 Subsections = 8533 buckets. Failed count: 12675"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        32B: 33 Subsections = 8448 buckets. Failed count: 1211"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        48B: 58 Subsections = 11878 buckets. Failed count: 21428"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        64B: 51 Subsections = 8704 buckets. Failed count: 25584"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        80B: 32 Subsections = 4681 buckets. Failed count: 2026"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        96B: 15 Subsections = 1920 buckets. Failed count: 2875"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        112B: 22 Subsections = 2503 buckets. Failed count: 3383"
+    },
+    {
+      "log": "selftest/player.log",
+      "line": "        128B: 20 Subsections = 2048 buckets. Failed count: 117"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "recorder-fix/before.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "[Licensing::Module] LicensingClient has failed validation; ignoring"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "[Licensing::Module] Error: Access token is unavailable; failed to update"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    },
+    {
+      "log": "recorder-fix/after.log",
+      "line": "\t\t\tLogAssemblyErrors (0ms)"
+    }
+  ],
+  "pattern": "error CS\\d+|Shader error|(?:NullReference|MissingReference|InvalidOperation|Argument|IndexOutOfRange)Exception\\s*:|\\[TapSelfTest\\] FAIL|\\[TilesHD\\].*FAIL|Compilation failed|BuildFailedException",
+  "note": "Licensing cache/token errors and readback curl cancellation observed despite successful exits; asset names and allocator fallback statistics are not runtime exceptions."
+}

@@ -1,0 +1,184 @@
+{
+  "passed": true,
+  "status": "COMPLETE",
+  "baseline": "e07520f16254b12ac7d4625c36209fc334e08650",
+  "branch": "feature/hd-ground-tiles",
+  "checks": {
+    "repaint-v3_supervisor": true,
+    "after-v3_supervisor": true,
+    "repeat_supervisor": true,
+    "readback_supervisor": true,
+    "build_supervisor": true,
+    "player_supervisor": true,
+    "selftest_534": true,
+    "fresh_build": true,
+    "repeat-validation": true,
+    "scene-protection": true,
+    "integration-protection": true,
+    "scope-validation": true,
+    "environment-restoration": true,
+    "final-prefs-audit": true,
+    "process-release": true,
+    "visual-review": true,
+    "geometry": true,
+    "scene_bytes_match_capture": true,
+    "road_coverage": true,
+    "capture_complete": true,
+    "player_frame_reviewed": true,
+    "ready_pngs": true,
+    "ready_handoff": true,
+    "ready_manifest": true,
+    "ready_validation": true,
+    "ready_scope_validation": true,
+    "tested_player_source_unchanged": true,
+    "recorder_fix_source_bound": true,
+    "recorder_fix_protection": true,
+    "recorder_fix_before": true,
+    "recorder_fix_after": true,
+    "recorder_rejects_final_as_before": true,
+    "no_detected_compile_render_runtime_errors": true,
+    "build_content_present": true
+  },
+  "selftest": {
+    "passed": 534,
+    "failed": 0,
+    "exit_code": 0
+  },
+  "supervisors": {
+    "repaint-v3": {
+      "command": [
+        "E:/unity/Downloads/Editor/Unity.exe",
+        "-batchmode",
+        "-projectPath",
+        "E:\\gamejam_wt\\tiles_hd",
+        "-executeMethod",
+        "TilesHD.RepaintMap.Repaint",
+        "-logFile",
+        "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\rework3\\unity\\repaint-v3.log",
+        "-quit"
+      ],
+      "exit_code": 0,
+      "editor_restored_before_supervisor": true,
+      "raw_restored_after_exit": true
+    },
+    "after-v3": {
+      "command": [
+        "E:/unity/Downloads/Editor/Unity.exe",
+        "-batchmode",
+        "-projectPath",
+        "E:\\gamejam_wt\\tiles_hd",
+        "-executeMethod",
+        "TilesHD.RecordMap.After",
+        "-logFile",
+        "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\rework3\\unity\\after-v3.log"
+      ],
+      "exit_code": 0,
+      "editor_restored_before_supervisor": true,
+      "raw_restored_after_exit": true
+    },
+    "repeat": {
+      "command": [
+        "E:/unity/Downloads/Editor/Unity.exe",
+        "-batchmode",
+        "-projectPath",
+        "E:\\gamejam_wt\\tiles_hd",
+        "-executeMethod",
+        "TilesHD.RepaintMap.Repaint",
+        "-logFile",
+        "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\rework3\\unity\\repeat.log",
+        "-quit"
+      ],
+      "exit_code": 0,
+      "editor_restored_before_supervisor": true,
+      "raw_restored_after_exit": true
+    },
+    "readback": {
+      "command": [
+        "E:/unity/Downloads/Editor/Unity.exe",
+        "-batchmode",
+        "-projectPath",
+        "E:\\gamejam_wt\\tiles_hd",
+        "-executeMethod",
+        "TilesHD.Rework3Map.Readback",
+        "-logFile",
+        "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\rework3\\unity\\readback.log",
+        "-quit"
+      ],
+      "exit_code": 0,
+      "editor_restored_before_supervisor": true,
+      "raw_restored_after_exit": true
+    },
+    "build": {
+      "command": [
+        "E:/unity/Downloads/Editor/Unity.exe",
+        "-batchmode",
+        "-projectPath",
+        "E:\\gamejam_wt\\tiles_hd",
+        "-executeMethod",
+        "TapWindowsBuild.Build",
+        "-logFile",
+        "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\rework3\\unity\\build.log",
+        "-quit",
+        "-tapbuildpath",
+        "Builds/Rework3/TapTap26.exe"
+      ],
+      "exit_code": 0,
+      "editor_restored_before_supervisor": true,
+      "raw_restored_after_exit": true
+    },
+    "player": {
+      "command": [
+        "E:\\gamejam_wt\\tiles_hd\\Builds\\Rework3\\TapTap26.exe",
+        "-tapselftest",
+        "-tapoutput",
+        "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\rework3\\unity\\selftest",
+        "-screen-fullscreen",
+        "0",
+        "-screen-width",
+        "1920",
+        "-screen-height",
+        "1080",
+        "-logFile",
+        "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\rework3\\unity\\selftest\\player.log"
+      ],
+      "exit_code": 0,
+      "player_restored_before_supervisor": true,
+      "post_exit_raw_restore": true,
+      "original_TAP_count": 0
+    }
+  },
+  "detected_error_lines": [],
+  "service_diagnostic_count": 29,
+  "tested_source_differences": [
+    "Assets/Editor/TilesHD/RecordMap.cs"
+  ],
+  "artifact_manifest_sha256": "4cad8648d928d6449630d0dfd3f2cf45869b49cb28ad606476f4876339d02a7c",
+  "scene_sha256": "541eb0f0d250a05b33acc1e9d528a854a5ce38eb29eb854a5a0058f59582407e",
+  "assembly_sha256": "2dd27e1253fa03717273a9765a2726b7161cb386f43314be3f5cd996cf222c87",
+  "visual_scope": {
+    "reviewed": true,
+    "passed": true,
+    "scope": "条目1单元明暗及局部路缘；不是完全消除格缝或材质重复的认证",
+    "images": [
+      "BiomechanicalCombatScene-after-closeup.png",
+      "BiomechanicalCombatScene-after-panorama.png",
+      "diagnostic-v2-v3-crop.png"
+    ],
+    "method": "实际Unity PlayMode Camera.Render截图，经图像工具检查；v2/v3同坐标裁切并排复核",
+    "player_frame_reviewed": true,
+    "player_frame": "selftest/target-after.png",
+    "player_frame_result": "新Builds/Rework3真实framebuffer已复核：可见地面、角色、路灯、HUD无明显黑块/粉材质/漏显；不推定截图外内容或所有交互已目视验证。",
+    "soil": "v3相较v2整块菱形亮暗明显减轻，相邻单元底色更接近；第一观感为连续蓝灰土面，原细格缝仍可见。允许原细格缝的连续地面目标基本满足，不能声称无网格或无色差。",
+    "panorama": "698格覆盖连续；无明显新增黑洞、缺块、断路；外围闭合，路灯与机械装饰可见。",
+    "road": "27格局部边缘改为已有过渡素材，四条纵边任意3格存在过渡，由独立CSV/坐标检查支持。路端及少量转角依旧偏硬，不是所有端点均全面重画。",
+    "limitations": [
+      "轻微细格缝、纹理重复仍在",
+      "石板与土面本身的材质对比保留",
+      "固定camera渲染不包含overlay UI；player framebuffer另行复核",
+      "未新增碎石材质或改动占用与玩法"
+    ]
+  },
+  "restored_environment_rebuilt": false,
+  "requirement_document": "E:/gamejam/Docs/tasks/REWORK_TILES_HD_3.md exists; lead has read it; recorder-fix delegate independently read the document. Prior not-found statement corrected. No commit under delegated scope.",
+  "no_commit": true
+}

@@ -1,0 +1,12 @@
+{
+  "baseline": "e07520f",
+  "directional_light_before": "1.015-.03*(.45*X/256+.55*Y/128)",
+  "directional_light_after": "1.0",
+  "directional_peak_to_peak_after": 0,
+  "top_edge_width_px": 1,
+  "top_edge_alpha_before": 0,
+  "top_edge_alpha_after": 0,
+  "edge_note": "No separate diamond edge highlight exists in rework2. Zero opacity retained (0 * 0.5); no new edge painted. Existing slab bevels are material detail and unchanged.",
+  "world_lighting": "Not baked here; map owner must supply continuous large-scale world field, not 4x4 texture period.",
+  "protected": "All alpha; all RGBA outside visible top of cells0-39; props40-55; all importer metadata"
+}

@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "files": [
+    {
+      "path": "ProjectSettings/ProjectVersion.txt",
+      "tested_sha256": "e899a704febd8f35fa1fd9a2a4f834b679b2d46bacecec9628d0afebc8912a1f",
+      "baseline_sha256": "b42279cfd794d9f1825f3b7c1f318b861fa9e2e2b3c6c146737bdbd41c01b389",
+      "restored_from_preexecution_baseline": true,
+      "current_sha256": "b42279cfd794d9f1825f3b7c1f318b861fa9e2e2b3c6c146737bdbd41c01b389"
+    },
+    {
+      "path": "Packages/packages-lock.json",
+      "tested_sha256": "879686958d422c041c7ab0100a5074a19ca86061f12799cfb61b5489dcb0ae4f",
+      "baseline_sha256": "920350bf283c48f3d53d07fda8aad11cad0d9032ad3652db168107ee940948ee",
+      "restored_from_preexecution_baseline": true,
+      "current_sha256": "920350bf283c48f3d53d07fda8aad11cad0d9032ad3652db168107ee940948ee"
+    }
+  ],
+  "tested_editor": "E:/unity/Downloads/Editor/Unity.exe",
+  "tested_version": "m_EditorVersion: 2022.3.57f1\nm_EditorVersionWithRevision: 2022.3.57f1 (9d8bd91adc0a)\n",
+  "restored_version": "m_EditorVersion: 2022.3.62f3c1\nm_EditorVersionWithRevision: 2022.3.62f3c1 (1623fc0bbb97)\n",
+  "restored_environment_rebuilt": false,
+  "unrelated_Mix_unchanged": true,
+  "note": "Only the two known automatic environment edits restored; no blanket checkout/clean. Build certifies archived tested environment, NOT a rebuild under restored 2022.3.62f3c1."
+}

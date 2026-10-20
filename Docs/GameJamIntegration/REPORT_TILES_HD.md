@@ -333,3 +333,42 @@ python Docs/GameJamIntegration/tiles_hd/rework2/unity/closeout.py
 
 ### 总负责人最终视觉意见
 最终近景无原白色点阵，角色比地面更醒目，灯具可见且没有整框满青光；但底面周期明暗、石缝细双线、道路部分直切仍明显。8×8土图未见明显白点或硬接缝，但可辨周期纹理。辅助视觉工具关于“动画闪烁周期”的建议不适用本任务：这里检查空间重复，不新增动画验证要求。保留art_approved=false，请美术指导按实际图片复验；这是一份有完整技术证据的返工候选，不是美术全条款完成声明。
+
+## 返工 3（基线e07520f；仅地面明暗与局部路缘）
+
+### 结论与范围
+总负责人已完整读取 TASK_TILES_HD_HERMES.md、GUIDE_TILES_HD.md、历史报告及 E:/gamejam/Docs/tasks/REWORK_TILES_HD_3.md。本轮只处理返工单两项；不再重做已通过的材质、道具、地图构图。新提交仅推 feature/hd-ground-tiles，不触碰main。子代理实际模型均为gpt-6-astra。
+
+技术验证通过：全新Windows构建0错误/0警告，正常模式Player实测534 PASS / 0 FAIL；负责人再次执行verify.py与closeout.py均通过。最终近景整块菱形亮暗明显减轻，土面先呈连续底色；细格缝、轻微周期纹理和少量偏硬路端仍可辨。不以测试通过冒称完全无网格，最终美术签收交Claude。
+
+### 两处实际修改
+1. 地面明暗：17张生产PNG仅0–39格可见顶面RGB去掉单格方向梯度，方向梯度为0%；最大通道差2/255。返工2实际不存在独立菱形顶边高光层，有效透明度保持0，未额外添加亮边；不能声称做了非零高光的减半。保留石板内部磨边，不重画已通过素材。所有alpha、侧面、透明RGB、40–55道具RGBA及meta身份保持。
+   仅去梯度不足以消除实际游戏菱形，故增加仅地面使用的TilesHDWorldLight材质/shader及TilesHDSoilLight灰度校正图：逐片元取同一世界坐标低频明暗场，并在线性空间抵消土面已有的低频亮暗。不用4格循环冒充世界光，不改atlas中的材质分区。v1/v2失败图片保留，v3为最终候选。该shader不采样动态2D灯；世界空间校正图绑定本场景布局，未来重新铺图应重生成，不能当作任意地图通用光照系统。仅TilemapRenderer材质引用为必要渲染例外，排序等其余字段保持。
+2. 路缘：仅58个局部边缘候选参与匹配，实际27格换成既有石土过渡格，四条纵边任意连续3格均有过渡，转角纳入小碎石区域；保留原L路线、道路内部及外围构图。记录见unity/road-edge.csv与integration-protection.json。698格占用、origin/size、cell颜色/矩阵/flags不变；167条场景记录ID不增删，只有Tilemap格子与其Renderer材质引用变化。装饰6灯/9管道、相机及玩法对象保持，2307受保护文件检查通过。
+
+### 图像自检与保护
+复用原生成器先重放e07520f，17张RGBA逐像素相同，然后仅应用本轮顶面改动；没有新AI生成任务。固定原RGB分类器与区域，640格最小Alpha IoU=1.0、全格材质=0.981104414、顶面材质=0.960246294，均通过原阈值。非授权像素变动为0。完整640行见art/per_cell_validation.csv，范围证明见art/scope_validation.json与reproduction_validation.json。图像数值证明的是生产atlas，不把世界光渲染后的颜色冒称该分类器已测。
+
+### 真实执行与后续辅助修复
+最终运行证据在tiles_hd/rework3/unity：
+- run_editor.py TilesHD.RepaintMap.Repaint repaint-v3；TilesHD.RecordMap.After after-v3；repeat changed=0且保存场景字节一致；TilesHD.Rework3Map.Readback新进程回读一致。
+- run_editor.py TapWindowsBuild.Build build -tapbuildpath Builds/Rework3/TapTap26.exe：新目录构建，Succeeded errors=0 warnings=0。
+- python Tools/run_tap_selftest.py --exe Builds/Rework3/TapTap26.exe --output Docs/GameJamIntegration/tiles_hd/rework3/unity/selftest --timeout 300：RESULT passed=534 failed=0，exit=0。
+- python Docs/GameJamIntegration/tiles_hd/rework3/unity/verify.py；closeout.py：负责人独立复跑PASS。
+- 提交前审查发现切换证据目录后RecordMap.Before缺少多变体基线，已修为从固定e07520f Git读取17张基线PNG/meta，内存合批与Sprite/Tile克隆，不覆盖生产PNG。真实Before/After均exit=0；最终场景误作Before的负向测试按预期exit=1且无截图。该修复只涉及Editor录制器，生产内容哈希保持，不冒称之后又重跑534或build；旧tested-source清单未改写，新增Editor证据在recorder-fix中单独绑定。
+
+Editor原2项、Player原0项raw prefs自行恢复及外部回读匹配。未宣称非空真实Player存档或强杀恢复覆盖。实际Unity2022.3.57f1，归档tested-environment后仅恢复自动ProjectVersion/lock至原声明；未在恢复后的2022.3.62f3c1环境重新构建。原始日志有授权缓存/服务诊断，编译/着色/运行时异常扫描无新增阻断；不宣称原始日志所有类别零错误。所属Unity/Player进程已释放，未停止共享MCP服务。
+
+### 交付图片与证据
+以下相对Docs/GameJamIntegration/tiles_hd/rework3/：
+- art/atlas_final.png：地砖总图；comparison_128px.png、comparison_256px.png及草/石/土8×8对照。
+- unity/BiomechanicalCombatScene-after-panorama.png、after-closeup.png：最终1920×1080游戏相机RenderTexture，全景/近景，不含overlay Canvas。
+- unity/selftest/target-after.png：新Player完整HUD framebuffer。
+- unity/recorder-fix/：辅助录制器修复后的真实基线Before、当前After、正反测试及生产保护证据。
+- unity/closeout.json、artifact-sha256.json、scene-protection.json、integration-protection.json、scope-validation.json、repeat-validation.json、fresh-readback.json、log-audit.json、handoff.md。
+- build.log、selftest/selftest.txt、selftest/player.log、各supervisor-result.json为真实日志。私有prefs原始快照、构建二进制、重复baseline/reproduction图片和额外测试截图仅本地保留，不提交；清单包含本地文件不代表全部进入Git。原有未跟踪文件未纳入提交。
+
+主PNG SHA256：edfd979538fb35685bbfdaa5f2e74fb1aefc9da497352548b058aec3e8e2fc3b。
+最终场景SHA256：541eb0f0d250a05b33acc1e9d528a854a5ce38eb29eb854a5a0058f59582407e。
+游戏程序集SHA256：2dd27e1253fa03717273a9765a2726b7161cb386f43314be3f5cd996cf222c87（玩法未改）。
+

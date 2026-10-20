@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "negative_cases": [
+    [
+      "exit_code",
+      1
+    ],
+    [
+      "exit_code",
+      "0"
+    ],
+    [
+      "exit_code",
+      false
+    ],
+    [
+      "editor_restored_before_supervisor",
+      false
+    ],
+    [
+      "editor_restored_before_supervisor",
+      "true"
+    ],
+    [
+      "raw_restored_after_exit",
+      null
+    ],
+    [
+      "error",
+      "failure"
+    ],
+    [
+      "exit_code",
+      "missing"
+    ],
+    [
+      "editor_restored_before_supervisor",
+      "missing"
+    ],
+    [
+      "raw_restored_after_exit",
+      "missing"
+    ]
+  ],
+  "note": "Predicate tests only; does not replace real editor/player execution."
+}

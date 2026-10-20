@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "namespaces": {
+    "editor": {
+      "original_count": 2,
+      "matches_original_raw": true,
+      "supervisor_recovery_needed": false
+    },
+    "player": {
+      "original_count": 0,
+      "matches_original_raw": true,
+      "supervisor_recovery_needed": false
+    }
+  },
+  "note": "Native registry type/raw bytes and existence for TAP_, GJ_UltChoice, GJ_GEAR_ prefixes; real player namespace initially empty. Synthetic raw-type test is separate."
+}

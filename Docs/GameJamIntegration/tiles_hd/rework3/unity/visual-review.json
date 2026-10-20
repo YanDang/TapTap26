@@ -1,0 +1,14 @@
+{
+  "reviewed": true,
+  "passed": true,
+  "scope": "条目1单元明暗及局部路缘；不是完全消除格缝或材质重复的认证",
+  "images": ["BiomechanicalCombatScene-after-closeup.png", "BiomechanicalCombatScene-after-panorama.png", "diagnostic-v2-v3-crop.png"],
+  "method": "实际Unity PlayMode Camera.Render截图，经图像工具检查；v2/v3同坐标裁切并排复核",
+  "player_frame_reviewed": true,
+  "player_frame": "selftest/target-after.png",
+  "player_frame_result": "新Builds/Rework3真实framebuffer已复核：可见地面、角色、路灯、HUD无明显黑块/粉材质/漏显；不推定截图外内容或所有交互已目视验证。", 
+  "soil": "v3相较v2整块菱形亮暗明显减轻，相邻单元底色更接近；第一观感为连续蓝灰土面，原细格缝仍可见。允许原细格缝的连续地面目标基本满足，不能声称无网格或无色差。",
+  "panorama": "698格覆盖连续；无明显新增黑洞、缺块、断路；外围闭合，路灯与机械装饰可见。",
+  "road": "27格局部边缘改为已有过渡素材，四条纵边任意3格存在过渡，由独立CSV/坐标检查支持。路端及少量转角依旧偏硬，不是所有端点均全面重画。",
+  "limitations": ["轻微细格缝、纹理重复仍在", "石板与土面本身的材质对比保留", "固定camera渲染不包含overlay UI；player framebuffer另行复核", "未新增碎石材质或改动占用与玩法"]
+}

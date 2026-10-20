@@ -1,0 +1,17 @@
+{
+  "command": [
+    "E:/unity/Downloads/Editor/Unity.exe",
+    "-batchmode",
+    "-projectPath",
+    "E:\\gamejam_wt\\tiles_hd",
+    "-executeMethod",
+    "TilesHD.RecordMap.Before",
+    "-logFile",
+    "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\rework3\\unity\\recorder-fix\\guard.log",
+    "-tilesHDRecordOutput",
+    "Docs/GameJamIntegration/tiles_hd/rework3/unity/recorder-fix/guard"
+  ],
+  "exit_code": 1,
+  "editor_restored_before_supervisor": true,
+  "raw_restored_after_exit": true
+}

@@ -1,0 +1,165 @@
+{
+  "status": "ready_for_independent_review_and_unity_import",
+  "baseline_commit": "e07520f16254b12ac7d4625c36209fc334e08650",
+  "atlas_path": "Assets/Pic/Test/basic_ground_tiles.png",
+  "atlas_sha256": "edfd979538fb35685bbfdaa5f2e74fb1aefc9da497352548b058aec3e8e2fc3b",
+  "variant_count": 16,
+  "production_pngs": {
+    "Assets/Pic/Test/basic_ground_tiles.png": {
+      "sha256": "edfd979538fb35685bbfdaa5f2e74fb1aefc9da497352548b058aec3e8e2fc3b",
+      "bytes": 839711,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_00.png": {
+      "sha256": "edfd979538fb35685bbfdaa5f2e74fb1aefc9da497352548b058aec3e8e2fc3b",
+      "bytes": 839711,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_01.png": {
+      "sha256": "7ae79e017576258567d059c5a18f5fd287c61e431b31a745d538c8c05aaa03e2",
+      "bytes": 831466,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_02.png": {
+      "sha256": "7308b3581a90bc3e55182d533256949cffd37ad49a44baa3e680c28b5caf4a73",
+      "bytes": 831617,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_03.png": {
+      "sha256": "b1bf9616f3a68da005a310c2c02154bba90f9635cd9d78ac5a9f21a4bf835472",
+      "bytes": 833507,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_04.png": {
+      "sha256": "11e32165b195183fd105d6b9b323780ffda639d9440cc6a7791cac28f8f7e001",
+      "bytes": 823901,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_05.png": {
+      "sha256": "ae3caeea310d7f150372fb02d75602d5356e70ced2360078d8fa50f5e41e0c9d",
+      "bytes": 823689,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_06.png": {
+      "sha256": "7791437a619e4b6f127db0146bd8316a394b0b2617440e773b4c595d16e7cd51",
+      "bytes": 832931,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_07.png": {
+      "sha256": "30267d9a81fc6a23d5d10f06c247772851a9a60bc7868852584dce6f1c4d1ef4",
+      "bytes": 836920,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_08.png": {
+      "sha256": "8a2fdd91a844215effa3d06dda87eacd751d078d897a2e3e7e1d65e9bbb5bdcb",
+      "bytes": 839618,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_09.png": {
+      "sha256": "b5e1bcc53f435267b8661b925a0140f00c313086bde5bacca736d5b3f0232405",
+      "bytes": 823812,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_10.png": {
+      "sha256": "7ce5b58e5c945d8f34625de286a8e857eabae4491d6cd819b099b9dfaf12eac2",
+      "bytes": 832949,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_11.png": {
+      "sha256": "63b56962b69753bb221f116605aa52146ef29dbdb36662239563f3409711d78d",
+      "bytes": 832827,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_12.png": {
+      "sha256": "d9e2941616a84dcd0a950a6192f524a6169255a90ea1df077453e91d49b8a87f",
+      "bytes": 835493,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_13.png": {
+      "sha256": "d374e205da677341169ab999fc21209d5f7b7c506b886e618fb55e2168c1d28a",
+      "bytes": 825047,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_14.png": {
+      "sha256": "ab9e1aa8effe92780007acd6d69ca8e8ba5bdd5d609fa14001a866c33bb0979b",
+      "bytes": 827607,
+      "size": [
+        2048,
+        1792
+      ]
+    },
+    "Assets/Pic/Test/TilesHDVariants/variant_15.png": {
+      "sha256": "7a33648c773e0bba423dcaa2bd389306d01b0eb51fc77de19dd4fa3a7a2dac0e",
+      "bytes": 836462,
+      "size": [
+        2048,
+        1792
+      ]
+    }
+  },
+  "technical_image_checks_passed": true,
+  "art_approved": false,
+  "world_space_lighting_verified": false,
+  "top_edge_nonzero_halving_applied": false,
+  "top_edge_note": "Baseline rework2 has no independent tile-edge highlight; opacity remains zero, no new line introduced.",
+  "validation": {
+    "min_alpha_iou": 1.0,
+    "min_material_accuracy": 0.9811044143997394,
+    "min_top_accuracy": 0.960246293639407
+  },
+  "handoff": "Docs/GameJamIntegration/tiles_hd/rework3/art/handoff.md",
+  "handoff_sha256": "298275cf33fd6f2be8ad365c708ed09c668852653d4712a676b33857bccf5509",
+  "manifest_sha256": "a523bc9a02b352918acdaf82716c86a860d96f123564727111816fcef8a87667",
+  "validation_sha256": "dd539e7b5ecfc8d752ee9e1ecb4a32945bc22558ce55e0693e7a12dfc2ed47ba",
+  "scope_validation_sha256": "55598c06ef605ee7ebf489bc88d7b6d2dfa168aed2bf645d57d43ffd25f0d719",
+  "known_limitations": [
+    "World lighting and runtime diamond-grid acceptance deferred to map owner",
+    "Existing 4-cell material repetition preserved",
+    "No preexisting nonzero independent tile-edge layer to halve"
+  ]
+}

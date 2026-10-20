@@ -1,0 +1,537 @@
+PASS formal combat scene loaded
+PASS live player and Hero2D
+PASS one adapter
+PASS default gathering door preserved
+PASS adapter initial enemy cleanup
+PASS orthographic camera and existing controller
+PASS real GPU graphics device NVIDIA GeForce RTX 5080 Laptop GPU
+MEASURE baseline=False screen=1920x1080 height=0.8783908 animatedBounds=0.8751309 speed=1.65144277 roll=3.509316 ortho=2.01843023 minZoom=0.8073719 maxZoom=4.03685951 heightsPerSec=1.88007748 screenFraction=0.217592552
+PASS measured source visual heights per second
+PASS reference screen fraction
+PASS zoom range ratio retained
+PASS roll/run ratio retained
+PASS game framebuffer screenshot written
+MOVEMENT actualDistance=0.41971004 elapsed=0.2541475 expected=0.41971004
+PASS actual unobstructed movement equals speed times engine delta
+PASS existing dodge entry accepted
+PASS dodge grants invulnerability
+PASS dodge plus existing counter-punch ends without stuck invulnerability
+PASS P6 real boss windup prepared
+PASS P6 production Mix additive request accepted
+PASS P6 actual Mix scene and production controller loaded
+PASS P6 real Mix preserves Boss HP phase windup impact index
+PASS P6 Mix input lock camera and HUD hidden
+PASS P6 gear HUD hidden over actual Mix
+PASS P6 Mix return raycast and real pointer callback
+PASS P6 Mix unloaded camera input HUD restored
+PASS P6 same Boss entity HP phase after Mix return
+PASS P6 Boss windup resumes after real Mix return
+PASS P6 production Collect door remains forbidden during Boss encounter
+PASS P6 actual Collect scene loaded via door BiomechanicalCombatScene:0:5.25:0
+PASS P6 production Collect Start commits this door day
+PASS P6 greenhouse has real harvest nodes
+PASS P6 production harvest increments one resource
+PASS P6 gear HUD hidden over actual Collect
+PASS P6 Collect return raycast and real callback
+PASS P6 Collect return camera input HUD restored
+PASS P6 same door cannot reopen on same day
+PASS P6 actual Collect scene loaded via door BiomechanicalCombatScene:4:5.25:0
+PASS P6 production Collect Start commits this door day
+PASS P6 second door independent resource nodes and harvest count
+PASS P6 greenhouse has real harvest nodes
+PASS P6 production harvest increments one resource
+PASS P6 gear HUD hidden over actual Collect
+PASS P6 Collect return raycast and real callback
+PASS P6 Collect return camera input HUD restored
+PASS P6 same door cannot reopen on same day
+PASS P6 production storage reload retains separate door resources and daily use
+PASS P6 next-day first door gets fresh independent state
+PASS P6 next-day second door independently available
+PASS P6 mobile ult switch actual hit target callback opens picker
+PASS P6 gear button actual hit target callback opens bench
+PASS P6 grapple screen hit invokes real equipment action
+PASS P6 grapple pointer callback pulls actual enemy
+PASS P6 pointer echo choice prepared
+PASS P6 ultimate screen hit invokes real release lock
+PASS P6 ordinary furniture damage and observer unchanged
+PASS P6 ordinary furniture pickup releases grid
+PASS P6 ordinary furniture putdown restores grid
+PASS P6 ordinary kick coroutine settles and restores grid
+PASS P6 permanent furniture remains indestructible
+PASS P6 gear HUD restored after overlay and bench close
+PASS P5 real player combat adapter and UI installed
+PASS P5 scale initialized from actual hero bounds not zero Start cache
+PASS P5 noncombat bench opens
+PASS P5 bench pauses production world
+PASS P5 all 15 source icons imported
+PASS P5 bench closes
+PASS P5 siphon real movement speed outside combat
+PASS P5 nerve real attack interval
+PASS P5 antenna actual charge multiplier
+PASS P5 fungi heals real player HP
+PASS P5 grapple accepted real enemy
+PASS P5 paused grapple cannot move target
+PASS P5 grapple actually pulls enemy XY
+PASS P5 cancelled grapple cannot settle stale pull
+PASS P5 nearby enemy blocks bench
+PASS P5 equip service rejects combat proximity
+PASS P5 hydro replaces smash
+PASS P5 hydro actual damage wet and shared displacement
+PASS P5 eel wet hit damages and paralyzes actual enemy
+PASS P5 static holds three stacks
+PASS P5 fourth block discharges real damage
+PASS P5 held shell guard accepted
+PASS P5 shell front yellow damage fully blocked
+PASS P5 lethal bubble saves real player
+PASS P5 stationary real player roots
+PASS P5 movement unroots
+PASS P5 furniture grapple accepted [lv=3 ready=True paused=False cooldown=4 distance=2.208705 unit=0.3658212 targetable=True registered=True]
+PASS P5 grapple relocates furniture AND grid ownership
+PASS P5 grapple refuses immovable furniture
+PASS P5 antenna actual energy Lv1
+PASS P5 nerve attack timer Lv1
+PASS P5 siphon movement multiplier Lv1
+PASS P5 fungi no premature heal Lv1
+PASS P5 fungi timed HP Lv1
+PASS P5 antenna actual energy Lv2
+PASS P5 nerve attack timer Lv2
+PASS P5 siphon movement multiplier Lv2
+PASS P5 fungi no premature heal Lv2
+PASS P5 fungi timed HP Lv2
+PASS P5 antenna actual energy Lv3
+PASS P5 nerve attack timer Lv3
+PASS P5 siphon movement multiplier Lv3
+PASS P5 fungi no premature heal Lv3
+PASS P5 fungi timed HP Lv3
+PASS P5 jet starts original dodge
+PASS P5 jet spends one of three charges
+PASS P5 jet recharge frozen by pause
+PASS P5 jet original dodge produces displacement
+PASS P5 jet timed charge recovery
+PASS P5 decoy real dodge accepted Lv1
+PASS P5 decoy triggered by actual avoided damage Lv1
+PASS P5 decoy taunt level gate Lv1
+PASS P5 decoy timed HP explosion Lv1
+PASS P5 decoy real dodge accepted Lv2
+PASS P5 decoy triggered by actual avoided damage Lv2
+PASS P5 decoy taunt level gate Lv2
+PASS P5 decoy actual AI pursuit Lv2
+PASS P5 decoy timed HP explosion Lv2
+PASS P5 decoy real dodge accepted Lv3
+PASS P5 decoy triggered by actual avoided damage Lv3
+PASS P5 decoy taunt level gate Lv3
+PASS P5 decoy actual AI pursuit Lv3
+PASS P5 decoy timed HP explosion Lv3
+PASS P5 second decoy staggered detonation
+PASS P5 spring actual extra HP recipients Lv1
+PASS P5 eel cadence no early damage Lv1
+PASS P5 eel cadence actual damage and level3 jump Lv1
+PASS P5 spring actual extra HP recipients Lv2
+PASS P5 eel cadence no early damage Lv2
+PASS P5 eel cadence actual damage and level3 jump Lv2
+PASS P5 spring actual extra HP recipients Lv3
+PASS P5 eel cadence no early damage Lv3
+PASS P5 eel cadence actual damage and level3 jump Lv3
+PASS P5 boss grapple accepted
+PASS P5 boss grapple moves player not boss
+PASS P5 boss taunt immunity arm_grapple
+PASS P5 boss hydro HP wet no displacement plus posture
+PASS P5 boss taunt immunity arm_hydro
+PASS P5 boss eel actual HP paralysis
+PASS P5 boss paralysis duration halved
+PASS P5 boss taunt immunity arm_eel
+PASS P5 perfect boss shell accepted
+PASS P5 perfect shell red HP half and exactly one Boss posture no push
+PASS P5 boss shell accepted
+PASS P5 beam guard faces source
+PASS P5 actual Boss beam reflected HP and player protected
+PASS P5 boss taunt immunity shell_mobile
+PASS P5 logic warning visible 0.2s earlier without advancing impact clock
+PASS P5 boss taunt immunity core_logic
+PASS P5 cleanup releases all owned action flags
+PASS P1 optional combat policy available
+PASS P1 ordinary damage and guard depletion
+PASS P1 ordinary parry pending and 1.5 vulnerability
+PASS P1 ordinary controls retained
+PASS P1 ordinary execution lethal and death reentry exactly once
+PASS P1 external AI sole owner stays registered
+PASS P1 external AI build pause
+PASS P1 external AI overlay pause
+PASS P1 external AI hitstop
+PASS P1 external parry window explicit owner
+PASS P1 no stale ordinary parry timer for external AI
+PASS P1 external AI obeys paralysis
+PASS P1 paralysis duration policy halved
+PASS P1 armored hit preserves state and filters guard damage
+PASS P1 damage veto preserves single HP
+PASS P1 all three knockback paths resisted
+PASS P1 slow clamp pacify immunity wet retained
+PASS P1 rejected execution no player lock or executing state
+PASS P1 settlement rechecks eligibility
+PASS P1 nonlethal execution settles same HP and recovers
+PASS P1 disabling player cancels in-flight execution settlement
+PASS P1 unblockable damage ignores guard
+PASS P1 block routes to actual attacker
+PASS P1 sourceless block never punishes nearby enemy
+PASS P1 actual player damage event excludes rejected hits
+PASS P1 real smash damage event and displacement resistance
+PASS P1 real normal attack emits damage event
+PASS P1 event dodge accepted
+PASS P1 perfect dodge once per real roll
+PASS P1 dodge end exactly once
+PASS P1 no perfect event outside roll
+PASS P2 shared geometry interior exterior closed outline P1_Claw3
+PASS P2 shared geometry interior exterior closed outline P1_Lunge
+PASS P2 shared geometry interior exterior closed outline P1_LeapSlam
+PASS P2 shared geometry interior exterior closed outline P1_CloakSweep
+PASS P2 shared geometry interior exterior closed outline P1_Wrap
+PASS P2 shared geometry interior exterior closed outline P2_SpinThrust
+PASS P2 shared geometry interior exterior closed outline P2_Claw5
+PASS P2 shared geometry interior exterior closed outline P2_EyeBeam
+PASS P2 guide yellow red impact semantics
+PASS P2 beam telegraph clipped at nearest cover
+PASS P2 beam stops at nearest furniture no downstream damage
+PASS P2 cover behind source or behind player does not protect
+PASS P2 cleave cover inside 2m shattered and protects
+PASS P2 cleave beyond 2m does not protect
+PASS P2 gathering door durability and cover exclusion
+PASS P2 water electric overlap doubles once and slow does not stack
+PASS P2 overlapping electric patches share one second cadence
+PASS P2 hazards lifetime and damage frozen in build pause
+PASS P2 hazards expire and movement restored
+PASS P2 blocked footprint does not move or clear foreign occupancy
+PASS P2 swept movement rejects map exterior
+PASS P2 authored rig height world scale 2.5 hero (not silhouette measurement)
+PASS P2 original gait changes rig bone poses
+PASS P2 original gait emits alternating-cycle footfalls
+PASS P2 lethal damage enters existing defeat
+PASS P2 real revival preserves boss identity HP phase thresholds
+PASS P2 wrap owns unique grab
+PASS P2 disable cleans owned grab and hazards
+PASS P2 posture opens execution eligibility
+PASS P2 expired execution window rejects stale request
+PASS P2 production boss spawn
+PASS P2 single registered HP entity
+PASS P2 encounter idempotent
+PASS P2 original layered rig bound
+PASS P2 ordinary damage no guard break
+PASS P2 execution twelve percent recovers
+PASS P2 build pause freezes attack
+PASS P2 overlay pause freezes attack
+PASS P2 door interaction denied during encounter
+PASS P2 slow capped and paralysis accepted
+PASS P2 knockback immune
+PASS P2 lethal damage deferred before mandatory thresholds
+PASS P2 lethal crossing 70 then 50 then 30 exactly once
+PASS P2 deferred death exactly once unlocks encounter
+PASS P3 all boss SFX and six BGM decoded nonzero PCM
+PASS P3 sigh and all steps imported
+PASS P3 sigh closeup rift and letterbox
+PASS P3 letterbox behind HUD and does not intercept input
+PASS P3 build pause freezes choreography FX and audio
+PASS P3 resumes owned audio
+PASS P3 workshop overlay preserves timeline and pauses audio
+PASS P3 sky eye reaches fully open on real FX clock
+PASS P3 vanished boss and tracking sky eye
+PASS P3 sky eye has visible sized iris and black pupil
+PASS P3 authoritative cleave event giant claw and emergence
+PASS P3 disable cancellation restores camera vanish black bars
+PASS P3 natural ultimate completion restores presentation
+PASS P3 transformation veins and cloak fragments
+PASS P3 thirty-percent X emits both cuts before emergence
+PASS P3 cancellation stops ultimate music warning
+PASS P3 authoritative first impact exactly once P1_Claw3
+PASS P3 resolved XY FX P1_Claw3
+PASS P3 authoritative first impact exactly once P1_Lunge
+PASS P3 resolved XY FX P1_Lunge
+PASS P3 authoritative first impact exactly once P1_LeapSlam
+PASS P3 resolved XY FX P1_LeapSlam
+PASS P3 authoritative first impact exactly once P1_CloakSweep
+PASS P3 resolved XY FX P1_CloakSweep
+PASS P3 authoritative first impact exactly once P1_Wrap
+PASS P3 resolved XY FX P1_Wrap
+PASS P3 authoritative first impact exactly once P2_SpinThrust
+PASS P3 resolved XY FX P2_SpinThrust
+PASS P3 authoritative first impact exactly once P2_Claw5
+PASS P3 resolved XY FX P2_Claw5
+PASS P3 authoritative first impact exactly once P2_EyeBeam
+PASS P3 resolved XY FX P2_EyeBeam
+PASS P3 short lived FX still expire after birth timing fix
+PASS P3 actual URP shader supported
+PASS P4 runtime manager and clickable HUD installed
+PASS P4 out-of-combat selection accepted and persisted
+PASS P4 switch button opens three-card selection
+PASS P4 full charge animated arc border
+PASS P4 arm without target does not spend charge
+PASS P4 successful source-less block awards five charge
+PASS P4 sourced block awards five charge exactly once
+PASS P4 actual player damage normalized to four charge
+PASS P4 invulnerable invalid negative and NaN damage give no charge
+PASS P4 combat selection rejected
+PASS P4 ordinary attack rejects ultimate without spending charge
+PASS P4 ordinary attack naturally releases eligibility
+PASS P4 same mobile click starts arm and acquires lock
+PASS P4 movement dodge charge execute placement input locked
+PASS P4 build pause freezes ultimate and damage
+PASS P4 workshop blocks release and freezes current phase
+PASS P4 arm actual timed cone damage
+PASS P4 arm restores lock and dash invulnerability
+PASS P4 choose cannon
+PASS P4 cannon release accepted
+PASS P4 cannon superarmor takes damage without cancelling
+PASS P4 swept cannon detonates
+PASS P4 actual explosion applies burn
+PASS P4 repeated burn refreshes without stacking
+PASS P4 burn damage frozen during build pause
+PASS P4 burn deals four actual world-second ticks
+PASS P4 choose echo
+PASS P4 echo starts
+PASS P4 echo absorbs blockable unblockable and legacy element damage
+PASS P4 echo rejects grab and stuns grabber
+PASS P4 echo eight-stack cap
+PASS P6 eight stacks rendered in HUD before capture
+PASS P4 early echo click causes wave damage and unlocks
+PASS P4 echo repeat release
+PASS P4 echo remains visibly shelled beyond normal roll watchdog
+PASS P4 echo automatic five-second release
+PASS P4 player disable cancels without stale action
+PASS P4 reset clears energy lock owned projectile and burn
+PASS P4 choice uses isolated preference key
+PASS P4 unlocked cannon release accepted
+PASS P4 cannon without lock fires facing not nearest enemy
+PASS P4 arm accepts real boss target
+PASS P4 arm dash only is invulnerable
+PASS P4 arm boss eight damage two posture no displacement
+PASS P4 echo accepts boss encounter
+PASS P4 echo absorbs real boss sourced red damage
+PASS P4 eight echoes deal ten damage and cap boss posture at three
+PASS P4 cannon explosion damages and burns actual boss
+PASS FINALE corruption level day 1
+PASS FINALE HP day 1
+PASS FINALE hit day 1
+PASS FINALE grab day 1
+PASS FINALE corruption level day 4
+PASS FINALE HP day 4
+PASS FINALE hit day 4
+PASS FINALE grab day 4
+PASS FINALE corruption level day 7
+PASS FINALE HP day 7
+PASS FINALE hit day 7
+PASS FINALE grab day 7
+PASS FINALE day clamp including integer boundaries
+PASS FINALE all spawn routes attach day 1 kind 0
+PASS FINALE real spawn HP
+PASS FINALE both player damage routes
+PASS FINALE raw furniture/base damage unchanged
+PASS FINALE repeated Apply neither stacks nor heals
+PASS FINALE purple-red body tint
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE soft pool and textured spores
+PASS FINALE all spawn routes attach day 1 kind 1
+PASS FINALE real spawn HP
+PASS FINALE both player damage routes
+PASS FINALE raw furniture/base damage unchanged
+PASS FINALE repeated Apply neither stacks nor heals
+PASS FINALE purple-red body tint
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE soft pool and textured spores
+PASS FINALE all spawn routes attach day 1 kind 2
+PASS FINALE real spawn HP
+PASS FINALE both player damage routes
+PASS FINALE raw furniture/base damage unchanged
+PASS FINALE repeated Apply neither stacks nor heals
+PASS FINALE purple-red body tint
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE soft pool and textured spores
+PASS FINALE elite HP only one daily factor
+PASS FINALE elite hit and grab preserve elite multiplier once
+PASS FINALE elite difficulty idempotent
+PASS FINALE all spawn routes attach day 4 kind 0
+PASS FINALE real spawn HP
+PASS FINALE both player damage routes
+PASS FINALE raw furniture/base damage unchanged
+PASS FINALE repeated Apply neither stacks nor heals
+PASS FINALE purple-red body tint
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE soft pool and textured spores
+PASS FINALE all spawn routes attach day 4 kind 1
+PASS FINALE real spawn HP
+PASS FINALE both player damage routes
+PASS FINALE raw furniture/base damage unchanged
+PASS FINALE repeated Apply neither stacks nor heals
+PASS FINALE purple-red body tint
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE soft pool and textured spores
+PASS FINALE all spawn routes attach day 4 kind 2
+PASS FINALE real spawn HP
+PASS FINALE both player damage routes
+PASS FINALE raw furniture/base damage unchanged
+PASS FINALE repeated Apply neither stacks nor heals
+PASS FINALE purple-red body tint
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE soft pool and textured spores
+PASS FINALE elite HP only one daily factor
+PASS FINALE elite hit and grab preserve elite multiplier once
+PASS FINALE elite difficulty idempotent
+PASS FINALE all spawn routes attach day 7 kind 0
+PASS FINALE real spawn HP
+PASS FINALE both player damage routes
+PASS FINALE raw furniture/base damage unchanged
+PASS FINALE repeated Apply neither stacks nor heals
+PASS FINALE purple-red body tint
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE soft pool and textured spores
+PASS FINALE all spawn routes attach day 7 kind 1
+PASS FINALE real spawn HP
+PASS FINALE both player damage routes
+PASS FINALE raw furniture/base damage unchanged
+PASS FINALE repeated Apply neither stacks nor heals
+PASS FINALE purple-red body tint
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE soft pool and textured spores
+PASS FINALE all spawn routes attach day 7 kind 2
+PASS FINALE real spawn HP
+PASS FINALE both player damage routes
+PASS FINALE raw furniture/base damage unchanged
+PASS FINALE repeated Apply neither stacks nor heals
+PASS FINALE purple-red body tint
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE weaker warning overrides corruption
+PASS FINALE soft pool and textured spores
+PASS FINALE elite HP only one daily factor
+PASS FINALE elite hit and grab preserve elite multiplier once
+PASS FINALE elite difficulty idempotent
+PASS FINALE living enemy keeps its spawn-day snapshot
+PASS FINALE real respawn refreshes current day once
+PASS FINALE damage probe requires live player and unequipped gear
+PASS FINALE actual hit readiness day 1
+PASS FINALE actual normal impact HP loss day 1
+PASS FINALE real TryGrab day 1
+PASS FINALE actual grab tick HP loss day 1
+PASS FINALE actual hit readiness day 4
+PASS FINALE actual normal impact HP loss day 4
+PASS FINALE real TryGrab day 4
+PASS FINALE actual grab tick HP loss day 4
+PASS FINALE actual hit readiness day 7
+PASS FINALE actual normal impact HP loss day 7
+PASS FINALE real TryGrab day 7
+PASS FINALE actual grab tick HP loss day 7
+PASS FINALE Boss probe starts with no existing encounter
+PASS FINALE real Boss factory accepted
+PASS FINALE Boss factory ordering excludes HP damage and FX
+PASS FINALE explicit Boss Apply rejected
+PASS FINALE hero production owners exist
+PASS FINALE hero HUD installed
+PASS FINALE hero fixture ready without bypassing action guards
+PASS FINALE hero remains 100 HP
+PASS B2 player has no overhead HP background or fill including inactive descendants
+PASS FINALE shared overhead root retained for stamina
+PASS FINALE overhead stamina retained and visible: Stamina_BG
+PASS FINALE overhead stamina retained and visible: Stamina_Fill
+PASS FINALE real damage displays 80 / 100
+PASS FINALE damage ghost and flash start
+PASS FINALE ghost converges and flash expires
+PASS FINALE 30 percent inclusive pulse
+PASS FINALE low health color actually pulses
+PASS FINALE above 30 percent no pulse
+PASS FINALE heal clamp and ghost catchup
+PASS FINALE HP nonblocking Plate
+PASS FINALE HP nonblocking Border
+PASS FINALE HP nonblocking Background
+PASS FINALE HP nonblocking Ghost
+PASS FINALE HP nonblocking Fill
+PASS FINALE HP nonblocking HealthNumber
+PASS FINALE HP avoids visible control 切换大招
+PASS FINALE HP avoids visible control 
+PASS FINALE HP avoids visible control 面板
+PASS FINALE HP avoids visible control 面板
+PASS FINALE HP avoids visible control BtnPushFurniture
+PASS FINALE HP avoids visible control BtnParry
+PASS FINALE HP avoids visible control BtnDodge
+PASS FINALE HP avoids visible control BtnSettings
+PASS FINALE HP avoids visible control BtnOpenCrafting
+PASS FINALE HP avoids visible control BtnRestUntilNextDay
+PASS FINALE HP avoids visible control Parry
+PASS FINALE HP avoids visible control Dodge
+PASS FINALE fungi equipped Lv1
+PASS FINALE fungi no early tick Lv1
+PASS FINALE fungi exact tick Lv1
+PASS FINALE fungi execution level gate Lv1
+PASS FINALE fungi equipped Lv2
+PASS FINALE fungi no early tick Lv2
+PASS FINALE fungi exact tick Lv2
+PASS FINALE fungi execution level gate Lv2
+PASS FINALE fungi equipped Lv3
+PASS FINALE fungi no early tick Lv3
+PASS FINALE fungi exact tick Lv3
+PASS FINALE fungi execution level gate Lv3
+PASS FINALE root entered without premature heal
+PASS FINALE root waits two rooted seconds
+PASS FINALE root heals exactly 10 per two seconds
+PASS FINALE root repeat exact 10
+PASS FINALE lethal float absorbs and heals exactly 15
+PASS FINALE initial portal identified by authored product marker
+PASS FINALE starts without another encounter
+PASS FINALE day 6 remains ordinary portal
+PASS FINALE day 6 retains ordinary two-energy guard warning
+PASS FINALE ordinary cancellation refunds reservation
+PASS FINALE day 7 initial portal becomes final rift
+PASS B2 day 7 undefeated final boss rejects rest with exact guidance
+PASS B2 day 7 undefeated final boss rejects direct settlement
+PASS FINALE interaction begins named final summon
+PASS FINALE summon neither charges nor reserves energy
+PASS FINALE production intro director exists
+PASS FINALE duplicate interaction and developer spawn blocked during intro
+PASS FINALE summon freezes during build pause
+PASS FINALE rift with eye behind boss opens before spawn
+PASS FINALE boss emerges no earlier than 1.45 seconds
+PASS FINALE boss spawns at fixed door-front rift and holds
+PASS FINALE named boss begins vanished
+PASS FINALE no ordinary guards summoned
+PASS FINALE intro rejects forced attacks
+PASS FINALE intro hold respects pause
+PASS FINALE enabled AI cannot move or attack during hold
+PASS FINALE live boss interaction is idempotent and free
+PASS FINALE rift closes and vanish resets at intro completion
+PASS FINALE camera follow restored
+PASS FINALE boss remains still throughout entry
+PASS FINALE real death restores ordinary portal
+PASS B2 actual save reload retains final victory and ordinary portal
+PASS FINALE player revived after lethal threshold sequence
+PASS FINALE defeated portal resumes normal paid guard trial before greenhouse
+PASS B2 victory does not bypass ordinary living-enemy rest safety
+PASS B2 trial guards complete emergence before damage probe
+PASS B2 defeated final boss permits day 7 rest settlement
+PASS B2 settled victory survives production save reload
+PASS B2 new journey resets persisted final victory
+PASS B2 new journey reset survives production save reload
+PASS B2 day 1 has no final boss rest gate
+PASS B2 day 2 has no final boss rest gate
+PASS B2 day 3 has no final boss rest gate
+PASS B2 day 4 has no final boss rest gate
+PASS B2 day 5 has no final boss rest gate
+PASS B2 day 6 has no final boss rest gate
+PASS B2 same portal requires new victory in a new journey
+PASS P2 standalone BossTest enters formal arena and spawns boss
+PASS probe originally absent
+PASS raw snapshot enumerates unknown TAP key
+PASS all native types and raw bytes restored, new keys absent
+PASS original TAP namespace exact restoration
+RESULT passed=534 failed=0

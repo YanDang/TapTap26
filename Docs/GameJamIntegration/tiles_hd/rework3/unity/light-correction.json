@@ -1,0 +1,18 @@
+{
+  "purpose": "remove soil baked low-frequency luminance only; replace with continuous shader world field",
+  "source": "E:\\gamejam_wt\\tiles_hd\\Docs\\GameJamIntegration\\tiles_hd\\rework3\\art\\material_final_2.png",
+  "source_sha256": "9834e3a33598fd0345bc5c0b0f86276de4d150a5293beb842faa5da833f77d62",
+  "sigma_source_pixels": 8,
+  "world_origin": [
+    -21.0,
+    -10.0
+  ],
+  "world_size": [
+    42.0,
+    22.0
+  ],
+  "pixels_per_world_unit": 128,
+  "gain_min": 0.7021591067314148,
+  "gain_max": 1.461594581604004,
+  "production_atlases_unchanged": true
+}

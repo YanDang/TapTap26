@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "baseline_records": 167,
+  "final_records": 167,
+  "changes": [
+    {
+      "id": "822251684",
+      "field": "TilemapRenderer material only"
+    },
+    {
+      "id": "822251685",
+      "field": "Tilemap local rim cells"
+    }
+  ],
+  "occupied": 698,
+  "origin_unchanged": true,
+  "size_unchanged": true,
+  "fresh_readback_matches_saved": true,
+  "issues": []
+}

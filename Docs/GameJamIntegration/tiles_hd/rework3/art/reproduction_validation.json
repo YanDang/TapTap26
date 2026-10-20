@@ -1,0 +1,73 @@
+{
+  "source_sha256": "8c070244bf0b34985a111b1e216dc3f1244ee0ad2182a3db7d728a93a16de780",
+  "checks": [
+    {
+      "path": "Assets/Pic/Test/basic_ground_tiles.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_00.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_01.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_02.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_03.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_04.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_05.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_06.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_07.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_08.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_09.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_10.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_11.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_12.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_13.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_14.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    },
+    {
+      "path": "Assets/Pic/Test/TilesHDVariants/variant_15.png",
+      "reproduced_rgba_equal_to_e07520f": true
+    }
+  ]
+}

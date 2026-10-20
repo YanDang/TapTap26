@@ -1,0 +1,254 @@
+{
+  "passed": true,
+  "allowed_scene_changes": [
+    "local road rim Tiles",
+    "ground renderer material only"
+  ],
+  "cell_changes": [
+    {
+      "position": [
+        0,
+        -2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v08_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v08_tile_16.asset"
+    },
+    {
+      "position": [
+        2,
+        -2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v10_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v10_tile_16.asset"
+    },
+    {
+      "position": [
+        5,
+        -2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v09_tile_17.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v09_tile_16.asset"
+    },
+    {
+      "position": [
+        6,
+        -2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v10_tile_02.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v10_tile_03.asset"
+    },
+    {
+      "position": [
+        7,
+        -2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_16.asset"
+    },
+    {
+      "position": [
+        10,
+        -2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v10_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v10_tile_16.asset"
+    },
+    {
+      "position": [
+        11,
+        -2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_28.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_19.asset"
+    },
+    {
+      "position": [
+        11,
+        -1,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v15_tile_25.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v15_tile_03.asset"
+    },
+    {
+      "position": [
+        11,
+        0,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v03_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v03_tile_18.asset"
+    },
+    {
+      "position": [
+        -2,
+        2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v10_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v10_tile_19.asset"
+    },
+    {
+      "position": [
+        0,
+        2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v08_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v08_tile_19.asset"
+    },
+    {
+      "position": [
+        1,
+        2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v09_tile_17.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v09_tile_03.asset"
+    },
+    {
+      "position": [
+        2,
+        2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v10_tile_02.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v10_tile_03.asset"
+    },
+    {
+      "position": [
+        3,
+        2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_19.asset"
+    },
+    {
+      "position": [
+        5,
+        2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v09_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v09_tile_19.asset"
+    },
+    {
+      "position": [
+        7,
+        2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_19.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_02.asset"
+    },
+    {
+      "position": [
+        11,
+        2,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_18.asset"
+    },
+    {
+      "position": [
+        11,
+        3,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v15_tile_02.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v15_tile_18.asset"
+    },
+    {
+      "position": [
+        7,
+        4,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v03_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v03_tile_17.asset"
+    },
+    {
+      "position": [
+        11,
+        4,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v03_tile_02.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v03_tile_03.asset"
+    },
+    {
+      "position": [
+        11,
+        5,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v07_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v07_tile_18.asset"
+    },
+    {
+      "position": [
+        7,
+        6,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_02.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_03.asset"
+    },
+    {
+      "position": [
+        7,
+        7,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v15_tile_02.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v15_tile_17.asset"
+    },
+    {
+      "position": [
+        11,
+        8,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v03_tile_02.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v03_tile_18.asset"
+    },
+    {
+      "position": [
+        7,
+        9,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v07_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v07_tile_17.asset"
+    },
+    {
+      "position": [
+        11,
+        10,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v11_tile_18.asset"
+    },
+    {
+      "position": [
+        11,
+        11,
+        0
+      ],
+      "before": "Assets/Art/Tiles/Test/TilesHDVariants/v15_tile_03.asset",
+      "after": "Assets/Art/Tiles/Test/TilesHDVariants/v15_tile_19.asset"
+    }
+  ],
+  "all_decor_camera_gameplay_records_unchanged": true,
+  "issues": []
+}

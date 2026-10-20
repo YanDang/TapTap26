@@ -1,0 +1,1 @@
+PASS changed=0; candidate rim=58; protected components=228; renderer material only exception

@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "before": "541eb0f0d250a05b33acc1e9d528a854a5ce38eb29eb854a5a0058f59582407e",
+  "after": "541eb0f0d250a05b33acc1e9d528a854a5ce38eb29eb854a5a0058f59582407e",
+  "result": "PASS changed=0; candidate rim=58; protected components=228; renderer material only exception\n"
+}

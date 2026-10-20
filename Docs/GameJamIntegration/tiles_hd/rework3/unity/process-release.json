@@ -1,0 +1,19 @@
+{
+  "timestamp_utc": "2026-10-20T05:04:48.450268+00:00",
+  "owned_active": [],
+  "observed_unity_related": [
+    {
+      "ProcessId": 5280,
+      "ParentProcessId": 41972,
+      "Name": "mcp-for-unity.exe",
+      "CommandLine": "\"C:\\Users\\ROG\\AppData\\Local\\uv\\cache\\archive-v0\\TW9SML1EHsYuSNjB\\Scripts\\mcp-for-unity.exe\" --transport stdio --project-scoped-tools"
+    }
+  ],
+  "passed": true,
+  "completed_sessions": {
+    "proc_48d46f21bb1a": 0,
+    "proc_8bbc00b450d5": 0,
+    "proc_51e7cab708ba": 0
+  },
+  "note": "Session exits independently polled by agent; process inventory is live. Shared licensing/MCP services are not killed."
+}

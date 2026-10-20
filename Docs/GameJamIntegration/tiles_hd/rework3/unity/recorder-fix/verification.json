@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "exit_codes": {
+    "before": 0,
+    "after": 0
+  },
+  "error": null,
+  "scene_sha256": "541eb0f0d250a05b33acc1e9d528a854a5ce38eb29eb854a5a0058f59582407e",
+  "protected_asset_differences": [],
+  "existing_image_differences": [],
+  "editor_source_sha256": "0e57211bb663256ca74298722d94afd3b6446f9badac2750bfea38028bc0d29a",
+  "original_tested_source_manifest_sha256": "572860230a3c19c2740317dc355c3302f0208c90b356c97f4817bc6141d73774",
+  "environment_restored": true,
+  "note": "Original 534/build tested-source manifest retained. Only Editor recorder changed; fresh Before and After compile/PlayMode/GPU evidence supplement unchanged player production content."
+}
