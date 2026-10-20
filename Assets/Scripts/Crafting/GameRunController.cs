@@ -55,9 +55,12 @@ public sealed class GameRunController : MonoBehaviour
         var status = Rect("DailyEnergyPanel", root, new Vector2(350, 100), new Vector2(-28, -205));
         status.anchorMin = status.anchorMax = status.pivot = Vector2.one;
         var background = status.gameObject.AddComponent<Image>();
-        background.color = new Color(0.04f, 0.1f, 0.12f, 0.9f);
+        background.color = Color.clear;
         background.raycastTarget = false;
         statusText = Label(status, "", 20, new Vector2(340, 94), Vector2.zero);
+        var textOutline = statusText.gameObject.AddComponent<Outline>();
+        textOutline.effectColor = new Color(0f, 0f, 0f, 0.85f);
+        textOutline.effectDistance = new Vector2(1.5f, -1.5f);
 
         var overlay = Rect("RunEndingPanel", root, Vector2.zero, Vector2.zero);
         overlay.anchorMin = Vector2.zero;
