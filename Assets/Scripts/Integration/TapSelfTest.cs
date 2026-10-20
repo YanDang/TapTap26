@@ -94,6 +94,7 @@ public sealed class TapSelfTest : MonoBehaviour
         while(p.IsInvulnerable && Time.realtimeSinceStartup<dodgeDeadline) yield return null;
         Check(!p.IsInvulnerable,"dodge plus existing counter-punch ends without stuck invulnerability");
         if (!baseline && Array.IndexOf(Environment.GetCommandLineArgs(),"-tapnofeel")<0) yield return TapFeelTests.Run(Check);   // gamejam 手感对齐（-tapbaseline / -tapnofeel 时不装）
+        if (!baseline && Array.IndexOf(Environment.GetCommandLineArgs(),"-tapnofeel")<0) yield return TapLockTests.Run(Check);   // 锁定追击（同一开关）
         yield return TapP6Tests.Run(Check);
         yield return TapGearTests.Run(Check);
         yield return CombatTests(p);
