@@ -1,0 +1,29 @@
+{
+  "technical_passed": true,
+  "art_approved": false,
+  "baseline": "879645d",
+  "editor_exits": {
+    "before": 0,
+    "repaint-final": 0,
+    "repaint-final-repeat": 0,
+    "after-final": 0,
+    "build": 0
+  },
+  "player_exit": 0,
+  "selftest": "RESULT passed=534 failed=0",
+  "atlas_sha256": "9cfa33cea6c5c266849121adc2baa2aa9612cedc9282e578cf62bbd718664920",
+  "scene_sha256": "2207f8c305477664adf95387720248c1f46ddc8fdf33dfbb3754663704fed01a",
+  "repeat_changed": 0,
+  "repeat_scene_bytes_identical": true,
+  "detected_error_lines": [],
+  "editor_original_prefix_count": 2,
+  "player_original_prefix_count": 0,
+  "owned_processes_remaining": [],
+  "actual_unity": "m_EditorVersion: 2022.3.57f1\nm_EditorVersionWithRevision: 2022.3.57f1 (9d8bd91adc0a)",
+  "restored_declared_unity": "m_EditorVersion: 2022.3.62f3c1\nm_EditorVersionWithRevision: 2022.3.62f3c1 (1623fc0bbb97)",
+  "restored_environment_rebuilt": false,
+  "shared_sprite_atlas": true,
+  "raw_prefs_restored": true,
+  "scene_protection_passed": true,
+  "integration_protection_passed": true
+}

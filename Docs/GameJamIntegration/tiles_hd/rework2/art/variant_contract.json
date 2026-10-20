@@ -1,0 +1,31 @@
+{
+  "status": "final",
+  "atlas_size": [
+    2048,
+    1792
+  ],
+  "cell_size": 256,
+  "columns": 8,
+  "rows": 7,
+  "variant_count": 16,
+  "paths": "Assets/Pic/Test/TilesHDVariants/variant_{index:02d}.png",
+  "ground_cells": [
+    0,
+    39
+  ],
+  "props_cells": [
+    40,
+    55
+  ],
+  "selection": "index = positive_mod(cell_x,4) + 4 * positive_mod(cell_y,4)",
+  "world_square_mapping": "variant index x=index%4 y=index//4; square u advances cell_x, v advances cell_y; stone sampled from continuous 4x4 world layout, NOT independent random tiles",
+  "ppu": 256,
+  "pivot": [
+    0.5,
+    0.25
+  ],
+  "main_atlas": "Assets/Pic/Test/basic_ground_tiles.png",
+  "main_identity": "unchanged metadata; main image equals variant_00; ground maps should select variants by coordinates",
+  "repeat_note": "4-cell period; no <=2-cell selection period. Do not randomize stone selection: adjacency requires world-square coordinates. Props identical.",
+  "sha256_manifest": "READY.json: production_pngs"
+}

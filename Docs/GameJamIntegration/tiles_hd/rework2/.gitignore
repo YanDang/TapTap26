@@ -1,0 +1,7 @@
+# Raw save snapshots remain local; never publish player/editor values.
+**/*prefs*.json
+**/*supervisor-before.json
+**/__pycache__/
+# Legacy suite's ancillary screenshots are local; retain final task framebuffer.
+unity/selftest/*.png
+!unity/selftest/target-after.png

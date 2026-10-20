@@ -1,0 +1,29 @@
+{
+  "ProjectSettings/ProjectVersion.txt": {
+    "initial_sha256": "b42279cfd794d9f1825f3b7c1f318b861fa9e2e2b3c6c146737bdbd41c01b389",
+    "tested_sha256": "e899a704febd8f35fa1fd9a2a4f834b679b2d46bacecec9628d0afebc8912a1f",
+    "restored_sha256": "b42279cfd794d9f1825f3b7c1f318b861fa9e2e2b3c6c146737bdbd41c01b389",
+    "restored_matches_initial": true,
+    "was_automatically_changed": true,
+    "tested_archive": "tested-ProjectVersion.txt",
+    "restored_environment_rebuilt": false
+  },
+  "Packages/packages-lock.json": {
+    "initial_sha256": "920350bf283c48f3d53d07fda8aad11cad0d9032ad3652db168107ee940948ee",
+    "tested_sha256": "879686958d422c041c7ab0100a5074a19ca86061f12799cfb61b5489dcb0ae4f",
+    "restored_sha256": "920350bf283c48f3d53d07fda8aad11cad0d9032ad3652db168107ee940948ee",
+    "restored_matches_initial": true,
+    "was_automatically_changed": true,
+    "tested_archive": "tested-packages-lock.json",
+    "restored_environment_rebuilt": false
+  },
+  "Assets/Scenes/Mix.unity": {
+    "initial_sha256": "4a9423f2358e5c590ae38d22697ea4df8c08d40c762bc40dce622f70a07a65ac",
+    "tested_sha256": "4a9423f2358e5c590ae38d22697ea4df8c08d40c762bc40dce622f70a07a65ac",
+    "restored_sha256": "4a9423f2358e5c590ae38d22697ea4df8c08d40c762bc40dce622f70a07a65ac",
+    "restored_matches_initial": true,
+    "was_automatically_changed": false,
+    "tested_archive": "tested-Mix.unity",
+    "restored_environment_rebuilt": false
+  }
+}

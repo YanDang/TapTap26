@@ -1,0 +1,37 @@
+{
+  "Assets/Scenes/BiomechanicalCombatScene.unity": {
+    "baseline_sha256": "eb86c11ad1dfe482b9e22ac78fa2cce072692bff40d852373f30f47b2ba2a2f1",
+    "initial_sha256": "eb86c11ad1dfe482b9e22ac78fa2cce072692bff40d852373f30f47b2ba2a2f1",
+    "initial_matches_baseline_eol": true
+  },
+  "Assets/Pic/Test/basic_ground_tiles.png": {
+    "baseline_sha256": "34b525b1926db531944c34d66421d1696e28ef800a347c21f66b91d476f46214",
+    "initial_sha256": "9cfa33cea6c5c266849121adc2baa2aa9612cedc9282e578cf62bbd718664920",
+    "initial_matches_baseline_eol": false
+  },
+  "Assets/Pic/Test/basic_ground_tiles.png.meta": {
+    "baseline_sha256": "b9340013bbc971c024ff1a857fb86714a94f1bdb7dfcd5c43d4184265bbdd5de",
+    "initial_sha256": "a96d3599814fe3e67494cdf9492d42c4b2bb23f36ae6ccbf91ba81f8f94db8ed",
+    "initial_matches_baseline_eol": true
+  },
+  "Assets/Pic/Test/basic_ground_tiles_original_backup.png": {
+    "baseline_sha256": "4d96142faa69be0539a89fd86ad05fda4ddf1d5b86e05039f8e7d4eca787a611",
+    "initial_sha256": "4d96142faa69be0539a89fd86ad05fda4ddf1d5b86e05039f8e7d4eca787a611",
+    "initial_matches_baseline_eol": true
+  },
+  "ProjectSettings/ProjectVersion.txt": {
+    "baseline_sha256": "b42279cfd794d9f1825f3b7c1f318b861fa9e2e2b3c6c146737bdbd41c01b389",
+    "initial_sha256": "b42279cfd794d9f1825f3b7c1f318b861fa9e2e2b3c6c146737bdbd41c01b389",
+    "initial_matches_baseline_eol": true
+  },
+  "Packages/packages-lock.json": {
+    "baseline_sha256": "920350bf283c48f3d53d07fda8aad11cad0d9032ad3652db168107ee940948ee",
+    "initial_sha256": "920350bf283c48f3d53d07fda8aad11cad0d9032ad3652db168107ee940948ee",
+    "initial_matches_baseline_eol": true
+  },
+  "Assets/Scenes/Mix.unity": {
+    "baseline_sha256": "4a9423f2358e5c590ae38d22697ea4df8c08d40c762bc40dce622f70a07a65ac",
+    "initial_sha256": "4a9423f2358e5c590ae38d22697ea4df8c08d40c762bc40dce622f70a07a65ac",
+    "initial_matches_baseline_eol": true
+  }
+}

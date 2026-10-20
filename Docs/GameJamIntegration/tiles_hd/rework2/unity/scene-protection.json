@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "baseline_scene_sha256": "eb86c11ad1dfe482b9e22ac78fa2cce072692bff40d852373f30f47b2ba2a2f1",
+  "final_scene_sha256": "2207f8c305477664adf95387720248c1f46ddc8fdf33dfbb3754663704fed01a",
+  "baseline_records": 173,
+  "final_records": 167,
+  "protected_baseline_records": 120,
+  "changes": [
+    {
+      "id": "822251685",
+      "type": 1839735485,
+      "authorized": "Tilemap cells"
+    }
+  ],
+  "geometry": [
+    {
+      "path": "Grid/Tilemap",
+      "before": 698,
+      "after": 698,
+      "added": [],
+      "removed": [],
+      "origin_unchanged": true,
+      "size_unchanged": true,
+      "passed": true
+    }
+  ],
+  "issues": []
+}

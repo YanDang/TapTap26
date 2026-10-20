@@ -18,7 +18,7 @@ public static class RecordMap {
  public static void Before(){Start("before");}
  public static void After(){Start("after");}
  static void Start(string phase){
-  if(phase=="before" && !File.ReadAllBytes(RepaintMap.ScenePath).SequenceEqual(File.ReadAllBytes(RepaintMap.Baseline+"/BiomechanicalCombatScene.unity")))throw new Exception("Before recording requires exact 1fed22f scene; restore baseline scene first in an isolated project, never label modified map BEFORE.");
+  if(phase=="before" && !File.ReadAllBytes(RepaintMap.ScenePath).SequenceEqual(File.ReadAllBytes(RepaintMap.Baseline+"/BiomechanicalCombatScene.unity")))throw new Exception("Before recording requires exact 879645d scene; restore baseline scene first in an isolated project, never label modified map BEFORE.");
   SessionState.SetBool(Key+"Captured",false);SessionState.SetBool(Key+"Failed",false);
   Directory.CreateDirectory(RepaintMap.Output);
   var prefs=TapPrefsSnapshot.Capture();prefs.WriteJournal(RepaintMap.Output+"/editor-prefs-"+phase+".json");
@@ -57,6 +57,17 @@ public static class RecordMap {
    var cam=Camera.main;var p=PlayerController.Instance;
    var map=UnityEngine.Object.FindObjectOfType<Tilemap>();
    var bounds=map.GetComponent<TilemapRenderer>().bounds;
+   var tileSprites=new List<Sprite>();foreach(var c in map.cellBounds.allPositionsWithin)if(map.HasTile(c) && map.GetSprite(c))tileSprites.Add(map.GetSprite(c));
+   var textures=tileSprites.Select(s=>s.texture).Distinct().ToArray();
+   File.WriteAllText(RepaintMap.Output+"/texture-batches-"+phase+".txt",string.Join("\n",textures.Select(t=>t.name+" "+t.width+"x"+t.height))+"\nunique="+textures.Length);
+   if(phase=="after" && textures.Length!=1)throw new Exception("Chunk Tilemap needs one packed texture, got "+textures.Length);
+   if(phase=="after"){
+    var decor=GameObject.Find("TilesHD_Decor");
+    if(!decor)throw new Exception("Missing decoration root");
+    var props=decor.GetComponentsInChildren<SpriteRenderer>(true);
+    if(props.Length!=15 || props.Count(s=>s.name.StartsWith("PathLamp_"))!=6 || props.Count(s=>s.name.StartsWith("EdgePipe_"))!=9 || props.Any(s=>!s.enabled || !s.gameObject.activeInHierarchy || !s.sprite || s.color.a<=0 || s.sortingOrder<=map.GetComponent<TilemapRenderer>().sortingOrder))throw new Exception("Decoration renderer contract failed");
+    File.WriteAllLines(RepaintMap.Output+"/decor-runtime-after.txt",props.OrderBy(s=>s.name).Select(s=>s.name+" position="+s.transform.position+" sprite="+s.sprite.name+" texture="+s.sprite.texture.name+" sorting="+s.sortingLayerName+":"+s.sortingOrder+" bounds="+s.bounds));
+   }
    var originalPosition=cam.transform.position;float originalSize=cam.orthographicSize;
    // Same fixed framing both phases; changes are in memory only.
    cam.transform.position=new Vector3(bounds.center.x,bounds.center.y,originalPosition.z);
@@ -75,7 +86,7 @@ public static class RecordMap {
   var tex=new Texture2D(2,2,TextureFormat.RGBA32,false);tex.LoadImage(File.ReadAllBytes(RepaintMap.Baseline+"/basic_ground_tiles.png"));tex.filterMode=FilterMode.Bilinear;
   var sprites=new Dictionary<string,Sprite>();
   foreach(var s in AssetDatabase.LoadAllAssetsAtPath("Assets/Pic/Test/basic_ground_tiles.png").OfType<Sprite>()){
-   // 1fed22f baseline metadata: 256px rect, pivot (.5,.25), PPU 256.
+   // 879645d immutable baseline metadata (hash gated and checked against production meta): 256px rect, pivot (.5,.25), PPU 256.
    int index=int.Parse(s.name.Substring(s.name.LastIndexOf('_')+1));
    sprites[s.name]=Sprite.Create(tex,new Rect(index%8*256,(6-index/8)*256,256,256),new Vector2(.5f,.25f),256,0,SpriteMeshType.FullRect);
   }

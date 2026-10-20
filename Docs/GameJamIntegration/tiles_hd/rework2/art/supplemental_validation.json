@@ -1,0 +1,17 @@
+{
+  "pure_grass_cell0_luminance_before_after": [
+    121.53901207606587,
+    93.66162160852713
+  ],
+  "pure_grass_cell0_luminance_reduction": 0.22936989524064522,
+  "pure_grass_cell0_HSV_saturation_before_after": [
+    0.8492329434308727,
+    0.6270693610993482
+  ],
+  "pure_grass_cell0_HSV_saturation_reduction": 0.26160499783956936,
+  "props_alpha_byte_equal_to_879645d": true,
+  "total_production_png_bytes": 14194461,
+  "no_1_or_2_cell_full_tile_repeat": true,
+  "repeat_test_definition": "40 ground cell images each have16 unique SHA; coordinate 4x4 schedule has no full-image shifts of1 or2 in either axis. This is NOT a perceptual no-repeat guarantee.",
+  "baseline_sha256": "34b525b1926db531944c34d66421d1696e28ef800a347c21f66b91d476f46214"
+}

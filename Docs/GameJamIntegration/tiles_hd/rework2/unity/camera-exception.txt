@@ -1,0 +1,1 @@
+Authorized Main Camera.backgroundColor only: RGBA(0.027, 0.071, 0.106, 1.000) -> RGBA(0.027, 0.071, 0.106, 1.000)
