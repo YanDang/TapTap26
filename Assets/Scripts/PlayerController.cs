@@ -237,6 +237,7 @@ public class PlayerController : MonoBehaviour
     private const float LockChaseRepathInterval = 0.3f;  // 直线被挡时，格子寻路重算间隔
     private bool rightPressBeganOnEnemy = false;         // 本次右键按住起点在怪身上（A）
     private bool lockChasePathActive = false;            // 当前 isMoving 的路径是追击自己发的
+    private bool lockChaseSteppedThisFrame = false;      // 本帧直线追击走了一步：UpdateMovement 空闲分支不得清走路动画
     private float lockChaseRepathTimer = 0f;
     private float lastManualMoveInputAt = -10f;          // 键盘 / 摇杆最近一次手动移动
     private EnemyController explicitLockTarget = null;   // 玩家右键显式锁定的目标（只有它会触发追击）
@@ -820,16 +821,27 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(0.35f);
         isAttackingAnim = false;
 
-        // 附近还有敌人：自动锁定最近的一个继续战斗（格挡立刻可用）；没有才脱战
-        var next = NearestEnemy(reLockRadius);
-        if (next != null)
+        if (TapCombatFeel.On)
         {
-            currentTarget = next;
-            InCombat = true;
+            // 对齐 gamejam PlayerController.UpdateExecute：处决结束后在 reLockRadius 内找最近的敌人，
+            // 按 RightClickEnemy 同样的方式显式锁定（会追击）；没有才脱战
+            var next = NearestEnemy(reLockRadius);
+            if (next != null) RightClickEnemy(next);
+            else ExitCombat();
         }
         else
         {
-            ExitCombat();
+            // 附近还有敌人：自动锁定最近的一个继续战斗（格挡立刻可用）；没有才脱战
+            var next = NearestEnemy(reLockRadius);
+            if (next != null)
+            {
+                currentTarget = next;
+                InCombat = true;
+            }
+            else
+            {
+                ExitCombat();
+            }
         }
         } finally {
             if (enemy != null) enemy.CancelExecution();
@@ -1451,9 +1463,9 @@ public class PlayerController : MonoBehaviour
     {
         InCombat = false;
         currentTarget = null;
-        UnwatchLockTarget();
         if (TapCombatFeel.On)
         {
+            UnwatchLockTarget();      // 死亡监听只由开关打开时的 RightClickEnemy 建立
             explicitLockTarget = null;
             StopLockChaseMovement();
             suppressAutoRelock = false;
@@ -1702,20 +1714,26 @@ public class PlayerController : MonoBehaviour
             if (PlayerSessionData.CurrentMobileControlMode == PlayerSessionData.MobileControlMode.Joystick) return;
             if (!IsPointerOverUI(-1) && !IsInBottomDockArea(Input.mousePosition))
             {
-                if (cam != null)
+                if (TapCombatFeel.On)
                 {
-                    Vector3 worldPos = cam.ScreenToWorldPoint(Input.mousePosition);
-                    worldPos.z = 0f;
-                    if (TapCombatFeel.On)
+                    if (cam != null)
                     {
+                        Vector3 worldPos = cam.ScreenToWorldPoint(Input.mousePosition);
+                        worldPos.z = 0f;
                         HandleRightHold(Time.deltaTime, worldPos);
                     }
-                    else
+                }
+                else
+                {
+                    // 基线分支与原逻辑逐字一致：计时在 cam 判空之外累加
+                    rightClickHoldTimer += Time.deltaTime;
+                    if (rightClickHoldTimer >= 0.1f)
                     {
-                        rightClickHoldTimer += Time.deltaTime;
-                        if (rightClickHoldTimer >= 0.1f)
+                        rightClickHoldTimer = 0f;
+                        if (cam != null)
                         {
-                            rightClickHoldTimer = 0f;
+                            Vector3 worldPos = cam.ScreenToWorldPoint(Input.mousePosition);
+                            worldPos.z = 0f;
                             MoveToWorldPoint(worldPos);
                         }
                     }
@@ -1724,7 +1742,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetMouseButtonUp(1))
         {
-            rightPressBeganOnEnemy = false;
+            if (TapCombatFeel.On) rightPressBeganOnEnemy = false;
         }
 
         // 2. 鼠标左键 (Button 0)：QTE / 处决 / 弹刀 / 蓄力砸击 / 踢家具
@@ -2057,7 +2075,7 @@ public class PlayerController : MonoBehaviour
             return;
 
         if (!enableClickToMove || grid == null) return;
-        lockChasePathActive = false;   // 玩家手动寻路：现有路径不再属于追击
+        if (TapCombatFeel.On) lockChasePathActive = false;   // 玩家手动寻路：现有路径不再属于追击
         Vector3 groundRayPos = new Vector3(worldPos.x, worldPos.y - groundHeightOffset, 0f);
         Vector3Int targetCell = grid.WorldToCell(groundRayPos);
         MoveToCell(targetCell);
@@ -2192,6 +2210,8 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void UpdateLockChase()
     {
+        // 每帧先清：只有本帧真的直线走了一步才置真，UpdateMovement 据此保留走路动画
+        lockChaseSteppedThisFrame = false;
         if (!TapCombatFeel.On) return;
 
         // 只有玩家右键显式锁定的那只才追击；自动就近锁定的目标保持原有“不自动贴脸”行为
@@ -2248,6 +2268,7 @@ public class PlayerController : MonoBehaviour
             transform.position = nextPos;
             if (dir.x > 0.05f) SetVisualFacing(false);
             else if (dir.x < -0.05f) SetVisualFacing(true);
+            lockChaseSteppedThisFrame = true;   // 本帧已播走路姿势，UpdateMovement 勿清
             PlayWalkPose();
             return;
         }
@@ -2282,7 +2303,10 @@ public class PlayerController : MonoBehaviour
         return true;
     }
 
-    /// <summary>与 MoveWithInput 相同的走路表现（骨骼 Speed 或静态 Sprite 上下摆动）。</summary>
+    /// <summary>
+    /// 与 MoveWithInput 相同的走路表现（骨骼 Speed 或静态 Sprite 上下摆动）。
+    /// 寄居蟹走路由 HeroGait 在 LateUpdate 里按根节点实际位移自动驱动（无需在此写值）。
+    /// </summary>
     private void PlayWalkPose()
     {
         if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null)
@@ -2469,8 +2493,11 @@ public class PlayerController : MonoBehaviour
         if (!canMove || isRolling || isCharging || isSmashing || moveDir.sqrMagnitude < 0.01f) return;
 
         // E: 键盘 / 摇杆手动移动优先，暂停锁定追击
-        lastManualMoveInputAt = Time.time;
-        lockChasePathActive = false;
+        if (TapCombatFeel.On)
+        {
+            lastManualMoveInputAt = Time.time;
+            lockChasePathActive = false;
+        }
 
         // 摇杆/键盘输入时打断点击寻路路径
         isMoving = false;
@@ -2807,11 +2834,13 @@ public class PlayerController : MonoBehaviour
 
         if (isRolling || !isMoving || waypoints.Count == 0 || currentWaypointIndex >= waypoints.Count)
         {
-            if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null && !isMovingByKeyboard)
+            // B（TapCombatFeel）：本帧直线追击走了一步，走路姿势由 UpdateLockChase 写好，这里不得清回待机
+            bool lockChaseWalking = TapCombatFeel.On && lockChaseSteppedThisFrame;
+            if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null && !isMovingByKeyboard && !lockChaseWalking)
             {
                 playerAnimator.SetFloat("Speed", 0f);
             }
-            if (!isAttackingAnim && playerRenderer != null && !isRolling)
+            if (!isAttackingAnim && playerRenderer != null && !isRolling && !lockChaseWalking)
             {
                 playerRenderer.transform.localPosition = Vector3.zero;
             }
@@ -2863,7 +2892,7 @@ public class PlayerController : MonoBehaviour
     {
         isMoving = false;
         isMovingByKeyboard = false;
-        lockChasePathActive = false;
+        if (TapCombatFeel.On) lockChasePathActive = false;
         waypoints.Clear();
         if (playerAnimator != null && playerAnimator.enabled && playerAnimator.runtimeAnimatorController != null)
         {

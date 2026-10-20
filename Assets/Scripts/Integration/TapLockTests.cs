@@ -62,6 +62,19 @@ public static class TapLockTests
         SetPrivate(p, "attackCooldownTimer", cooldown);
     }
 
+    /// <summary>
+    /// 当前走路状态（0 = 待机，1 = 正常行走）：寄居蟹由 HeroGait 按根节点实际位移驱动步态，
+    /// 其它渲染路径读 Animator 的 Speed；两者都不存在时退回玩家控制器本帧的追击步行标志。
+    /// </summary>
+    static float WalkState(PlayerController p)
+    {
+        var gait = Private<GameJam.HeroGait>(p, "heroGait");
+        if (gait != null) return gait.CurrentSpeed;
+        if (p.playerAnimator != null && p.playerAnimator.enabled && p.playerAnimator.runtimeAnimatorController != null)
+            return p.playerAnimator.GetFloat("Speed");
+        return Private<bool>(p, "lockChaseSteppedThisFrame") ? 1f : 0f;
+    }
+
     public static IEnumerator Run(Action<bool, string> check)
     {
         var p = PlayerController.Instance;
@@ -86,6 +99,7 @@ public static class TapLockTests
         float startDist = Vector3.Distance(p.transform.position, chaseTarget.transform.position);
         float prevDist = startDist;
         bool monotonic = true, heading = true;
+        int walkRun = 0, bestWalkRun = 0;
         float chaseDeadline = Time.realtimeSinceStartup + 4f;
         while (Time.realtimeSinceStartup < chaseDeadline && prevDist > p.attackRange * 0.9f)
         {
@@ -98,13 +112,18 @@ public static class TapLockTests
             if (dist > prevDist + 1e-3f) monotonic = false;
             if (step.magnitude > 1e-5f && Vector3.Angle(step, toTarget) > 30f) heading = false;
             prevDist = dist;
+            // 走路姿势不能在 UpdateMovement 空闲分支被清掉：连续多帧都必须处于行走状态
+            if (WalkState(p) > 0.5f) { walkRun++; bestWalkRun = Mathf.Max(bestWalkRun, walkRun); }
+            else walkRun = 0;
         }
         check(monotonic && prevDist < startDist - 0.5f, $"LOCK chase distance decreases monotonically ({startDist:0.##}->{prevDist:0.##})");
         check(heading, "LOCK every chase step points at the target (<30 deg)");
+        check(bestWalkRun >= 5, $"LOCK walk pose plays through consecutive chase frames ({bestWalkRun} frames)");
         check(prevDist <= p.attackRange * 0.9f + 0.05f, $"LOCK chase stops at attack range (dist={prevDist:0.###} range={p.attackRange:0.###})");
         Vector3 arrived = p.transform.position;
         yield return new WaitForSeconds(0.3f);
         check(Vector3.Distance(arrived, p.transform.position) < 0.02f, "LOCK chase holds position after arriving (0.3s drift < 0.02)");
+        check(WalkState(p) <= 0.5f, $"LOCK returns to idle pose after arriving (walk={WalkState(p):0.##})");
         StopAll(p);
         UnityEngine.Object.Destroy(chaseTarget.gameObject);
         yield return null;
@@ -194,8 +213,51 @@ public static class TapLockTests
         check(Vector3.Distance(deadPos, p.transform.position) < 0.02f, "LOCK player stops chasing after the locked target dies");
         check(p.currentTarget == null && bystander.IsAlive, "LOCK bystander stays alive and unselected");
         StopAll(p);
-        UnityEngine.Object.Destroy(dieTarget.gameObject);
-        UnityEngine.Object.Destroy(bystander.gameObject);
+        if (dieTarget != null) UnityEngine.Object.Destroy(dieTarget.gameObject);
+        if (bystander != null) UnityEngine.Object.Destroy(bystander.gameObject);
+        yield return null;
+
+        // ------------------------------------------------- G: 处决结束后自动接下一只（对齐 gamejam reLockRadius）
+        dir = FindClearDir(p, p.attackRange * 3.1f);
+        if (dir == Vector3.zero) dir = Vector3.right;
+        var execVictim = Spawn(p, p.transform.position + dir * (p.attackRange * 0.5f), "LOCK_ExecVictim");
+        var execNext = Spawn(p, p.transform.position + dir * (p.attackRange * 2.5f), "LOCK_ExecNext");
+        yield return null;
+        SetPrivate(p, "attackCooldownTimer", 5f);
+        p.RightClickEnemy(execVictim);
+        yield return null;
+        p.ExecuteEnemy(execVictim);
+        float execDeadline = Time.realtimeSinceStartup + 3f;
+        while (Private<EnemyController>(p, "executionTarget") != null && Time.realtimeSinceStartup < execDeadline)
+            yield return null;
+        check(Private<EnemyController>(p, "executionTarget") == null, "LOCK execution routine finished");
+        check(execVictim == null || !execVictim.IsAlive, "LOCK execution victim dies");
+        check(p.currentTarget == execNext, "LOCK execution re-locks the nearest enemy within reLockRadius");
+        check(Private<EnemyController>(p, "explicitLockTarget") == execNext, "LOCK re-locked enemy is explicitly locked for chase");
+        Vector3 chaseFrom = p.transform.position;
+        yield return new WaitForSeconds(0.25f);
+        Vector3 chaseStep = p.transform.position - chaseFrom;
+        Vector3 chaseTo = execNext.transform.position - chaseFrom;
+        check(chaseStep.magnitude > 0.05f && Vector3.Angle(chaseStep, chaseTo) < 30f,
+              $"LOCK player chases the re-locked enemy after execution (step={chaseStep.magnitude:0.##})");
+        StopAll(p);
+        if (execVictim != null) UnityEngine.Object.Destroy(execVictim.gameObject);   // 死亡 0.45 s 后可能已自毁
+        if (execNext != null) UnityEngine.Object.Destroy(execNext.gameObject);
+        yield return null;
+
+        // 旁边没有敌人：处决结束后脱战
+        var soloVictim = Spawn(p, p.transform.position + dir * (p.attackRange * 0.5f), "LOCK_ExecSolo");
+        yield return null;
+        SetPrivate(p, "attackCooldownTimer", 5f);
+        p.RightClickEnemy(soloVictim);
+        yield return null;
+        p.ExecuteEnemy(soloVictim);
+        execDeadline = Time.realtimeSinceStartup + 3f;
+        while (Private<EnemyController>(p, "executionTarget") != null && Time.realtimeSinceStartup < execDeadline)
+            yield return null;
+        check(Private<EnemyController>(p, "executionTarget") == null, "LOCK solo execution routine finished");
+        check(p.currentTarget == null && !p.InCombat, "LOCK execution exits combat when no enemy is within reLockRadius");
+        if (soloVictim != null) UnityEngine.Object.Destroy(soloVictim.gameObject);
         yield return null;
 
         if (restoreMode) PlayerSessionData.CurrentMobileControlMode = savedMode;
